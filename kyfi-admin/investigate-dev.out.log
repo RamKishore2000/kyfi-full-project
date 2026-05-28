@@ -1,0 +1,17 @@
+
+> kyfi-admin@1.0.0 dev
+> next dev --turbopack -p 3005
+
+   ▲ Next.js 15.5.18 (Turbopack)
+   - Local:        http://localhost:3005
+   - Network:      http://192.168.29.243:3005
+
+ ✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\electronics cart\\Downloads\\kyfi_admin',
+  testMode: true
+}
+ ✓ Ready in 3.2s
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 16.5s
+ GET /dashboard 200 in 19464ms

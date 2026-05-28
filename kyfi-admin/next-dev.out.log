@@ -1,0 +1,10 @@
+
+> kyfi-admin@1.0.0 dev
+> next dev -p 3005
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3005
+   - Network:      http://192.168.29.243:3005
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
