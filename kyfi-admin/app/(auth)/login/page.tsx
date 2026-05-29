@@ -35,7 +35,7 @@ export default function LoginPage() {
     void loginAdmin({ mobile: mobile.trim(), password: password.trim() })
       .then((data) => {
         if (data.dealer?.role !== "admin") {
-          throw new Error("Admin access only");
+          throw new Error("Only admins can sign in here.");
         }
 
         window.localStorage.setItem("kyfi_admin_token", data.token);

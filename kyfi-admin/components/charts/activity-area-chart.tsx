@@ -3,11 +3,18 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { monthlyActivity } from "@/data/mock-data";
 
-export function ActivityAreaChart() {
+type ActivityPoint = {
+  month: string;
+  farmers: number;
+  reports: number;
+  approvals?: number;
+};
+
+export function ActivityAreaChart({ data = monthlyActivity }: { data?: ActivityPoint[] }) {
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={monthlyActivity} margin={{ left: -20, right: 10 }}>
+        <AreaChart data={data} margin={{ left: -20, right: 10 }}>
           <defs>
             <linearGradient id="farmers" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#2563EB" stopOpacity={0.32} />

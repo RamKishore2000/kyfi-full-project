@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const statusStyles = {
-  GREEN: "border-emerald-200 bg-emerald-50/80",
-  YELLOW: "border-amber-200 bg-amber-50/80",
-  RED: "border-red-200 bg-red-50/80",
+  GREEN: "border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white",
+  YELLOW: "border-amber-200/80 bg-gradient-to-br from-amber-50 to-white",
+  RED: "border-red-200/80 bg-gradient-to-br from-red-50 to-white",
 } as const;
 
 export function StatusCard({
@@ -33,19 +33,19 @@ export function StatusCard({
       transition={{ duration: 0.35, delay: index * 0.06 }}
       whileHover={{ y: -4 }}
     >
-      <Card className={cn("h-full border", statusStyles[status])}>
-        <CardContent className="space-y-4 p-6">
+      <Card className={cn("h-full border shadow-[0_16px_50px_rgba(15,23,42,0.08)]", statusStyles[status])}>
+        <CardContent className="space-y-5 p-6">
           <div className="flex items-center justify-between gap-3">
             <Badge variant={badgeVariant}>{status}</Badge>
-            <span className="font-manrope type-small text-slate-500">
-              Repayment status
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              Reputation signal
             </span>
           </div>
           <div className="space-y-2">
-            <h3 className="font-manrope type-card text-slate-900">
+            <h3 className="font-manrope text-[1.08rem] font-bold tracking-[-0.02em] text-slate-900 lg:text-[1.15rem]">
               {title}
             </h3>
-            <p className="font-manrope type-body">{text}</p>
+            <p className="font-manrope text-[0.95rem] leading-7 text-slate-600">{text}</p>
           </div>
         </CardContent>
       </Card>

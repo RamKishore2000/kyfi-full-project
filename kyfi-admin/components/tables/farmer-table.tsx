@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import { farmers } from "@/data/mock-data";
+import type { Farmer } from "@/types";
 import { useFilter } from "@/hooks/use-filter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,12 +13,16 @@ import { Pagination } from "@/components/tables/pagination";
 import { TableShell, TableToolbar } from "@/components/tables/table-shell";
 import { BlacklistWarning } from "@/components/dashboard/blacklist-warning";
 
-export function FarmerTable() {
+export function FarmerTable({ farmerRecords = farmers }: { farmerRecords?: Farmer[] } = {}) {
+  return <FarmerTableContent farmerRecords={farmerRecords} />;
+}
+
+export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?: Farmer[] }) {
   const [statusFilter, setStatusFilter] = useState("All");
   const statusFilteredFarmers = useMemo(() => {
-    if (statusFilter === "All") return farmers;
-    return farmers.filter((farmer) => farmer.status.toLowerCase() === statusFilter.toLowerCase());
-  }, [statusFilter]);
+    if (statusFilter === "All") return farmerRecords;
+    return farmerRecords.filter((farmer) => farmer.status.toLowerCase() === statusFilter.toLowerCase());
+  }, [farmerRecords, statusFilter]);
   const { query, setQuery, filtered } = useFilter(statusFilteredFarmers, ["name", "id", "district", "mandal", "village", "aadhaarMasked", "phone"]);
 
   return (
@@ -131,7 +136,7 @@ export function FarmerTable() {
   );
 }
 
-function FarmerDialog({ farmer }: { farmer: (typeof farmers)[number] }) {
+function FarmerDialog({ farmer }: { farmer: Farmer }) {
   return (
     <>
       <DialogHeader>

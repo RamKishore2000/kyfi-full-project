@@ -1,9 +1,30 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/navigation/page-header";
 import { BlacklistList } from "@/components/tables/blacklist-list";
+import {
+  deleteBlacklistEntry,
+  fetchBlacklistEntries,
+  type AdminBlacklistRecord,
+} from "@/lib/api/blacklist";
 
 export default function BlacklistPage() {
+  const [entries, setEntries] = useState<AdminBlacklistRecord[]>([]);
+
+  useEffect(() => {
+    void fetchBlacklistEntries()
+      .then((response) => setEntries(response.entries))
+      .catch(() => setEntries([]));
+  }, []);
+
+  const removeEntry = async (recordId: number) => {
+    await deleteBlacklistEntry(recordId);
+    setEntries((current) => current.filter((entry) => entry.recordId !== recordId));
+  };
+
   return (
     <>
       <PageHeader
@@ -35,7 +56,7 @@ export default function BlacklistPage() {
           </div>
         </div>
       </Card>
-      <BlacklistList />
+      <BlacklistList records={entries} onRemove={removeEntry} />
     </>
   );
 }

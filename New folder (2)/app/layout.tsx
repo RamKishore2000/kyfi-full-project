@@ -7,6 +7,7 @@ import "@fontsource/manrope/700.css";
 import "@fontsource/manrope/800.css";
 import "./globals.css";
 import { NativeStatusBar } from "@/components/kyfi/native-status-bar";
+import { LanguageProvider } from "@/components/kyfi/language-provider";
 
 export const metadata: Metadata = {
   title: "KYFI - Know Your Farmer Information",
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <NativeStatusBar />
-        {children}
+        <LanguageProvider>
+          <NativeStatusBar />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

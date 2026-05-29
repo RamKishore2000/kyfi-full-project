@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS dealers (
   village VARCHAR(100) NOT NULL,
   aadhaar_or_gst_number VARCHAR(32) NOT NULL,
   status ENUM('pending', 'approved', 'rejected', 'suspended') NOT NULL DEFAULT 'pending',
+  language_preference VARCHAR(10) NOT NULL DEFAULT 'en',
   otp_code VARCHAR(16) DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -72,6 +73,19 @@ CREATE TABLE IF NOT EXISTS blacklist_entries (
   CONSTRAINT fk_blacklist_created_by FOREIGN KEY (created_by_dealer_id) REFERENCES dealers(id)
 );
 
+CREATE TABLE IF NOT EXISTS blacklist_reports (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  blacklist_entry_id BIGINT UNSIGNED NOT NULL,
+  dealer_id BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_blacklist_report_once (blacklist_entry_id, dealer_id),
+  KEY idx_blacklist_report_entry (blacklist_entry_id),
+  KEY idx_blacklist_report_dealer (dealer_id),
+  CONSTRAINT fk_blacklist_report_entry FOREIGN KEY (blacklist_entry_id) REFERENCES blacklist_entries(id) ON DELETE CASCADE,
+  CONSTRAINT fk_blacklist_report_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
 INSERT INTO dealers (id, role, name, mobile, password_hash, shop_name, district, state, mandal, village, aadhaar_or_gst_number, status, otp_code)
 VALUES
   (1, 'admin', 'KYFI Admin', '9000000000', NULL, 'KYFI Control', 'Guntur', 'Andhra Pradesh', 'Guntur East', 'Kondapalli', 'ADMIN001', 'approved', '123456'),
@@ -93,4 +107,9 @@ INSERT INTO blacklist_entries (
 )
 VALUES
   (1, '123456781234', 'Rama Devi', 'Guntur', 'Guntur East', 'Kondapalli', 'Credit taken and not repaid within the agreed season.', 'Kondapalli village', 2)
+ON DUPLICATE KEY UPDATE id = id;
+
+INSERT INTO blacklist_reports (id, blacklist_entry_id, dealer_id)
+VALUES
+  (1, 1, 2)
 ON DUPLICATE KEY UPDATE id = id;

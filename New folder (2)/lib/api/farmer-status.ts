@@ -1,0 +1,94 @@
+import { KYFI_API_BASE_URL } from "@/lib/config";
+
+export type FarmerStatusColor = "GREEN" | "YELLOW" | "RED";
+
+export type FarmerStatusRecord = {
+  id: number;
+  aadhaar: string;
+  aadhaarMasked: string;
+  farmerName: string;
+  mobileNumber: string | null;
+  district: string;
+  mandal: string;
+  village: string;
+  statusColor: FarmerStatusColor;
+  rationCardNumber: string | null;
+  address: string | null;
+  amountPending: number | null;
+  remarks: string | null;
+  createdByDealerId: number;
+  voteCount: number;
+  createdAt: string;
+  updatedAt: string;
+  currentDealerVoted?: boolean;
+  canVote?: boolean;
+  blacklisted?: boolean;
+  blacklistReason?: string | null;
+  blacklistEntryId?: number | null;
+};
+
+type ApiErrorPayload = {
+  message?: string;
+};
+
+function getToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem("kyfi_token") ?? "";
+}
+
+async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<TResponse> {
+  const response = await fetch(`${KYFI_API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init.headers || {}),
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  const data = (await response.json().catch(() => null)) as TResponse | ApiErrorPayload | null;
+
+  if (!response.ok) {
+    throw new Error((data as ApiErrorPayload | null)?.message || "Request failed");
+  }
+
+  return data as TResponse;
+}
+
+export async function checkFarmerStatus(input: {
+  aadhaar?: string;
+  mobileNumber?: string;
+}) {
+  return apiRequest<{ exists: boolean; farmerStatus: FarmerStatusRecord | null }>("/farmer-statuses/check", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function addFarmerStatus(input: {
+  aadhaar: string;
+  farmerName: string;
+  mobileNumber?: string;
+  district: string;
+  mandal: string;
+  village: string;
+  statusColor: FarmerStatusColor;
+  rationCardNumber?: string;
+  address?: string;
+  amountPending?: number | null;
+  remarks?: string;
+}) {
+  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord }>("/farmer-statuses", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function voteFarmerStatus(statusId: number) {
+  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
+    `/farmer-statuses/${statusId}/vote`,
+    {
+      method: "POST",
+    },
+  );
+}

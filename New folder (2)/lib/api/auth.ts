@@ -22,6 +22,21 @@ export type LoginOtpInput = {
   otp: string;
 };
 
+export type DealerAuthResponse = {
+  id?: number;
+  role?: "dealer" | "admin";
+  name?: string;
+  mobile?: string;
+  shopName?: string;
+  district?: string;
+  state?: string;
+  mandal?: string;
+  village?: string;
+  aadhaarOrGstNumber?: string;
+  status?: "pending" | "approved" | "rejected" | "suspended";
+  languagePreference?: "en" | "te";
+};
+
 type ApiErrorPayload = {
   message?: string;
 };
@@ -41,7 +56,7 @@ async function apiRequest<TResponse>(
 }
 
 export async function registerDealer(input: RegisterDealerInput) {
-  return apiRequest<{ message: string; dealer: unknown }>("/register", {
+  return apiRequest<{ message: string; dealer: DealerAuthResponse }>("/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -51,7 +66,7 @@ export async function registerDealer(input: RegisterDealerInput) {
 }
 
 export async function loginDealerPassword(input: LoginPasswordInput) {
-  return apiRequest<{ message: string; token: string; dealer: unknown }>("/login", {
+  return apiRequest<{ message: string; token: string; dealer: DealerAuthResponse }>("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -64,7 +79,7 @@ export async function loginDealerPassword(input: LoginPasswordInput) {
 }
 
 export async function loginDealerOtp(input: LoginOtpInput) {
-  return apiRequest<{ message: string; token: string; dealer: unknown }>("/login", {
+  return apiRequest<{ message: string; token: string; dealer: DealerAuthResponse }>("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -13,7 +13,13 @@ import { DealerStatusBadge } from "@/components/tables/status-badge";
 import { Pagination } from "@/components/tables/pagination";
 import { TableShell, TableToolbar } from "@/components/tables/table-shell";
 
-export function DealerTable({ dealerRecords = dealers }: { dealerRecords?: Dealer[] }) {
+export function DealerTable({
+  dealerRecords = dealers,
+  onStatusChange,
+}: {
+  dealerRecords?: Dealer[];
+  onStatusChange?: (dealerId: string, status: Dealer["status"]) => void | Promise<void>;
+}) {
   const [statusFilter, setStatusFilter] = useState("All");
   const statusFilteredDealers = useMemo(() => {
     if (statusFilter === "All") return dealerRecords;
@@ -41,11 +47,11 @@ export function DealerTable({ dealerRecords = dealers }: { dealerRecords?: Deale
                 <p className="truncate font-medium leading-5">{dealer.name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{dealer.ownerName} - {dealer.id}</p>
               </div>
-              <DealerActions dealer={dealer} />
+            <DealerActions dealer={dealer} onStatusChange={onStatusChange} />
             </div>
             <div className="mt-4 grid gap-3 text-sm">
               <Info label="Location" value={`${dealer.village}, ${dealer.mandal}, ${dealer.district}`} />
-              <Info label="Registration" value={`${dealer.licenseId} / ${dealer.mobile}`} />
+              <Info label="Mobile number" value={dealer.mobile} />
               <Info label="Farmers linked" value={String(dealer.farmersLinked)} />
               <div className="rounded-md border p-3">
                 <p className="text-xs text-muted-foreground">Status</p>
@@ -70,7 +76,7 @@ export function DealerTable({ dealerRecords = dealers }: { dealerRecords?: Deale
             <tr>
               <th className="px-4 py-3">Dealer</th>
               <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Registration</th>
+              <th className="px-4 py-3">Mobile number</th>
               <th className="px-4 py-3 text-center">Status</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
@@ -87,8 +93,7 @@ export function DealerTable({ dealerRecords = dealers }: { dealerRecords?: Deale
                   <div className="text-xs text-muted-foreground">{dealer.mandal}, {dealer.district}</div>
                 </td>
                 <td className="px-4 py-4 align-middle">
-                  <div className="break-words leading-6">{dealer.licenseId}</div>
-                  <div className="text-xs text-muted-foreground">{dealer.mobile}</div>
+                  <div className="break-words leading-6">{dealer.mobile}</div>
                 </td>
                 <td className="px-4 py-4 align-middle">
                   <div className="flex justify-center">
@@ -96,7 +101,7 @@ export function DealerTable({ dealerRecords = dealers }: { dealerRecords?: Deale
                   </div>
                 </td>
                 <td className="px-4 py-4 align-middle">
-                  <DealerActions dealer={dealer} />
+                <DealerActions dealer={dealer} onStatusChange={onStatusChange} />
                 </td>
               </tr>
             ))}
@@ -117,7 +122,13 @@ const actionLabels = {
 
 type DealerAction = keyof typeof actionLabels;
 
-function DealerActions({ dealer }: { dealer: Dealer }) {
+function DealerActions({
+  dealer,
+  onStatusChange,
+}: {
+  dealer: Dealer;
+  onStatusChange?: (dealerId: string, status: Dealer["status"]) => void | Promise<void>;
+}) {
   const [viewOpen, setViewOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<DealerAction>("approve");
@@ -132,17 +143,28 @@ function DealerActions({ dealer }: { dealer: Dealer }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="min-w-36">
-          <DropdownMenuItem onSelect={() => setSelectedAction("approve")}>
+          <DropdownMenuItem
+            onSelect={() => {
+              setSelectedAction("approve");
+              void onStatusChange?.(dealer.id, "Approved");
+            }}
+          >
             <Check className="h-4 w-4 text-success" />
             Approve
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setSelectedAction("reject")}>
+          <DropdownMenuItem
+            onSelect={() => {
+              setSelectedAction("reject");
+              void onStatusChange?.(dealer.id, "Rejected");
+            }}
+          >
             <X className="h-4 w-4 text-muted-foreground" />
             Reject
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               setSelectedAction("suspend");
+              void onStatusChange?.(dealer.id, "Suspended");
               setSuspendOpen(true);
             }}
           >
@@ -185,7 +207,6 @@ function DealerActions({ dealer }: { dealer: Dealer }) {
             <Info label="Farmers linked" value={String(dealer.farmersLinked)} />
             <Info label="Owner" value={dealer.ownerName} />
             <Info label="Mobile" value={dealer.mobile} />
-            <Info label="Aadhaar / GST" value={dealer.aadhaarOrGst} />
             <Info label="Location" value={`${dealer.village}, ${dealer.mandal}, ${dealer.district}`} />
             <Info label="Joined" value={dealer.joined} />
           </div>
