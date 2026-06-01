@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const statusStyles = {
-  GREEN: "border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white",
-  YELLOW: "border-amber-200/80 bg-gradient-to-br from-amber-50 to-white",
-  RED: "border-red-200/80 bg-gradient-to-br from-red-50 to-white",
+  GREEN: "border-emerald-200/90 bg-gradient-to-br from-emerald-50 via-emerald-50 to-white",
+  YELLOW: "border-amber-200/90 bg-gradient-to-br from-amber-50 via-amber-50 to-white",
+  RED: "border-red-200/90 bg-gradient-to-br from-red-50 via-red-50 to-white",
 } as const;
 
 export function StatusCard({
@@ -37,15 +37,44 @@ export function StatusCard({
         <CardContent className="space-y-5 p-6">
           <div className="flex items-center justify-between gap-3">
             <Badge variant={badgeVariant}>{status}</Badge>
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+            <span
+              className={cn(
+                "text-xs font-bold uppercase tracking-[0.18em]",
+                status === "GREEN"
+                  ? "text-emerald-700"
+                  : status === "YELLOW"
+                    ? "text-amber-700"
+                    : "text-red-700",
+              )}
+            >
               Reputation signal
             </span>
           </div>
           <div className="space-y-2">
-            <h3 className="font-manrope text-[1.08rem] font-bold tracking-[-0.02em] text-slate-900 lg:text-[1.15rem]">
+            <h3
+              className={cn(
+                "font-manrope text-[1.08rem] font-bold tracking-[-0.02em] lg:text-[1.15rem]",
+                status === "GREEN"
+                  ? "text-emerald-900"
+                  : status === "YELLOW"
+                    ? "text-amber-900"
+                    : "text-red-900",
+              )}
+            >
               {title}
             </h3>
-            <p className="font-manrope text-[0.95rem] leading-7 text-slate-600">{text}</p>
+            <p
+              className={cn(
+                "font-manrope text-[0.95rem] leading-7",
+                status === "GREEN"
+                  ? "text-emerald-900/70"
+                  : status === "YELLOW"
+                    ? "text-amber-900/70"
+                    : "text-red-900/70",
+              )}
+            >
+              {text}
+            </p>
           </div>
         </CardContent>
       </Card>

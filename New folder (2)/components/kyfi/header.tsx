@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { Capacitor } from "@capacitor/core";
 import {
+  Leaf,
   KeyRound,
   LogOut,
-  MoreVertical,
   PencilLine,
   Settings,
   UserRound,
@@ -13,7 +13,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ChangePasswordModal } from "@/components/kyfi/change-password-modal";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 const links = [
@@ -47,11 +46,8 @@ function MenuItem({
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [hideSubtitle, setHideSubtitle] = useState(false);
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -63,6 +59,7 @@ export function Header() {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("kyfi_token");
       window.localStorage.removeItem("kyfi_dealer");
+      window.dispatchEvent(new Event("kyfi-auth-changed"));
     }
 
     router.push("/login" as any);
@@ -81,9 +78,6 @@ export function Header() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
-        setMobileMenuOpen(false);
-      }
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setProfileMenuOpen(false);
       }
@@ -111,16 +105,16 @@ export function Header() {
           onClick={() => router.push("/dashboard")}
           className="flex items-center gap-3 text-left"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-extrabold text-white shadow-[0_14px_30px_rgba(22,101,52,0.28)]">
-            KY
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgb(4,120,87)] text-white shadow-[0_14px_30px_rgba(4,120,87,0.22)]">
+            <Leaf className="h-6 w-6" />
           </div>
           <div className="leading-tight">
-            <div className="font-manrope text-[1.06rem] font-extrabold tracking-[-0.03em] text-slate-900">
+            <div className="font-manrope text-[1.06rem] font-extrabold tracking-[-0.03em] text-[rgb(4,120,87)]">
               KYFI
             </div>
             {!hideSubtitle ? (
               <div className="font-manrope text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Know Your Farmer Information
+                {t("header.subtitle")}
               </div>
             ) : null}
           </div>
@@ -139,8 +133,8 @@ export function Header() {
                 className={cn(
                   "group relative rounded-full px-4 py-2 text-left text-[0.92rem] font-semibold transition",
                   active
-                    ? "text-emerald-800"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-emerald-800",
+                    ? "text-[rgb(4,120,87)]"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-[rgb(4,120,87)]",
                 )}
               >
               <span className="relative inline-flex flex-col">
@@ -150,7 +144,7 @@ export function Header() {
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ duration: 0.35, ease: "easeOut" }}
-                      className="mt-1 h-0.5 w-full origin-left rounded-full bg-emerald-700"
+                      className="mt-1 h-0.5 w-full origin-left rounded-full bg-[rgb(4,120,87)]"
                     />
                   ) : null}
                 </span>
@@ -165,16 +159,16 @@ export function Header() {
           onMouseEnter={() => setProfileMenuOpen(true)}
           onMouseLeave={() => setProfileMenuOpen(false)}
         >
-          <button
-            type="button"
-            onClick={() => setProfileMenuOpen((value) => !value)}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-700 px-4 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(22,101,52,0.25)] transition hover:bg-emerald-800"
-            aria-expanded={profileMenuOpen}
-            aria-haspopup="menu"
-          >
-            <UserRound className="h-4 w-4" />
-            {t("menu.profile")}
-          </button>
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((value) => !value)}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-[rgb(4,120,87)] bg-[rgb(4,120,87)] px-4 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(4,120,87,0.25)] transition hover:brightness-105"
+              aria-expanded={profileMenuOpen}
+              aria-haspopup="menu"
+            >
+              <UserRound className="h-4 w-4" />
+              {t("menu.profile")}
+            </button>
 
           <AnimatePresence>
             {profileMenuOpen ? (
@@ -207,7 +201,7 @@ export function Header() {
                   label={t("menu.changePassword")}
                   onClick={() => {
                     setProfileMenuOpen(false);
-                    setChangePasswordOpen(true);
+                    router.push("/change-password" as any);
                   }}
                 />
                 <MenuItem
@@ -223,28 +217,18 @@ export function Header() {
           </AnimatePresence>
         </div>
 
-        <div className="relative flex items-center gap-2 lg:hidden" ref={mobileMenuRef}>
+        <div className="relative flex items-center gap-2 lg:hidden">
           <button
             type="button"
             onClick={() => {
               setProfileMenuOpen((value) => !value);
-              setMobileMenuOpen(false);
             }}
             className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:text-emerald-800"
-            aria-label="Profile menu"
+            aria-label={t("header.profileMenu")}
             aria-expanded={profileMenuOpen}
             aria-haspopup="menu"
           >
             <UserRound className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Open menu"
-            aria-expanded={mobileMenuOpen}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:text-emerald-800"
-            onClick={() => setMobileMenuOpen((value) => !value)}
-          >
-            <MoreVertical className="h-5 w-5" />
           </button>
 
           <AnimatePresence>
@@ -278,7 +262,7 @@ export function Header() {
                   label={t("menu.changePassword")}
                   onClick={() => {
                     setProfileMenuOpen(false);
-                    setChangePasswordOpen(true);
+                    router.push("/change-password" as any);
                   }}
                 />
                 <MenuItem
@@ -291,68 +275,10 @@ export function Header() {
                 />
               </motion.div>
             ) : null}
-            {mobileMenuOpen ? (
-              <motion.div
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                transition={{ duration: 0.18 }}
-                className="absolute right-[-4px] top-[calc(100%+0.75rem)] z-50 w-64 overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)]"
-              >
-                <div className="border-b border-slate-100 px-4 py-4">
-                  <p className="font-manrope text-[0.68rem] font-bold uppercase tracking-[0.22em] text-slate-500">
-                    {t("menu.menu")}
-                  </p>
-                  <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
-                    {t("menu.shortcuts")}
-                  </p>
-                </div>
-
-                <div className="p-2">
-                  {links.map((link) => {
-                    const active = isActive(link.href);
-
-                    return (
-                      <button
-                        key={link.href}
-                        type="button"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          router.push(link.href as any);
-                        }}
-                        aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "block w-full rounded-2xl px-3 py-3 text-left text-sm font-semibold transition",
-                        active
-                          ? "text-emerald-800"
-                          : "text-slate-700 hover:bg-slate-50 hover:text-emerald-800",
-                      )}
-                    >
-                      <span className="inline-flex flex-col">
-                    <span>{t(link.labelKey)}</span>
-                        {active ? (
-                          <motion.span
-                            initial={{ scaleX: 0 }}
-                            animate={{ scaleX: 1 }}
-                            transition={{ duration: 0.35, ease: "easeOut" }}
-                            className="mt-1 h-0.5 w-full origin-left rounded-full bg-emerald-700"
-                          />
-                        ) : null}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              </motion.div>
-            ) : null}
           </AnimatePresence>
         </div>
       </div>
 
-      <ChangePasswordModal
-        open={changePasswordOpen}
-        onClose={() => setChangePasswordOpen(false)}
-      />
     </motion.header>
   );
 }

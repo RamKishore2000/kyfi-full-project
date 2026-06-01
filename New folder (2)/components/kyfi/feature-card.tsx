@@ -20,8 +20,8 @@ export function FeatureCard({
   href?: string;
 }) {
   const content = (
-    <Card className="group h-full overflow-hidden border-white/80 bg-white/85 shadow-[0_16px_50px_rgba(15,23,42,0.08)] transition-colors hover:border-emerald-200">
-      <CardContent className="space-y-5 p-6">
+    <Card className="group flex h-full overflow-hidden border-white/80 bg-white/85 shadow-[0_16px_50px_rgba(15,23,42,0.08)] transition-colors hover:border-emerald-200">
+      <CardContent className="flex h-full flex-1 flex-col justify-between gap-5 p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 transition group-hover:bg-emerald-100">
             {icon}
@@ -43,6 +43,7 @@ export function FeatureCard({
 
   return (
     <motion.div
+      className="h-full"
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}

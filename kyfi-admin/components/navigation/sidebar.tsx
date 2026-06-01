@@ -4,9 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
-  ChartNoAxesCombined,
   CircleGauge,
-  Flag,
+  Image,
   Landmark,
   Leaf,
   Settings,
@@ -14,30 +13,32 @@ import {
   UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminLanguage } from "@/components/admin-language-provider";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: CircleGauge },
-  { href: "/dashboard/dealers", label: "Dealers", icon: Landmark },
-  { href: "/dashboard/farmers", label: "Farmers", icon: Leaf },
-  { href: "/dashboard/blacklist", label: "Blacklist", icon: ShieldAlert },
-  { href: "/dashboard/reports", label: "Reports", icon: ChartNoAxesCombined },
-  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-  { href: "/dashboard/profile", label: "Profile", icon: UserRound },
+  { href: "/dashboard", label: "nav.dashboard", icon: CircleGauge },
+  { href: "/dashboard/dealers", label: "nav.dealers", icon: Landmark },
+  { href: "/dashboard/farmers", label: "nav.farmers", icon: Leaf },
+  { href: "/dashboard/blacklist", label: "nav.blacklist", icon: ShieldAlert },
+  { href: "/dashboard/notifications", label: "nav.notifications", icon: Bell },
+  { href: "/dashboard/banner", label: "nav.banner", icon: Image },
+  { href: "/dashboard/settings", label: "nav.settings", icon: Settings },
+  { href: "/dashboard/profile", label: "nav.profile", icon: UserRound },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useAdminLanguage();
 
   return (
     <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r bg-card/80 px-4 py-5 backdrop-blur lg:block">
       <Link href="/dashboard" className="mb-8 flex items-center gap-3 px-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
-          <Flag className="h-5 w-5" />
+          <Leaf className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-base font-semibold leading-5">KYFI Admin</p>
-          <p className="text-xs font-normal leading-5 text-muted-foreground">Know Your Farmer information</p>
+          <p className="text-base font-semibold leading-5 text-primary">KYFI Admin</p>
+          <p className="text-xs font-normal leading-5 text-muted-foreground">{t("sidebar.subtitle")}</p>
         </div>
       </Link>
       <nav className="space-y-1">
@@ -54,7 +55,7 @@ export function Sidebar() {
               )}
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              {t(item.label)}
             </Link>
           );
         })}

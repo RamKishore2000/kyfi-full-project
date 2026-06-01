@@ -1,4 +1,8 @@
-const { listDealers, updateDealerStatusById } = require("../services/dealer.service");
+const { findDealerById, listDealers, updateDealerStatusById } = require("../services/dealer.service");
+const {
+  createAdminNotification,
+  buildDealerStatusNotificationContent,
+} = require("../services/admin-notifications.service");
 
 const getDealers = async (req, res, next) => {
   try {
@@ -45,6 +49,23 @@ const updateDealerStatus = async (req, res, next) => {
 
     if (!updated) {
       return res.status(404).json({ message: "Dealer not found" });
+    }
+
+    const adminId = req.user?.dealerId;
+    if (adminId) {
+      const admin = await findDealerById(adminId);
+      if (admin && admin.role === "admin") {
+        const notificationContent = buildDealerStatusNotificationContent(normalizedStatus);
+
+        await createAdminNotification({
+          recipientType: "individual",
+          title: notificationContent.title,
+          message: notificationContent.message,
+          dealerId,
+          sentByAdminId: admin.id,
+          sentByName: admin.name || "KYFI Admin",
+        });
+      }
     }
 
     return res.status(200).json({

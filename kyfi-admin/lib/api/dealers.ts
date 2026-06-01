@@ -23,6 +23,18 @@ type DealersResponse = {
   message?: string;
 };
 
+export type RegisterDealerInput = {
+  shopName: string;
+  ownerName: string;
+  mobile: string;
+  password?: string;
+  district: string;
+  state: string;
+  mandal: string;
+  village: string;
+  aadhaarOrGstNumber: string;
+};
+
 async function authFetch(path: string, init: RequestInit = {}) {
   const token =
     typeof window !== "undefined" ? window.localStorage.getItem("kyfi_admin_token") : null;
@@ -57,4 +69,37 @@ export async function updateDealerStatus(
     method: "PATCH",
     body: JSON.stringify({ status }),
   }) as Promise<{ message: string; dealer: { id: number; status: string } }>;
+}
+
+export async function registerDealer(input: RegisterDealerInput) {
+  const response = await fetch(`${KYFI_API_BASE_URL}/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Request failed");
+  }
+
+  return data as {
+    message: string;
+    dealer: {
+      id?: number;
+      role?: string;
+      name?: string;
+      mobile?: string;
+      shopName?: string;
+      district?: string;
+      state?: string;
+      mandal?: string;
+      village?: string;
+      aadhaarOrGstNumber?: string;
+      status?: string;
+    };
+  };
 }

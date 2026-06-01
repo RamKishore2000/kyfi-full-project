@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
+import { useAdminLanguage } from "@/components/admin-language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityAreaChart } from "@/components/charts/activity-area-chart";
@@ -13,8 +14,27 @@ import { FarmerTable } from "@/components/tables/farmer-table";
 import { fetchAdminDashboard, type DashboardSummaryResponse } from "@/lib/api/dashboard";
 
 export default function DashboardPage() {
+  const { t, translateText } = useAdminLanguage();
   const [data, setData] = useState<DashboardSummaryResponse | null>(null);
   const [error, setError] = useState("");
+  const toTitleCase = (value: string) => {
+    if (!value) return value;
+    return value
+      .split(/(\s+|\+|\/)/)
+      .map((part) => {
+        if (!part || /^\s+$/.test(part) || part === "+" || part === "/") {
+          return part;
+        }
+        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+      })
+      .join("");
+  };
+  const metricTitleMap: Record<string, string> = {
+    "Total Farmers": "dashboard.metric.totalFarmers",
+    "Registered Dealers": "dashboard.metric.registeredDealers",
+    "Status Votes": "dashboard.metric.statusVotes",
+    "Blacklist Entries": "dashboard.metric.blacklistEntries",
+  };
 
   useEffect(() => {
     void fetchAdminDashboard()
@@ -27,9 +47,9 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader
-        title="Dashboard analytics"
-        description="Admin view of dealer approvals, farmer status totals, votes, and separate blacklist entries."
-        actions={<Button variant="outline"><Download className="h-4 w-4" />Export</Button>}
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
+        actions={<Button variant="outline"><Download className="h-4 w-4" />{t("dashboard.export")}</Button>}
       />
 
       {error ? (
@@ -42,15 +62,20 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(data?.analytics ?? []).map((item) => (
-          <MetricCard key={item.label} {...item} />
+          <MetricCard
+            key={item.label}
+            {...item}
+            label={toTitleCase(t(metricTitleMap[item.label] ?? item.label))}
+            change={toTitleCase(translateText(item.change))}
+          />
         ))}
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.6fr_0.8fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Monthly activity</CardTitle>
-            <CardDescription>Farmer onboarding and report volume trend.</CardDescription>
+            <CardTitle>{t("dashboard.monthlyTitle")}</CardTitle>
+            <CardDescription>{t("dashboard.monthlyDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ActivityAreaChart data={data?.monthlyActivity ?? []} />
@@ -58,8 +83,8 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Status distribution</CardTitle>
-            <CardDescription>GREEN / YELLOW / RED farmer status database.</CardDescription>
+            <CardTitle className="lg:whitespace-nowrap">{t("dashboard.statusTitle")}</CardTitle>
+            <CardDescription>{t("dashboard.statusDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <StatusPieChart data={data?.statusDistribution ?? []} />
@@ -69,7 +94,7 @@ export default function DashboardPage() {
 
       <div className="mt-6">
         <div>
-          <h2 className="mb-3 text-lg font-medium">Recent farmer records</h2>
+          <h2 className="mb-3 text-lg font-medium">{t("dashboard.recentTitle")}</h2>
           <FarmerTable farmerRecords={data?.recentFarmers ?? []} />
         </div>
       </div>

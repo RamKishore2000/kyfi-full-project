@@ -21,6 +21,25 @@ CREATE TABLE IF NOT EXISTS dealers (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS dealer_otp_requests (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  dealer_id BIGINT UNSIGNED NOT NULL,
+  mobile VARCHAR(20) NOT NULL,
+  otp_code VARCHAR(16) NOT NULL,
+  verification_status ENUM('pending', 'verified', 'expired', 'locked') NOT NULL DEFAULT 'pending',
+  expires_at DATETIME NOT NULL,
+  verified_at DATETIME DEFAULT NULL,
+  attempt_count INT NOT NULL DEFAULT 0,
+  resend_count INT NOT NULL DEFAULT 0,
+  last_sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_dealer_otp_mobile_status (mobile, verification_status),
+  KEY idx_dealer_otp_expires_at (expires_at),
+  CONSTRAINT fk_dealer_otp_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS farmer_statuses (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   aadhaar VARCHAR(16) NOT NULL,
@@ -84,6 +103,58 @@ CREATE TABLE IF NOT EXISTS blacklist_reports (
   KEY idx_blacklist_report_dealer (dealer_id),
   CONSTRAINT fk_blacklist_report_entry FOREIGN KEY (blacklist_entry_id) REFERENCES blacklist_entries(id) ON DELETE CASCADE,
   CONSTRAINT fk_blacklist_report_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS admin_notifications (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  recipient_type ENUM('all', 'individual') NOT NULL DEFAULT 'all',
+  dealer_id BIGINT UNSIGNED NULL,
+  recipient_label VARCHAR(200) NOT NULL,
+  recipient_company_name VARCHAR(200) DEFAULT NULL,
+  recipient_owner_name VARCHAR(200) DEFAULT NULL,
+  recipient_dealer_code VARCHAR(50) DEFAULT NULL,
+  recipient_mobile_number VARCHAR(20) DEFAULT NULL,
+  recipient_district VARCHAR(100) DEFAULT NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  notification_type ENUM('Broadcast', 'Individual') NOT NULL DEFAULT 'Broadcast',
+  status ENUM('Sent', 'Queued', 'Failed') NOT NULL DEFAULT 'Sent',
+  sent_by_admin_id BIGINT UNSIGNED NOT NULL,
+  sent_by_name VARCHAR(200) NOT NULL,
+  sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_admin_notifications_recipient_type (recipient_type),
+  KEY idx_admin_notifications_dealer_id (dealer_id),
+  KEY idx_admin_notifications_sent_at (sent_at)
+);
+
+CREATE TABLE IF NOT EXISTS site_hero_banner_settings (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  desktop_image_path VARCHAR(255) DEFAULT NULL,
+  desktop_image_name VARCHAR(255) DEFAULT NULL,
+  mobile_image_path VARCHAR(255) DEFAULT NULL,
+  mobile_image_name VARCHAR(255) DEFAULT NULL,
+  updated_by_dealer_id INT UNSIGNED DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+INSERT IGNORE INTO site_hero_banner_settings (id) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS mandals (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  state_name VARCHAR(100) NOT NULL,
+  district_name VARCHAR(150) NOT NULL,
+  mandal_name VARCHAR(150) NOT NULL,
+  source_label VARCHAR(100) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_mandal_state_district_name (state_name, district_name, mandal_name),
+  KEY idx_mandal_state_district (state_name, district_name),
+  KEY idx_mandal_name (mandal_name)
 );
 
 INSERT INTO dealers (id, role, name, mobile, password_hash, shop_name, district, state, mandal, village, aadhaar_or_gst_number, status, otp_code)

@@ -5,7 +5,8 @@
   "description": "KYFI backend Node.js server",
   "scripts": {
     "dev": "node --watch server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "import:mandals": "node scripts/import-mandals.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

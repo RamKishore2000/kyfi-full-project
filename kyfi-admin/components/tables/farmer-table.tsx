@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import { farmers } from "@/data/mock-data";
 import type { Farmer } from "@/types";
@@ -12,18 +12,39 @@ import { FarmerStatusBadge } from "@/components/tables/status-badge";
 import { Pagination } from "@/components/tables/pagination";
 import { TableShell, TableToolbar } from "@/components/tables/table-shell";
 import { BlacklistWarning } from "@/components/dashboard/blacklist-warning";
+import { useAdminLanguage } from "@/components/admin-language-provider";
 
 export function FarmerTable({ farmerRecords = farmers }: { farmerRecords?: Farmer[] } = {}) {
   return <FarmerTableContent farmerRecords={farmerRecords} />;
 }
 
 export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?: Farmer[] }) {
+  const { t } = useAdminLanguage();
   const [statusFilter, setStatusFilter] = useState("All");
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
   const statusFilteredFarmers = useMemo(() => {
     if (statusFilter === "All") return farmerRecords;
     return farmerRecords.filter((farmer) => farmer.status.toLowerCase() === statusFilter.toLowerCase());
   }, [farmerRecords, statusFilter]);
   const { query, setQuery, filtered } = useFilter(statusFilteredFarmers, ["name", "id", "district", "mandal", "village", "aadhaarMasked", "phone"]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedFarmers = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusFilter, farmerRecords]);
+
+  const handlePrev = () => {
+    setPage((current) => Math.max(1, current - 1));
+  };
+
+  const handleNext = () => {
+    setPage((current) => Math.min(totalPages, current + 1));
+  };
 
   return (
     <TableShell>
@@ -31,13 +52,14 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
         <SearchFilterBar
           value={query}
           onChange={setQuery}
-          placeholder="Search farmer, ID, district..."
+          placeholder={t("table.searchFarmer")}
           selectedFilter={statusFilter}
           onFilterChange={setStatusFilter}
+          showFiltersButton={false}
         />
       </TableToolbar>
       <div className="space-y-3 md:hidden">
-        {filtered.map((farmer) => (
+        {paginatedFarmers.map((farmer) => (
           <div key={farmer.id} className={`rounded-lg border p-4 ${farmer.blacklisted ? "bg-red-50/80 dark:bg-red-950/30" : "bg-card"}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -48,7 +70,7 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="shrink-0 px-2">
                     <Eye className="h-4 w-4" />
-                    View
+                    {t("table.view")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -57,11 +79,11 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
               </Dialog>
             </div>
             <div className="mt-4 grid gap-3 text-sm">
-              <Info label="Location" value={`${farmer.village}, ${farmer.mandal}, ${farmer.district}`} />
-              <Info label="Aadhaar / Mobile" value={`${farmer.aadhaarMasked} / ${farmer.phone}`} />
-              <Info label="Vote count" value={String(farmer.voteCount)} />
+              <Info label={t("table.location")} value={`${farmer.village}, ${farmer.mandal}, ${farmer.district}`} />
+              <Info label={t("table.aadhaarMobile")} value={`${farmer.aadhaarMasked} / ${farmer.phone}`} />
+              <Info label={t("table.votes")} value={String(farmer.voteCount)} />
               <div className="rounded-md border p-3">
-                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-xs text-muted-foreground">{t("table.status")}</p>
                 <div className="mt-2">
                   <FarmerStatusBadge status={farmer.status} blacklisted={farmer.blacklisted} />
                 </div>
@@ -82,16 +104,16 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
           </colgroup>
           <thead className="bg-muted/60 text-xs font-semibold uppercase text-muted-foreground">
             <tr>
-              <th className="px-4 py-3">Farmer</th>
-              <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Aadhaar / Mobile</th>
-              <th className="px-4 py-3 text-center">Status</th>
-              <th className="px-4 py-3">Votes</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3">{t("table.farmer")}</th>
+              <th className="px-4 py-3">{t("table.location")}</th>
+              <th className="px-4 py-3">{t("table.aadhaarMobile")}</th>
+              <th className="px-4 py-3 text-center">{t("table.status")}</th>
+              <th className="px-4 py-3">{t("table.votes")}</th>
+              <th className="px-4 py-3 text-right">{t("table.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {filtered.map((farmer) => (
+            {paginatedFarmers.map((farmer) => (
               <tr key={farmer.id} className={farmer.blacklisted ? "bg-red-50/80 dark:bg-red-950/30" : "hover:bg-muted/40"}>
                 <td className="px-4 py-4 align-middle">
                   <div className="truncate font-medium leading-5">{farmer.name}</div>
@@ -117,7 +139,7 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm" className="w-16 px-2">
                           <Eye className="h-4 w-4" />
-                          View
+                          {t("table.view")}
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -131,33 +153,29 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
           </tbody>
         </table>
       </div>
-      <Pagination total={filtered.length} />
+      <Pagination total={filtered.length} pageSize={pageSize} page={page} onPrev={handlePrev} onNext={handleNext} />
     </TableShell>
   );
 }
 
 function FarmerDialog({ farmer }: { farmer: Farmer }) {
+  const { t } = useAdminLanguage();
   return (
     <>
       <DialogHeader>
         <DialogTitle>{farmer.name}</DialogTitle>
-        <DialogDescription>{farmer.id} farmer detail view</DialogDescription>
+        <DialogDescription>{farmer.id} {t("table.detailView")}</DialogDescription>
       </DialogHeader>
       <div className="space-y-4">
         <BlacklistWarning farmer={farmer} />
         <div className="grid gap-3 text-sm sm:grid-cols-2">
-          <Info label="Aadhaar" value={farmer.aadhaarMasked} />
-          <Info label="Phone" value={farmer.phone} />
-          <Info label="Village / Mandal" value={`${farmer.village}, ${farmer.mandal}`} />
-          <Info label="District" value={farmer.district} />
-          <Info label="Crop" value={farmer.crop} />
-          <Info label="Vote count" value={String(farmer.voteCount)} />
-          <Info label="Date added" value={farmer.dateAdded} />
-          <Info label="Last verified" value={farmer.lastVerified} />
-        </div>
-        <div className="rounded-md border p-3 text-sm">
-          <p className="text-xs text-muted-foreground">Remarks</p>
-          <p className="mt-1">{farmer.remarks}</p>
+          <Info label={t("table.aadhaarMobile")} value={farmer.aadhaarMasked} />
+          <Info label={t("table.mobile")} value={farmer.phone} />
+          <Info label={t("table.villageMandalDistrict")} value={`${farmer.village}, ${farmer.mandal}`} />
+          <Info label={t("table.district")} value={farmer.district} />
+          <Info label={t("table.votes")} value={String(farmer.voteCount)} />
+          <Info label={t("table.dateAdded")} value={farmer.dateAdded} />
+          <Info label={t("table.lastVerified")} value={farmer.lastVerified} />
         </div>
       </div>
     </>

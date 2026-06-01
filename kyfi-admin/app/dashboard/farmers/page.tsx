@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAdminLanguage } from "@/components/admin-language-provider";
 import { PageHeader } from "@/components/navigation/page-header";
 import { FarmerTable } from "@/components/tables/farmer-table";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { fetchFarmers } from "@/lib/api/farmers";
 import type { Farmer } from "@/types";
 
 export default function FarmersPage() {
+  const { t } = useAdminLanguage();
   const [farmers, setFarmers] = useState<Farmer[] | null>(null);
   const [error, setError] = useState("");
 
@@ -15,15 +17,15 @@ export default function FarmersPage() {
     void fetchFarmers()
       .then((response) => setFarmers(response.farmers))
       .catch((farmersError) => {
-        setError(farmersError instanceof Error ? farmersError.message : "Unable to load farmers");
+        setError(farmersError instanceof Error ? farmersError.message : t("farmers.loading"));
       });
   }, []);
 
   return (
     <>
       <PageHeader
-        title="Farmer records"
-        description="Search, filter, inspect, and review farmer status records by district, mandal, village, status, and date."
+        title={t("farmers.title")}
+        description={t("farmers.description")}
       />
 
       {error ? (

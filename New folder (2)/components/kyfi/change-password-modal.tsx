@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { updateDealerPassword } from "@/lib/api/profile";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
@@ -10,9 +10,10 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 type ChangePasswordModalProps = {
   open: boolean;
   onClose: () => void;
+  onSuccess?: (message: string) => void;
 };
 
-export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps) {
+export function ChangePasswordModal({ open, onClose, onSuccess }: ChangePasswordModalProps) {
   const { t } = useKyfiLanguage();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -20,6 +21,9 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -51,12 +55,12 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
     setError("");
 
     if (newPassword.trim().length < 4) {
-      setError("New password must be at least 4 characters.");
+      setError(t("settings.invalidPasswordShort"));
       return;
     }
 
     if (newPassword.trim() !== confirmPassword.trim()) {
-      setError("New password and confirm password must match.");
+      setError(t("settings.passwordMismatch"));
       return;
     }
 
@@ -68,10 +72,11 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
         newPassword: newPassword.trim(),
       });
 
-      setMessage(response.message || "Password updated successfully");
+      setMessage(response.message || t("settings.passwordSaved"));
+      onSuccess?.(response.message || t("settings.passwordSaved"));
       setTimeout(() => closeModal(), 1200);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to update password");
+      setError(submitError instanceof Error ? submitError.message : t("settings.loadPasswordFailed"));
     } finally {
       setLoading(false);
     }
@@ -87,14 +92,14 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-md"
           onClick={onClose}
         >
-        <motion.div
-          initial={{ opacity: 0, y: 18, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 18, scale: 0.98 }}
-          transition={{ duration: 0.18 }}
-          onClick={(event) => event.stopPropagation()}
-          className="w-full max-w-lg rounded-[2rem] border border-white/80 bg-white p-6 shadow-[0_28px_100px_rgba(15,23,42,0.2)] sm:p-8"
-        >
+          <motion.div
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 18, scale: 0.98 }}
+            transition={{ duration: 0.18 }}
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-lg rounded-[2rem] border border-white/80 bg-white p-6 shadow-[0_28px_100px_rgba(15,23,42,0.2)] sm:p-8"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="kyfi-section-kicker">{t("settings.changePassword")}</p>
@@ -106,7 +111,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
                 type="button"
                 onClick={closeModal}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                aria-label="Close modal"
+                aria-label={t("common.closeModal")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -114,42 +119,66 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
 
             <div className="mt-6 space-y-4">
               <div className="space-y-2">
-                <label className="font-manrope type-nav text-slate-800">
-                  {t("settings.currentPassword")}
-                </label>
-                <input
-                  type="password"
-                  placeholder="Enter current password"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                />
+                <label className="font-manrope type-nav text-slate-800">{t("settings.currentPassword")}</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    placeholder={t("settings.currentPasswordPlaceholder")}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword((current) => !current)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
+                    aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                  >
+                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label className="font-manrope type-nav text-slate-800">
-                  {t("settings.newPassword")}
-                </label>
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                />
+                <label className="font-manrope type-nav text-slate-800">{t("settings.newPassword")}</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder={t("settings.newPasswordPlaceholder")}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((current) => !current)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label className="font-manrope type-nav text-slate-800">
-                  {t("settings.confirmPassword")}
-                </label>
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                />
+                <label className="font-manrope type-nav text-slate-800">{t("settings.confirmPassword")}</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder={t("settings.confirmPasswordPlaceholder")}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((current) => !current)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <button

@@ -137,9 +137,9 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    border: 1px solid rgba(22, 101, 52, 0.14);
-    background: rgba(22, 101, 52, 0.06);
-    color: rgb(20 83 45);
+    border: 1px solid rgba(4, 120, 87, 0.14);
+    background: rgba(4, 120, 87, 0.06);
+    color: rgb(4 120 87);
     border-radius: 9999px;
     padding: 0.45rem 0.8rem;
     font-size: 0.75rem;
@@ -211,6 +211,15 @@ body {
   .type-body {
     font-size: 16px;
   }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 ::selection {

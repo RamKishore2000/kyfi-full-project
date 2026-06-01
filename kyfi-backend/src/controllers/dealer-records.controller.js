@@ -29,6 +29,23 @@ const serializeFarmerStatusRecord = (record) => ({
   blacklistReason: null,
 });
 
+const serializeDealerVoteRecord = (record) => ({
+  id: record.id,
+  statusId: record.status_id,
+  dealerId: record.dealer_id,
+  votedAt: record.voted_at,
+  aadhaar: record.aadhaar,
+  aadhaarMasked: maskAadhaar(record.aadhaar),
+  farmerName: record.farmer_name,
+  mobileNumber: record.mobile_number,
+  district: record.district,
+  mandal: record.mandal,
+  village: record.village,
+  statusColor: record.status_color,
+  farmerCreatedAt: record.farmer_created_at,
+  farmerUpdatedAt: record.farmer_updated_at,
+});
+
 const getCurrentDealerRecords = async (req, res, next) => {
   const dealerId = req.user?.dealerId;
 
@@ -43,6 +60,7 @@ const getCurrentDealerRecords = async (req, res, next) => {
       counts: records.counts,
       farmerStatuses: records.farmerStatuses.map((status) => serializeFarmerStatusRecord(status)),
       blacklistEntries: records.blacklistEntries.map((entry) => serializeBlacklistEntry(entry)),
+      votes: records.votes.map((vote) => serializeDealerVoteRecord(vote)),
     });
   } catch (error) {
     return next(error);

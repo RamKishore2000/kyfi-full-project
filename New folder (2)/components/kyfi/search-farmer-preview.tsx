@@ -6,18 +6,18 @@ import { ChevronDown, Fingerprint, MapPin, Phone, Search, ShieldAlert } from "lu
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { searchFarmerStatuses } from "@/lib/api/farmer-status-search";
 import type { FarmerStatusRecord } from "@/lib/api/farmer-status";
+import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 function maskAadhaar(value: string) {
   const digits = value.replace(/\D/g, "");
   return digits.length >= 4 ? `XXXX XXXX ${digits.slice(-4)}` : "XXXX XXXX XXXX";
 }
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatDate(date: Date, language: "en" | "te") {
+  return new Intl.DateTimeFormat(language === "te" ? "te-IN" : "en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -25,6 +25,7 @@ function formatDate(date: Date) {
 }
 
 export function SearchFarmerPreview() {
+  const { language, t } = useKyfiLanguage();
   const [term, setTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<FarmerStatusRecord[]>([]);
@@ -33,7 +34,7 @@ export function SearchFarmerPreview() {
   const runSearch = async () => {
     if (!term.trim()) {
       setResults([]);
-      setMessage("Enter Aadhaar number, mobile number, or farmer name.");
+      setMessage(t("search.enterTerm"));
       return;
     }
 
@@ -43,10 +44,10 @@ export function SearchFarmerPreview() {
     try {
       const response = await searchFarmerStatuses(term.trim());
       setResults(response.results);
-      setMessage(response.results.length ? null : "No record found");
+      setMessage(response.results.length ? null : t("search.noRecordFound"));
     } catch (error) {
       setResults([]);
-      setMessage(error instanceof Error ? error.message : "Unable to search farmer status");
+      setMessage(error instanceof Error ? error.message : t("search.unable"));
     } finally {
       setLoading(false);
     }
@@ -60,233 +61,216 @@ export function SearchFarmerPreview() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
     >
-      <Card className="overflow-hidden border-white/80 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <CardContent className="space-y-6 p-6 sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+      <section className="space-y-8">
+          <div className="space-y-4">
+          <p className="kyfi-section-kicker w-fit">{t("search.title")}</p>
+          <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
             <div className="space-y-3">
-              <p className="kyfi-section-kicker w-fit">Search farmer status</p>
-              <h1 className="max-w-2xl font-manrope text-[clamp(1.75rem,3vw,2.8rem)] font-extrabold tracking-[-0.04em] text-slate-900">
-                Search by Aadhaar, mobile, or farmer name
+              <h1 className="max-w-3xl font-manrope text-[clamp(1.85rem,3.4vw,3.25rem)] font-extrabold tracking-[-0.05em] text-slate-900 lg:max-w-none lg:whitespace-nowrap">
+                {t("search.heading")}
               </h1>
-              <p className="max-w-2xl text-[1rem] leading-8 text-slate-600">
-                Find matching farmers and expand a card to review the full record, vote count, and blacklist warning in one place.
-              </p>
+             
             </div>
 
             <div className="flex flex-wrap gap-2 lg:justify-end">
-              <Badge variant="secondary">Live search</Badge>
-              <Badge variant="secondary">Masked Aadhaar</Badge>
+              <Badge variant="secondary">{t("search.live")}</Badge>
+              <Badge variant="secondary">{t("search.masked")}</Badge>
             </div>
           </div>
+        </div>
 
-          <div className="grid gap-6 lg:grid-cols-[3fr_1fr] lg:items-start">
-            <div className="space-y-6">
-              <div className="rounded-[1.75rem] border border-slate-200/70 bg-slate-50/90 p-4 shadow-inner">
-                <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Search term
-                    </label>
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                      <Input
-                        className="h-12 rounded-full border-slate-200 bg-white pl-9 shadow-sm"
-                        placeholder="Aadhaar, mobile number, or farmer name"
-                        value={term}
-                        onChange={(event) => setTerm(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            void runSearch();
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <LegendItem
+              tone="success"
+              label="GREEN"
+              text={t("search.legendGreen")}
+              helper={t("search.legendGreen")}
+            />
+            <LegendItem
+              tone="warning"
+              label="YELLOW"
+              text={t("search.legendYellow")}
+              helper={t("search.legendYellow")}
+            />
+            <LegendItem
+              tone="destructive"
+              label="RED"
+              text={t("search.legendRed")}
+              helper={t("search.legendRed")}
+            />
+            <LegendItem
+              tone="destructive"
+              label="BLACKLIST"
+              text={t("search.legendBlack")}
+              helper={t("search.legendBlack")}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5 lg:flex-row lg:items-end">
+            <div className="w-full space-y-2 lg:flex-1 lg:max-w-none">
+              <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                {t("search.searchTerm")}
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  className="h-12 rounded-full border border-slate-200 bg-white pl-10 shadow-none focus:border-[rgb(4,120,87)]"
+                  placeholder={t("search.placeholder")}
+                  value={term}
+                  onChange={(event) => setTerm(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void runSearch();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+              <Button
+                className="h-12 w-full rounded-full !bg-[rgb(4,120,87)] px-6 font-semibold !text-white shadow-[0_12px_24px_rgba(4,120,87,0.18)] hover:!bg-[rgb(4,120,87)] hover:brightness-110 lg:w-[220px]"
+                onClick={runSearch}
+                disabled={loading}
+              >
+              {loading ? t("search.loading") : t("search.searchButton")}
+              </Button>
+          </div>
+
+          {message ? (
+            <Alert
+              variant={message === t("search.noRecordFound") ? "default" : "destructive"}
+              className="border-slate-200 bg-white"
+            >
+              {message}
+            </Alert>
+          ) : null}
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[0.72rem] font-black uppercase tracking-[0.22em] text-slate-500">
+              {t("search.results")}
+            </p>
+            <Badge variant="outline" className="border-slate-200">
+              {summaryCount} {t("search.found")}
+            </Badge>
+          </div>
+
+          <div className="divide-y divide-slate-200/80 border-t border-b border-slate-200/80">
+              {results.map((farmer) => (
+                <details key={farmer.id} className="group">
+                  <summary className="grid cursor-pointer list-none gap-4 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                    <div className="min-w-0 space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="font-manrope text-[1.05rem] font-extrabold tracking-[-0.02em] text-slate-900">
+                          {farmer.farmerName}
+                        </p>
+                        <Badge
+                          variant={
+                            farmer.statusColor === "GREEN"
+                              ? "success"
+                              : farmer.statusColor === "YELLOW"
+                                ? "warning"
+                                : "destructive"
                           }
-                        }}
+                        >
+                          {farmer.statusColor}
+                        </Badge>
+                        {farmer.blacklisted ? (
+                          <Badge variant="destructive">{t("search.blacklisted")}</Badge>
+                        ) : null}
+                        {farmer.currentDealerVoted ? (
+                          <Badge variant="secondary">{t("search.youAlreadyVoted")}</Badge>
+                        ) : null}
+                      </div>
+
+                      <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-4">
+                        <MetaLine icon={MapPin} text={`${farmer.village}, ${farmer.mandal}`} />
+                        <MetaLine icon={Phone} text={farmer.mobileNumber || "-"} />
+                        <MetaLine icon={Fingerprint} text={maskAadhaar(farmer.aadhaar)} />
+                        <MetaLine label={t("search.votes")} text={String(farmer.voteCount)} compact />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 self-center pt-1">
+                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180" />
+                    </div>
+                  </summary>
+
+                  <div className="pb-5">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <MiniInfo label={t("search.status")} value={farmer.statusColor} />
+                      <MiniInfo label={t("search.district")} value={farmer.district} />
+                      <MiniInfo label={t("search.location")} value={`${farmer.village}, ${farmer.mandal}`} />
+                      <MiniInfo
+                        label={t("search.dateAdded")}
+                        value={formatDate(new Date(farmer.createdAt), language)}
                       />
                     </div>
-                  </div>
 
-                  <div className="flex justify-end">
-                    <Button className="h-12 rounded-full px-6" onClick={runSearch} disabled={loading}>
-                      {loading ? "Searching..." : "Search"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {message ? (
-                <Alert
-                  variant={message === "No record found" ? "default" : "destructive"}
-                  className="border-slate-200 bg-white"
-                >
-                  {message}
-                </Alert>
-              ) : null}
-
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Search results
-                </p>
-                <Badge variant="outline" className="border-slate-200">
-                  {summaryCount} found
-                </Badge>
-              </div>
-
-              <div className="space-y-4">
-                {results.map((farmer) => (
-                  <details
-                    key={farmer.id}
-                    className="group overflow-hidden rounded-[1.5rem] border border-slate-200/70 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(15,23,42,0.1)]"
-                  >
-                    <summary className="grid cursor-pointer list-none gap-4 px-5 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <p className="font-manrope text-[1.05rem] font-extrabold tracking-[-0.02em] text-slate-900">
-                            {farmer.farmerName}
-                          </p>
-                          <Badge
-                            variant={
-                              farmer.statusColor === "GREEN"
-                                ? "success"
-                                : farmer.statusColor === "YELLOW"
-                                  ? "warning"
-                                  : "destructive"
-                            }
-                          >
-                            {farmer.statusColor}
-                          </Badge>
-                          {farmer.blacklisted ? <Badge variant="destructive">BLACKLISTED</Badge> : null}
-                          {farmer.currentDealerVoted ? <Badge variant="secondary">You already voted</Badge> : null}
-                        </div>
-
-                        <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-4">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>
-                              {farmer.village}, {farmer.mandal}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            <span>{farmer.mobileNumber || "-"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Fingerprint className="h-4 w-4" />
-                            <span>{maskAadhaar(farmer.aadhaar)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-                              <span className="text-[0.62rem] font-black uppercase tracking-[0.28em] text-slate-500">
-                                Votes
-                              </span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-sm font-bold text-slate-900">
-                                {farmer.voteCount}
-                              </span>
-                            </div>
-                          </div>
-
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-end gap-3 self-center">
-
-                        <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180" />
-                      </div>
-                    </summary>
-
-                    <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-5">
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <MiniInfo label="Status" value={farmer.statusColor} />
-                        <MiniInfo label="District" value={farmer.district} />
-                        <MiniInfo label="Location" value={`${farmer.village}, ${farmer.mandal}`} />
-                        <MiniInfo label="Date added" value={formatDate(new Date(farmer.createdAt))} />
-                      </div>
-
-                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                        <MiniInfo label="Remarks" value={farmer.remarks || "-"} />
-                        <MiniInfo label="Aadhaar" value={maskAadhaar(farmer.aadhaar)} />
-                      </div>
-
-                      {farmer.blacklisted ? (
-                        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
-                          <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-800">
-                            BLACKLISTED
-                          </p>
-                          <p className="mt-2 text-sm leading-7 text-red-700">
-                            {farmer.blacklistReason || "Blacklist warning attached"}
-                          </p>
-                        </div>
-                      ) : null}
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <MiniInfo label={t("search.remarks")} value={farmer.remarks || "-"} />
+                      <MiniInfo label={t("search.maskedAadhaar")} value={maskAadhaar(farmer.aadhaar)} />
                     </div>
-                  </details>
-                ))}
+
+                    {farmer.blacklisted ? (
+                      <div className="mt-4 border-l-4 border-red-500 bg-red-50 px-4 py-4">
+                        <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-800">
+                          {t("search.blacklisted")}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-red-700">
+                          {farmer.blacklistReason || t("search.blacklistWarningAttached")}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </details>
+              ))}
 
                 {!results.length && !message ? (
-                  <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/70 px-6 py-10 text-center shadow-[0_14px_40px_rgba(15,23,42,0.05)]">
-                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
-                      Search results will appear here
-                    </p>
-                    <p className="mt-2 text-sm text-slate-600">
-                      Search by Aadhaar, mobile number, or farmer name to view matching farmers.
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <aside className="space-y-4 lg:sticky lg:top-6">
-              <div className="rounded-[1.5rem] border border-white/80 bg-white/90 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.08)]">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Legend</p>
-                <h3 className="mt-2 font-manrope text-[1.15rem] font-extrabold tracking-[-0.03em] text-slate-900">
-                  Status meaning
-                </h3>
-                <div className="mt-4 space-y-3">
-                  <LegendItem
-                    tone="success"
-                    label="GREEN"
-                    text="Safe to extend credit"
-                    helper="Good repayment record"
-                  />
-                  <LegendItem
-                    tone="warning"
-                    label="YELLOW"
-                    text="Proceed with caution"
-                    helper="Delayed payments seen"
-                  />
-                  <LegendItem
-                    tone="destructive"
-                    label="RED"
-                    text="Avoid credit"
-                    helper="Confirmed defaulter"
-                  />
-                  <LegendItem
-                    tone="destructive"
-                    label="BLACKLIST"
-                    text="Separate unpaid-dues warning"
-                    helper="Can appear with GREEN/YELLOW/RED"
-                  />
-                </div>
-              </div>
-
-                <div className="rounded-[1.5rem] border border-red-100 bg-red-50/90 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)]">
-                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-700">
-                    Quick reminder
+                <div className="px-1 py-10 text-center">
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
+                    {t("search.empty")}
                   </p>
-                  <p className="mt-2 text-sm leading-7 text-red-700/80">
-                    BLACKLIST is separate from the status color. A farmer can still be GREEN and also show a blacklist warning.
+                  <p className="mt-2 text-sm text-slate-600">
+                    {t("search.emptyHint")}
                   </p>
                 </div>
-            </aside>
+              ) : null}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </motion.div>
   );
 }
 
 function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="text-[15px] font-bold tracking-[-0.02em] text-slate-700">{label}</p>
-      <p className=" text-[14px] font-normal leading-7 text-slate-800">{value}</p>
+    <div className="border border-slate-200 bg-white px-4 py-4">
+      <p className="text-[0.78rem] font-black uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-2 text-[0.95rem] font-medium leading-7 text-slate-800">{value}</p>
+    </div>
+  );
+}
+
+function MetaLine({
+  icon: Icon,
+  text,
+  label,
+  compact = false,
+}: {
+  icon?: typeof MapPin;
+  text: string;
+  label?: string;
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {Icon ? <Icon className="h-4 w-4 text-slate-500" /> : null}
+      <span className={compact ? "text-sm font-semibold text-slate-800" : "text-sm text-slate-600"}>
+        {label ? `${label}: ` : null}
+        {text}
+      </span>
     </div>
   );
 }

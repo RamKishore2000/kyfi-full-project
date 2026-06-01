@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, X } from "lucide-react";
 
@@ -16,10 +17,22 @@ export function KyfiToast({
   tone = "success",
   onClose,
 }: KyfiToastProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    const timeout = window.setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [open, message, tone, onClose]);
+
   return (
     <AnimatePresence>
       {open ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[999] flex justify-center px-4 pb-5 sm:pb-6">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[1100] flex justify-center px-4 pb-5 sm:pb-6">
           <motion.div
             initial={{ opacity: 0, y: 42, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

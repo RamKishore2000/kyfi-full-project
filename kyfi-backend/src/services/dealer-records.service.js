@@ -46,12 +46,36 @@ const listDealerFarmerRecords = async (dealerId) => {
     [dealerId],
   );
 
+  const [voteRows] = await db.execute(
+    `SELECT
+      fsv.id,
+      fsv.status_id,
+      fsv.dealer_id,
+      fsv.created_at AS voted_at,
+      fs.aadhaar,
+      fs.farmer_name,
+      fs.mobile_number,
+      fs.district,
+      fs.mandal,
+      fs.village,
+      fs.status_color,
+      fs.created_at AS farmer_created_at,
+      fs.updated_at AS farmer_updated_at
+     FROM farmer_status_votes fsv
+     INNER JOIN farmer_statuses fs ON fs.id = fsv.status_id
+     WHERE fsv.dealer_id = ?
+     ORDER BY fsv.created_at DESC`,
+    [dealerId],
+  );
+
   return {
     farmerStatuses: farmerRows,
     blacklistEntries: blacklistRows,
+    votes: voteRows,
     counts: {
       farmerStatuses: farmerRows.length,
       blacklistEntries: blacklistRows.length,
+      votes: voteRows.length,
     },
   };
 };

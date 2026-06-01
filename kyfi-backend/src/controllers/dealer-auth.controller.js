@@ -7,6 +7,10 @@ const {
   updateDealerProfileById,
   updateDealerSettingsById,
 } = require("../services/dealer.service");
+const {
+  createOrResendDealerOtp,
+  verifyDealerOtp,
+} = require("../services/dealer-otp.service");
 const { signJwt } = require("../utils/jwt");
 
 const registerDealer = async (req, res, next) => {
@@ -62,6 +66,25 @@ const registerDealer = async (req, res, next) => {
   }
 };
 
+const buildDealerAuthResponse = (dealer, token, message = "Login successful") => ({
+  message,
+  token,
+  dealer: {
+    id: dealer.id,
+    role: dealer.role,
+    name: dealer.name,
+    mobile: dealer.mobile,
+    shopName: dealer.shop_name,
+    district: dealer.district,
+    state: dealer.state,
+    mandal: dealer.mandal,
+    village: dealer.village,
+    aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
+    status: dealer.status,
+    languagePreference: dealer.language_preference || "en",
+  },
+});
+
 const loginDealer = async (req, res, next) => {
   const { mobile, password, otp, mode } = req.body || {};
 
@@ -80,9 +103,31 @@ const loginDealer = async (req, res, next) => {
     const loginMode = mode === "otp" ? "otp" : "password";
 
     if (loginMode === "otp") {
-      if (String(otp || "").trim() !== "1111") {
-        return res.status(401).json({ message: "Invalid phone number or OTP" });
+      if (!otp) {
+        const otpResult = await createOrResendDealerOtp(mobile);
+
+        return res.status(200).json({
+          message: "OTP generated successfully",
+          mobile: dealer.mobile,
+          expiresInMinutes: otpResult.expiresInMinutes,
+          // Temporary testing value while the SMS gateway is not connected.
+          // TODO: Remove test OTP 111111 after SMS provider keys are added.
+          testOtp: otpResult.otpCode,
+        });
       }
+
+      const otpResult = await verifyDealerOtp(mobile, otp);
+      const token = signJwt(
+        {
+          dealerId: dealer.id,
+          role: dealer.role,
+          mobile: dealer.mobile,
+          status: dealer.status,
+        },
+        secret,
+      );
+
+      return res.status(200).json(buildDealerAuthResponse(otpResult.dealer, token, "OTP verified successfully"));
     } else {
       if (!password) {
         return res.status(400).json({ message: "Password is required" });
@@ -116,26 +161,109 @@ const loginDealer = async (req, res, next) => {
       secret,
     );
 
+    return res.status(200).json(buildDealerAuthResponse(dealer, token));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const requestDealerOtp = async (req, res, next) => {
+  const { mobile } = req.body || {};
+
+  if (!mobile) {
+    return res.status(400).json({ message: "Mobile number is required" });
+  }
+
+  try {
+    const otpResult = await createOrResendDealerOtp(mobile);
+
     return res.status(200).json({
-      message: "Login successful",
+      message: otpResult.isResend ? "OTP resent successfully" : "OTP generated successfully",
+      mobile: otpResult.dealer.mobile,
+      expiresInMinutes: otpResult.expiresInMinutes,
+      // Temporary testing value while the SMS gateway is not connected.
+      // TODO: Remove test OTP 111111 after SMS provider keys are added.
+      testOtp: otpResult.otpCode,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Unable to generate OTP",
+    });
+  }
+};
+
+const resendDealerOtp = async (req, res, next) => {
+  const { mobile } = req.body || {};
+
+  if (!mobile) {
+    return res.status(400).json({ message: "Mobile number is required" });
+  }
+
+  try {
+    const otpResult = await createOrResendDealerOtp(mobile);
+
+    return res.status(200).json({
+      message: "OTP resent successfully",
+      mobile: otpResult.dealer.mobile,
+      expiresInMinutes: otpResult.expiresInMinutes,
+      // Temporary testing value while the SMS gateway is not connected.
+      // TODO: Remove test OTP 111111 after SMS provider keys are added.
+      testOtp: otpResult.otpCode,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Unable to resend OTP",
+    });
+  }
+};
+
+const verifyDealerOtpRequest = async (req, res, next) => {
+  const { mobile, otp } = req.body || {};
+
+  if (!mobile || !otp) {
+    return res.status(400).json({ message: "Mobile number and OTP are required" });
+  }
+
+  try {
+    const dealer = await findDealerByMobile(mobile);
+    if (!dealer) {
+      return res.status(401).json({ message: "Invalid phone number or OTP" });
+    }
+
+    const otpResult = await verifyDealerOtp(mobile, otp);
+    const secret = process.env.JWT_SECRET || "kyfi-secret-key";
+    const token = signJwt(
+      {
+        dealerId: otpResult.dealer.id,
+        role: otpResult.dealer.role,
+        mobile: otpResult.dealer.mobile,
+        status: otpResult.dealer.status,
+      },
+      secret,
+    );
+
+    return res.status(200).json({
+      message: "OTP verified successfully",
       token,
       dealer: {
-        id: dealer.id,
-        role: dealer.role,
-        name: dealer.name,
-        mobile: dealer.mobile,
-        shopName: dealer.shop_name,
-        district: dealer.district,
-        state: dealer.state,
-        mandal: dealer.mandal,
-        village: dealer.village,
-        aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
-        status: dealer.status,
-        languagePreference: dealer.language_preference || "en",
+        id: otpResult.dealer.id,
+        role: otpResult.dealer.role,
+        name: otpResult.dealer.name,
+        mobile: otpResult.dealer.mobile,
+        shopName: otpResult.dealer.shop_name,
+        district: otpResult.dealer.district,
+        state: otpResult.dealer.state,
+        mandal: otpResult.dealer.mandal,
+        village: otpResult.dealer.village,
+        aadhaarOrGstNumber: otpResult.dealer.aadhaar_or_gst_number,
+        status: otpResult.dealer.status,
+        languagePreference: otpResult.dealer.language_preference || "en",
       },
     });
   } catch (error) {
-    return next(error);
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Unable to verify OTP",
+    });
   }
 };
 
@@ -218,6 +346,12 @@ const updateCurrentDealerProfile = async (req, res, next) => {
       },
     });
   } catch (error) {
+    if (error && error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        message: "Mobile number already exists",
+      });
+    }
+
     return next(error);
   }
 };
@@ -310,6 +444,9 @@ const updateCurrentDealerSettings = async (req, res, next) => {
 module.exports = {
   registerDealer,
   loginDealer,
+  requestDealerOtp,
+  resendDealerOtp,
+  verifyDealerOtp: verifyDealerOtpRequest,
   getCurrentDealer,
   updateCurrentDealerProfile,
   updateCurrentDealerPassword,

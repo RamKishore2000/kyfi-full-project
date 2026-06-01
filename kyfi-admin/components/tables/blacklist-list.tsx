@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SearchFilterBar } from "@/components/forms/search-filter-bar";
 import { FarmerStatusBadge } from "@/components/tables/status-badge";
 import { BlacklistWarning } from "@/components/dashboard/blacklist-warning";
+import { useAdminLanguage } from "@/components/admin-language-provider";
 
 type BlacklistListProps = {
   records?: AdminBlacklistRecord[];
@@ -15,6 +16,7 @@ type BlacklistListProps = {
 };
 
 export function BlacklistList({ records = [], onRemove }: BlacklistListProps) {
+  const { t } = useAdminLanguage();
   const [statusFilter, setStatusFilter] = useState("All");
   const statusFilteredFarmers = useMemo(() => {
     if (statusFilter === "All") return records;
@@ -39,10 +41,11 @@ export function BlacklistList({ records = [], onRemove }: BlacklistListProps) {
         <SearchFilterBar
           value={query}
           onChange={setQuery}
-          placeholder="Search blacklist by name, Aadhaar, mandal, village..."
+          placeholder={t("table.searchBlacklist")}
           filters={["All", "GREEN + Blacklisted", "YELLOW + Blacklisted", "RED + Blacklisted"]}
           selectedFilter={statusFilter}
           onFilterChange={setStatusFilter}
+          showFiltersButton={false}
         />
       </div>
 
@@ -65,31 +68,31 @@ export function BlacklistList({ records = [], onRemove }: BlacklistListProps) {
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3 md:justify-end">
-                <FarmerStatusBadge status={farmer.status} blacklisted={farmer.blacklisted} />
+                <FarmerStatusBadge status={farmer.status} blacklisted={farmer.blacklisted} showStatusBadge={false} />
                 <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
               </div>
             </summary>
-            <div className="space-y-4 border-t p-5">
-              <BlacklistWarning farmer={farmer as never} />
-              <div className="grid gap-3 text-sm sm:grid-cols-3">
-                <Info label="Reason" value={farmer.blacklistReason ?? "Confirmed blacklist entry"} />
-                <Info label="Address" value={farmer.address ?? `${farmer.village}, ${farmer.mandal}`} />
-                <Info label="Date added" value={farmer.dateAdded} />
+              <div className="space-y-4 border-t p-5">
+                <BlacklistWarning farmer={farmer as never} />
+                <div className="grid gap-3 text-sm sm:grid-cols-3">
+                <Info label={t("table.reason")} value={farmer.blacklistReason ?? "Confirmed blacklist entry"} />
+                <Info label={t("table.address")} value={farmer.address ?? `${farmer.village}, ${farmer.mandal}`} />
+                <Info label={t("table.dateAdded")} value={farmer.dateAdded} />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="danger"
+                    onClick={() => void onRemove?.(farmer.recordId)}
+                  >
+                  {t("table.removeBlacklist")}
+                  </Button>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <Button
-                  variant="danger"
-                  onClick={() => void onRemove?.(farmer.recordId)}
-                >
-                  Remove from Blacklist
-                </Button>
-              </div>
-            </div>
           </details>
         ))
       ) : (
         <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground shadow-soft">
-          No record found
+        {t("blacklist.noRecord")}
         </div>
       )}
     </div>

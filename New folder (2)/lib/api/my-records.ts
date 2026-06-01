@@ -45,9 +45,28 @@ export type MyRecordsResponse = {
   counts: {
     farmerStatuses: number;
     blacklistEntries: number;
+    votes: number;
   };
   farmerStatuses: MyFarmerStatusRecord[];
   blacklistEntries: MyBlacklistRecord[];
+  votes: MyVoteRecord[];
+};
+
+export type MyVoteRecord = {
+  id: number;
+  statusId: number;
+  dealerId: number;
+  votedAt?: string;
+  aadhaar: string;
+  aadhaarMasked?: string;
+  farmerName: string;
+  mobileNumber?: string | null;
+  district: string;
+  mandal: string;
+  village: string;
+  statusColor: "GREEN" | "YELLOW" | "RED";
+  farmerCreatedAt?: string;
+  farmerUpdatedAt?: string;
 };
 
 function getToken() {

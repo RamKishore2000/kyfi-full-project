@@ -1,7 +1,9 @@
 import { AlertTriangle } from "lucide-react";
 import type { Farmer } from "@/types";
+import { useAdminLanguage } from "@/components/admin-language-provider";
 
 export function BlacklistWarning({ farmer }: { farmer: Farmer }) {
+  const { t } = useAdminLanguage();
   if (!farmer.blacklisted) return null;
 
   return (
@@ -9,9 +11,9 @@ export function BlacklistWarning({ farmer }: { farmer: Farmer }) {
       <div className="flex gap-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <p className="font-medium">Blacklist warning dominates this record</p>
+          <p className="font-medium">{t("blacklist.reviewTitle")}</p>
           <p className="mt-1 text-sm text-red-100">
-            {farmer.name} may still show {farmer.status} verification, but blacklist status takes visual and operational priority.
+            {t("blacklist.warningBody").replace("{name}", farmer.name).replace("{status}", farmer.status)}
           </p>
         </div>
       </div>
