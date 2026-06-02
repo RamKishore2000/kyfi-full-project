@@ -62,7 +62,7 @@ const statusOptions: Array<{
   { value: "RED", label: "RED", helper: "High-risk repayment pattern" },
 ];
 
-function maskAadhaar(value: string) {
+function maskAadhaar(value: string | null | undefined) {
   const digits = String(value || "").replace(/\D/g, "");
   return digits.length >= 4 ? `XXXX XXXX ${digits.slice(-4)}` : "XXXX XXXX XXXX";
 }
@@ -141,7 +141,6 @@ export default function AddFarmerStatusPage() {
     farmerName: "",
     aadhaar: "",
     mobileNumber: "",
-    district: "",
     mandal: "",
     village: "",
   });
@@ -188,27 +187,19 @@ export default function AddFarmerStatusPage() {
           : event.target.value;
 
       setForm((current) => {
-        if (field === "district") {
-          return { ...current, district: value, mandal: "" };
-        }
-
         if (field === "mandal") {
-          return { ...current, mandal: value };
+          return { ...current, mandal: value, district: "" };
         }
 
         return { ...current, [field]: value };
       });
 
-      if (field === "district") {
-        setHideMandalSuggestions(false);
-        setMandalOptions([]);
-      }
       if (field === "mandal") {
         setHideMandalSuggestions(false);
       }
       setError("");
       setMessage("");
-      if (field === "farmerName" || field === "aadhaar" || field === "mobileNumber" || field === "district" || field === "mandal" || field === "village") {
+      if (field === "farmerName" || field === "aadhaar" || field === "mobileNumber" || field === "mandal" || field === "village") {
         setFieldErrors((current) => ({ ...current, [field]: "" }));
       }
     };
@@ -243,21 +234,6 @@ export default function AddFarmerStatusPage() {
           return autocomplete;
         };
 
-        if (districtInputRef.current) {
-          districtAutocompleteRef.current = createAutocomplete(districtInputRef.current, (place) => {
-            const value =
-              getComponent(place.address_components, ["administrative_area_level_2", "administrative_area_level_3"]) ||
-              place.name ||
-              buildAutocompleteLabel(place);
-
-            setForm((current) => ({
-              ...current,
-              district: value,
-              mandal: "",
-            }));
-          });
-        }
-
         if (villageInputRef.current) {
           villageAutocompleteRef.current = createAutocomplete(villageInputRef.current, (place) => {
             const value =
@@ -282,9 +258,6 @@ export default function AddFarmerStatusPage() {
 
     return () => {
       isCancelled = true;
-      if (districtAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(districtAutocompleteRef.current);
-      }
       if (villageAutocompleteRef.current) {
         window.google?.maps?.event?.clearInstanceListeners(villageAutocompleteRef.current);
       }
@@ -292,10 +265,9 @@ export default function AddFarmerStatusPage() {
   }, []);
 
   useEffect(() => {
-    const districtName = form.district.trim();
     const mandalQuery = form.mandal.trim();
 
-    if (hideMandalSuggestions || !districtName || mandalQuery.length < 2) {
+    if (hideMandalSuggestions || mandalQuery.length < 2) {
       setMandalOptions([]);
       setMandalSearchLoading(false);
       return;
@@ -304,7 +276,7 @@ export default function AddFarmerStatusPage() {
     let isCancelled = false;
     setMandalSearchLoading(true);
     const debounce = window.setTimeout(() => {
-      fetch(`${process.env.NEXT_PUBLIC_KYFI_API_BASE_URL}/locations/mandals?district=${encodeURIComponent(districtName)}&query=${encodeURIComponent(mandalQuery)}`)
+      fetch(`${process.env.NEXT_PUBLIC_KYFI_API_BASE_URL}/locations/mandals?query=${encodeURIComponent(mandalQuery)}`)
         .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
         .then(({ ok, data }) => {
           if (isCancelled) return;
@@ -328,21 +300,20 @@ export default function AddFarmerStatusPage() {
       isCancelled = true;
       window.clearTimeout(debounce);
     };
-  }, [form.district, form.mandal, hideMandalSuggestions]);
+  }, [form.mandal, hideMandalSuggestions]);
 
   const lookupExisting = async () => {
-    const aadhaar = form.aadhaar.replace(/\s+/g, "").trim();
     const mobileNumber = form.mobileNumber.trim();
 
-    if (!aadhaar && !mobileNumber) {
-      setError(isTe ? "ఉన్న రికార్డును తనిఖీ చేయడానికి Aadhaar లేదా mobile number నమోదు చేయండి." : "Enter Aadhaar or mobile number to check an existing record.");
+    if (!mobileNumber) {
+      setError(isTe ? "Enter mobile number to check an existing record." : "Enter mobile number to check an existing record.");
       return null;
     }
 
     setIsChecking(true);
 
     try {
-      const response = await checkFarmerStatus({ aadhaar, mobileNumber });
+      const response = await checkFarmerStatus({ mobileNumber });
       if (response.exists && response.farmerStatus) {
         setExistingFarmer(response.farmerStatus);
         setModalOpen(true);
@@ -370,7 +341,6 @@ export default function AddFarmerStatusPage() {
       farmerName: "",
       aadhaar: "",
       mobileNumber: "",
-      district: "",
       mandal: "",
       village: "",
     });
@@ -380,7 +350,7 @@ export default function AddFarmerStatusPage() {
 
     const nextErrors = {
       farmerName: form.farmerName.trim() ? "" : (isTe ? "రైతు పేరు అవసరం." : "Farmer name is required."),
-      aadhaar: /^\d{12}$/.test(aadhaar)
+      aadhaar: !aadhaar || /^\d{12}$/.test(aadhaar)
         ? ""
         : (isTe ? "సరైన 12 అంకెల Aadhaar సంఖ్యను నమోదు చేయండి." : "Enter a valid 12-digit Aadhaar number."),
       mobileNumber:
@@ -399,29 +369,28 @@ export default function AddFarmerStatusPage() {
       if (firstInvalidField === "farmerName") farmerNameInputRef.current?.focus();
       if (firstInvalidField === "aadhaar") aadhaarInputRef.current?.focus();
       if (firstInvalidField === "mobileNumber") mobileInputRef.current?.focus();
-      if (firstInvalidField === "district") districtInputRef.current?.focus();
-      if (firstInvalidField === "mandal") mandalInputRef.current?.focus();
+            if (firstInvalidField === "mandal") mandalInputRef.current?.focus();
       if (firstInvalidField === "village") villageInputRef.current?.focus();
       return;
     }
 
-    if (!aadhaar || aadhaar.length !== 12) {
-      setError(isTe ? "సరైన 12 అంకెల Aadhaar సంఖ్యను నమోదు చేయండి." : "Enter a valid 12-digit Aadhaar number.");
+    if (aadhaar && aadhaar.length !== 12) {
+      setError(isTe ? "Enter a valid 12-digit Aadhaar number." : "Enter a valid 12-digit Aadhaar number.");
       return;
     }
 
-    if (mobileNumber && !/^[6-9]\d{9}$/.test(mobileNumber)) {
-      setError(isTe ? "సరైన 10 అంకెల mobile number ను నమోదు చేయండి." : "Enter a valid 10-digit mobile number.");
+    if (!/^[6-9]\d{9}$/.test(mobileNumber)) {
+      setError(isTe ? "Enter a valid 10-digit mobile number." : "Enter a valid 10-digit mobile number.");
       return;
     }
 
     if (
       !form.farmerName.trim() ||
-      !form.district.trim() ||
+      !mobileNumber ||
       !form.mandal.trim() ||
       !form.village.trim()
     ) {
-      setError(isTe ? "రైతు పేరు, జిల్లా, మండలం, మరియు గ్రామం అవసరం." : "Farmer name, district, mandal, and village are required.");
+      setError(isTe ? "Farmer name, mobile number, mandal, and village are required." : "Farmer name, mobile number, mandal, and village are required.");
       return;
     }
 
@@ -435,9 +404,9 @@ export default function AddFarmerStatusPage() {
       }
 
       const response = await addFarmerStatus({
-        aadhaar,
+        aadhaar: aadhaar || undefined,
         farmerName: form.farmerName.trim(),
-        mobileNumber: mobileNumber || undefined,
+        mobileNumber,
         district: form.district.trim(),
         mandal: form.mandal.trim(),
         village: form.village.trim(),
@@ -457,7 +426,6 @@ export default function AddFarmerStatusPage() {
         farmerName: "",
         aadhaar: "",
         mobileNumber: "",
-        district: "",
         mandal: "",
         village: "",
       });
@@ -470,14 +438,14 @@ export default function AddFarmerStatusPage() {
     }
   };
 
-  const handleVote = async () => {
+  const handleVote = async (voteColor: FarmerStatusColor) => {
     if (!existingFarmer) return;
 
     setIsVoting(true);
     setError("");
 
     try {
-      const response = await voteFarmerStatus(existingFarmer.id);
+      const response = await voteFarmerStatus(existingFarmer.id, voteColor);
       if (response.farmerStatus) {
         setExistingFarmer(response.farmerStatus);
       }
@@ -546,7 +514,9 @@ export default function AddFarmerStatusPage() {
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-2">
-                      <label className="font-manrope type-nav text-slate-800">{isTe ? "రైతు పేరు" : "Farmer name"} <span className="text-red-500">*</span></label>
+                      <label className="font-manrope type-nav text-slate-800">
+                        {isTe ? "రైతు పేరు" : "Farmer name"} <span className="text-red-500">*</span>
+                      </label>
                       <Input
                         ref={farmerNameInputRef}
                         placeholder={isTe ? "రైతు పేరును నమోదు చేయండి" : "Enter farmer name"}
@@ -560,7 +530,10 @@ export default function AddFarmerStatusPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="font-manrope type-nav text-slate-800">{isTe ? "Aadhaar సంఖ్య" : "Aadhaar number"} <span className="text-red-500">*</span></label>
+                      <label className="font-manrope type-nav text-slate-800">
+                        {isTe ? "Aadhaar సంఖ్య" : "Aadhaar number"}
+                        <span className="ml-1 text-slate-400">(optional)</span>
+                      </label>
                       <Input
                         ref={aadhaarInputRef}
                         placeholder="XXXX XXXX 1234"
@@ -571,18 +544,19 @@ export default function AddFarmerStatusPage() {
                         autoComplete="off"
                         value={form.aadhaar}
                         onChange={handleChange("aadhaar")}
-                        required
                         aria-invalid={Boolean(fieldErrors.aadhaar)}
                         className={fieldErrors.aadhaar ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100" : ""}
                       />
                       <p className="font-manrope type-small text-slate-500">
-                        {isTe ? "కేవలం 12 అంకెలు మాత్రమే. స్పేస్‌లు అవసరం లేదు." : "Enter only 12 digits. Spaces are not needed."}
+                        {isTe ? "Aadhaar ఇవ్వడం అవసరం లేదు." : "Aadhaar is optional."}
                       </p>
                       {fieldErrors.aadhaar ? <p className="font-manrope text-sm text-red-600">{fieldErrors.aadhaar}</p> : null}
                     </div>
 
                     <div className="space-y-2">
-                      <label className="font-manrope type-nav text-slate-800">{isTe ? "Mobile number" : "Mobile number"} <span className="text-red-500">*</span></label>
+                      <label className="font-manrope type-nav text-slate-800">
+                        {isTe ? "Mobile number" : "Mobile number"} <span className="text-red-500">*</span>
+                      </label>
                       <Input
                         placeholder={isTe ? "Mobile number నమోదు చేయండి" : "Enter mobile number"}
                         inputMode="tel"
@@ -597,74 +571,54 @@ export default function AddFarmerStatusPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="font-manrope type-nav text-slate-800">{isTe ? "జిల్లా" : "District"} <span className="text-red-500">*</span></label>
-                    <Input
-                      ref={districtInputRef}
-                      placeholder={isTe ? "జిల్లాను నమోదు చేయండి" : "Enter district"}
-                      value={form.district}
-                      onChange={handleChange("district")}
-                      required
-                      aria-invalid={Boolean(fieldErrors.district)}
-                      className={fieldErrors.district ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100" : ""}
-                    />
-                    {fieldErrors.district ? <p className="font-manrope text-sm text-red-600">{fieldErrors.district}</p> : null}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="font-manrope type-nav text-slate-800">{isTe ? "మండలం" : "Mandal"} <span className="text-red-500">*</span></label>
-                    <div className="relative space-y-2">
-                      <Input
-                        ref={mandalInputRef}
-                        placeholder={
-                          form.district.trim()
-                            ? (isTe ? "2 లేదా అంతకంటే ఎక్కువ అక్షరాలు టైప్ చేయండి" : "Type 2 or more letters")
-                            : (isTe ? "ముందు జిల్లాను ఎంచుకోండి" : "Select district first")
-                        }
-                        value={form.mandal}
-                        onChange={handleChange("mandal")}
-                        disabled={!form.district.trim()}
-                        required
-                        aria-invalid={Boolean(fieldErrors.mandal)}
-                        className={fieldErrors.mandal ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100" : ""}
-                      />
-                      {form.district.trim() &&
-                      form.mandal.trim().length >= 2 &&
-                      !hideMandalSuggestions ? (
-                        <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-                          {mandalSearchLoading ? (
-                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                              {isTe ? "మండలాలను వెతుకుతోంది..." : "Searching mandals..."}
-                            </div>
-                          ) : mandalOptions.length ? (
-                            mandalOptions.map((mandal) => (
-                              <button
-                                key={mandal.id}
-                                type="button"
-                                onClick={() => {
-                                  setForm((current) => ({
-                                    ...current,
-                                    mandal: mandal.mandalName,
-                                  }));
-                                  setHideMandalSuggestions(true);
-                                  setMandalOptions([]);
-                                }}
-                                className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
-                              >
-                                <span className="font-manrope text-sm font-semibold text-slate-900">
-                                  {formatMandalSuggestion(mandal)}
-                                </span>
-                              </button>
-                            ))
-                          ) : (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            {isTe ? "సరిపోలే మండలం కనబడలేదు." : "No matching mandal found."}
+                      <label className="font-manrope type-nav text-slate-800">{isTe ? "?????" : "Mandal"} <span className="text-red-500">*</span></label>
+                      <div className="relative space-y-2">
+                        <Input
+                          ref={mandalInputRef}
+                          placeholder={isTe ? "2 ???? ??????? ?????? ???????? ???? ??????" : "Type 2 or more letters"}
+                          value={form.mandal}
+                          onChange={handleChange("mandal")}
+                          required
+                          aria-invalid={Boolean(fieldErrors.mandal)}
+                          className={fieldErrors.mandal ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100" : ""}
+                        />
+                        {form.mandal.trim().length >= 2 && !hideMandalSuggestions ? (
+                          <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                            {mandalSearchLoading ? (
+                              <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                                {isTe ? "???????? ???????????..." : "Searching mandals..."}
+                              </div>
+                            ) : mandalOptions.length ? (
+                              mandalOptions.map((mandal) => (
+                                <button
+                                  key={mandal.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setForm((current) => ({
+                                      ...current,
+                                      mandal: mandal.mandalName,
+                                      district: mandal.districtName,
+                                    }));
+                                    setHideMandalSuggestions(true);
+                                    setMandalOptions([]);
+                                  }}
+                                  className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                                >
+                                  <span className="font-manrope text-sm font-semibold text-slate-900">
+                                    {formatMandalSuggestion(mandal)}
+                                  </span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                                {isTe ? "??????? ????? ????????." : "No matching mandal found."}
+                              </div>
+                            )}
                           </div>
-                          )}
-                        </div>
-                      ) : null}
-                      {fieldErrors.mandal ? <p className="font-manrope text-sm text-red-600">{fieldErrors.mandal}</p> : null}
+                        ) : null}
+                        {fieldErrors.mandal ? <p className="font-manrope text-sm text-red-600">{fieldErrors.mandal}</p> : null}
+                      </div>
                     </div>
-                  </div>
 
                   <div className="space-y-2">
                     <label className="font-manrope type-nav text-slate-800">{isTe ? "గ్రామం" : "Village"} <span className="text-red-500">*</span></label>
@@ -850,23 +804,6 @@ export default function AddFarmerStatusPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Info label={isTe ? "రైతు" : "Farmer"} value={existingFarmer?.farmerName || form.farmerName || "Suresh Reddy"} />
-              <Info
-                label={isTe ? "స్థితి" : "Status"}
-                value={existingFarmer?.statusColor || selectedStatus}
-                badge={
-                  <Badge
-                    variant={
-                      (existingFarmer?.statusColor || selectedStatus) === "GREEN"
-                        ? "success"
-                        : (existingFarmer?.statusColor || selectedStatus) === "YELLOW"
-                          ? "warning"
-                          : "destructive"
-                    }
-                  >
-                    {existingFarmer?.statusColor || selectedStatus}
-                  </Badge>
-                }
-              />
               <Info label={isTe ? "Aadhaar" : "Aadhaar"} value={existingFarmer?.aadhaarMasked || maskAadhaar(form.aadhaar)} />
               <Info label={isTe ? "Mobile" : "Mobile"} value={existingFarmer?.mobileNumber || form.mobileNumber || (isTe ? "ఇవ్వలేదు" : "Not provided")} />
               <Info
@@ -892,7 +829,7 @@ export default function AddFarmerStatusPage() {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               {existingFarmer && existingFarmer.canVote ? (
-                <Button onClick={() => void handleVote()} disabled={isVoting}>
+                <Button onClick={() => void handleVote(selectedStatus)} disabled={isVoting}>
                   {isVoting ? (isTe ? "ఓటు వేస్తోంది..." : "Voting...") : (isTe ? "ఒక్కసారి ఓటు వేయండి" : "Vote once")}
                 </Button>
               ) : null}

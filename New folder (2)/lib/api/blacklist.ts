@@ -2,10 +2,12 @@ import { KYFI_API_BASE_URL } from "@/lib/config";
 
 export type BlacklistEntryRecord = {
   id: number;
-  aadhaar: string;
-  aadhaarMasked: string;
+  aadhaar?: string | null;
+  aadhaarMasked?: string | null;
+  mobileNumber?: string | null;
+  mobileMasked?: string | null;
   farmerName: string;
-  district: string;
+  district?: string | null;
   mandal: string;
   village: string;
   reason: string;
@@ -13,6 +15,8 @@ export type BlacklistEntryRecord = {
   createdByDealerId: number;
   createdAt: string;
   updatedAt: string;
+  reportCount?: number;
+  currentDealerReported?: boolean;
 };
 
 type ApiErrorPayload = {
@@ -43,7 +47,7 @@ async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<T
   return data as TResponse;
 }
 
-export async function checkBlacklistEntry(input: { aadhaar: string }) {
+export async function checkBlacklistEntry(input: { mobileNumber: string }) {
   return apiRequest<{ exists: boolean; blacklistEntry: BlacklistEntryRecord | null }>("/blacklist/check", {
     method: "POST",
     body: JSON.stringify(input),
@@ -51,9 +55,8 @@ export async function checkBlacklistEntry(input: { aadhaar: string }) {
 }
 
 export async function addBlacklistEntry(input: {
-  aadhaar: string;
+  mobileNumber: string;
   farmerName: string;
-  district: string;
   mandal: string;
   village: string;
   reason: string;
@@ -62,6 +65,20 @@ export async function addBlacklistEntry(input: {
   return apiRequest<{ message: string; blacklistEntry: BlacklistEntryRecord }>("/blacklist", {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+export async function reportBlacklistEntry(entryId: number) {
+  return apiRequest<{ message: string; blacklistEntry: BlacklistEntryRecord }>(`/blacklist/${entryId}/report`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function removeBlacklistEntry(entryId: number) {
+  return apiRequest<{ message: string; deleted?: boolean; blacklistEntry: BlacklistEntryRecord | null }>(`/blacklist/${entryId}/report`, {
+    method: "DELETE",
+    body: JSON.stringify({}),
   });
 }
 

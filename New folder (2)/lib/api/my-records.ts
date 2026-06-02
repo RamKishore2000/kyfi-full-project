@@ -14,6 +14,7 @@ export type MyFarmerStatusRecord = {
   mandal: string;
   village: string;
   statusColor: "GREEN" | "YELLOW" | "RED";
+  currentDealerVoteColor?: "GREEN" | "YELLOW" | "RED" | null;
   rationCardNumber?: string | null;
   address?: string | null;
   amountPending?: number | null;
@@ -30,6 +31,7 @@ export type MyBlacklistRecord = {
   id: number;
   aadhaar: string;
   aadhaarMasked?: string;
+  mobileNumber?: string | null;
   farmerName: string;
   district: string;
   mandal: string;
@@ -56,6 +58,7 @@ export type MyVoteRecord = {
   id: number;
   statusId: number;
   dealerId: number;
+  voteColor?: "GREEN" | "YELLOW" | "RED" | null;
   votedAt?: string;
   aadhaar: string;
   aadhaarMasked?: string;

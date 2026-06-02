@@ -8,8 +8,8 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 const tabs = [
   { href: "/dashboard", labelKey: "header.home", icon: Home },
-  { href: "/search-farmer-status", labelKey: "header.search", icon: Search },
   { href: "/add-farmer-status", labelKey: "header.addStatus", icon: CirclePlus },
+  { href: "/search-farmer-status", labelKey: "header.search", icon: Search },
   { href: "/add-to-blacklist", labelKey: "header.blacklist", icon: ShieldAlert },
   { href: "/blacklist-browser", labelKey: "header.browser", icon: ShieldCheck },
 ];

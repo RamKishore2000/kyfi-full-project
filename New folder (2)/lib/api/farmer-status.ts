@@ -4,8 +4,8 @@ export type FarmerStatusColor = "GREEN" | "YELLOW" | "RED";
 
 export type FarmerStatusRecord = {
   id: number;
-  aadhaar: string;
-  aadhaarMasked: string;
+  aadhaar: string | null;
+  aadhaarMasked: string | null;
   farmerName: string;
   mobileNumber: string | null;
   district: string;
@@ -22,9 +22,11 @@ export type FarmerStatusRecord = {
   updatedAt: string;
   currentDealerVoted?: boolean;
   canVote?: boolean;
+  currentDealerVoteColor?: FarmerStatusColor | null;
   blacklisted?: boolean;
   blacklistReason?: string | null;
   blacklistEntryId?: number | null;
+  voteBreakdown?: Record<FarmerStatusColor, number>;
 };
 
 type ApiErrorPayload = {
@@ -66,7 +68,7 @@ export async function checkFarmerStatus(input: {
 }
 
 export async function addFarmerStatus(input: {
-  aadhaar: string;
+  aadhaar?: string;
   farmerName: string;
   mobileNumber?: string;
   district: string;
@@ -84,11 +86,15 @@ export async function addFarmerStatus(input: {
   });
 }
 
-export async function voteFarmerStatus(statusId: number) {
+export async function voteFarmerStatus(
+  statusId: number,
+  voteColor: FarmerStatusColor,
+) {
   return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
     `/farmer-statuses/${statusId}/vote`,
     {
       method: "POST",
+      body: JSON.stringify({ voteColor }),
     },
   );
 }

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
+import { translateRuntimeMessage } from "@/lib/kyfi-runtime-message";
 import { registerDealer } from "@/lib/api/auth";
 import { fetchMandals, type MandalRecord } from "@/lib/api/locations";
 import { getKyfiDictionary } from "@/lib/kyfi-i18n";
@@ -414,7 +415,7 @@ export default function RegisterPage() {
       });
 
       setRedirectAfterToast(true);
-      showToast("Registration successful");
+      showToast(translateRuntimeMessage("Registration successful"));
     } catch (submitError) {
       setError(
         submitError instanceof Error ? submitError.message : "Registration failed",

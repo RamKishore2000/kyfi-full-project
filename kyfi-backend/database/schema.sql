@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS dealer_otp_requests (
 
 CREATE TABLE IF NOT EXISTS farmer_statuses (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  aadhaar VARCHAR(16) NOT NULL,
+  aadhaar VARCHAR(16) DEFAULT NULL,
   farmer_name VARCHAR(150) NOT NULL,
   mobile_number VARCHAR(20) DEFAULT NULL,
   district VARCHAR(100) NOT NULL,
@@ -67,7 +67,9 @@ CREATE TABLE IF NOT EXISTS farmer_status_votes (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   status_id BIGINT UNSIGNED NOT NULL,
   dealer_id BIGINT UNSIGNED NOT NULL,
+  vote_color ENUM('GREEN', 'YELLOW', 'RED') DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_vote_once (status_id, dealer_id),
   CONSTRAINT fk_vote_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
@@ -76,9 +78,10 @@ CREATE TABLE IF NOT EXISTS farmer_status_votes (
 
 CREATE TABLE IF NOT EXISTS blacklist_entries (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  aadhaar VARCHAR(16) NOT NULL,
+  aadhaar VARCHAR(16) DEFAULT NULL,
+  mobile_number VARCHAR(20) DEFAULT NULL,
   farmer_name VARCHAR(150) NOT NULL,
-  district VARCHAR(100) NOT NULL,
+  district VARCHAR(100) DEFAULT NULL,
   mandal VARCHAR(100) NOT NULL,
   village VARCHAR(100) NOT NULL,
   reason VARCHAR(255) NOT NULL,
@@ -88,6 +91,7 @@ CREATE TABLE IF NOT EXISTS blacklist_entries (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_blacklist_aadhaar (aadhaar),
+  UNIQUE KEY uq_blacklist_mobile (mobile_number),
   KEY idx_blacklist_location (district, mandal, village),
   CONSTRAINT fk_blacklist_created_by FOREIGN KEY (created_by_dealer_id) REFERENCES dealers(id)
 );
@@ -174,10 +178,10 @@ VALUES
 ON DUPLICATE KEY UPDATE id = id;
 
 INSERT INTO blacklist_entries (
-  id, aadhaar, farmer_name, district, mandal, village, reason, address, created_by_dealer_id
+  id, aadhaar, mobile_number, farmer_name, district, mandal, village, reason, address, created_by_dealer_id
 )
 VALUES
-  (1, '123456781234', 'Rama Devi', 'Guntur', 'Guntur East', 'Kondapalli', 'Credit taken and not repaid within the agreed season.', 'Kondapalli village', 2)
+  (1, '123456781234', NULL, 'Rama Devi', 'Guntur', 'Guntur East', 'Kondapalli', 'Credit taken and not repaid within the agreed season.', 'Kondapalli village', 2)
 ON DUPLICATE KEY UPDATE id = id;
 
 INSERT INTO blacklist_reports (id, blacklist_entry_id, dealer_id)

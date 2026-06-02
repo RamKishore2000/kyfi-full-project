@@ -29,9 +29,14 @@ async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<T
   return data as TResponse;
 }
 
-export async function searchFarmerStatuses(term: string) {
+export async function searchFarmerStatuses(input: {
+  mandal?: string;
+  village?: string;
+  farmer_name?: string;
+  term?: string;
+}) {
   return apiRequest<{ results: FarmerStatusRecord[] }>("/farmer-statuses/search", {
     method: "POST",
-    body: JSON.stringify({ term }),
+    body: JSON.stringify(input),
   });
 }

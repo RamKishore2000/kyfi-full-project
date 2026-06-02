@@ -28,6 +28,17 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
     return farmerRecords.filter((farmer) => farmer.status.toLowerCase() === statusFilter.toLowerCase());
   }, [farmerRecords, statusFilter]);
   const { query, setQuery, filtered } = useFilter(statusFilteredFarmers, ["name", "id", "district", "mandal", "village", "aadhaarMasked", "phone"]);
+  const statusCounts = useMemo(() => {
+    return filtered.reduce(
+      (counts, farmer) => {
+        if (farmer.status === "GREEN") counts.green += 1;
+        if (farmer.status === "YELLOW") counts.yellow += 1;
+        if (farmer.status === "RED") counts.red += 1;
+        return counts;
+      },
+      { green: 0, yellow: 0, red: 0 },
+    );
+  }, [filtered]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginatedFarmers = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),

@@ -17,10 +17,10 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 const links = [
   { href: "/dashboard", labelKey: "header.home" },
-  { href: "/search-farmer-status", labelKey: "header.search" },
   { href: "/add-farmer-status", labelKey: "header.addStatus" },
-  { href: "/add-to-blacklist", labelKey: "header.blacklist" },
+  { href: "/search-farmer-status", labelKey: "header.search" },
   { href: "/blacklist-browser", labelKey: "header.browser" },
+  { href: "/my-records", labelKey: "myRecords.kicker" },
 ];
 
 function MenuItem({

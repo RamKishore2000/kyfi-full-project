@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { fetchCurrentDealer, updateCurrentDealerProfile } from "@/lib/api/profile";
 import { fetchMandals, type MandalRecord } from "@/lib/api/locations";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
+import { translateRuntimeMessage } from "@/lib/kyfi-runtime-message";
 
 type GooglePlace = {
   formatted_address?: string;
@@ -349,11 +350,15 @@ export default function ProfilePage() {
         mandal: dealer.mandal ?? "",
         village: dealer.village ?? "",
       });
-      const successMessage = response.message || t("profile.updated");
+      const successMessage = response.message
+        ? translateRuntimeMessage(response.message)
+        : t("profile.updated");
       showToast(successMessage);
     } catch (submitError) {
       const nextError =
-        submitError instanceof Error ? submitError.message : t("profile.updateFailed");
+        submitError instanceof Error
+          ? translateRuntimeMessage(submitError.message)
+          : t("profile.updateFailed");
       setError(nextError);
       showToast(nextError, "error");
     } finally {

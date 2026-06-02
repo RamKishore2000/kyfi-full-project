@@ -26,11 +26,6 @@ const tabs = [
 
 type TabKey = (typeof tabs)[number]["key"];
 
-function maskAadhaar(aadhaar?: string) {
-  const digits = String(aadhaar || "").replace(/\D/g, "");
-  return digits.length >= 4 ? `XXXX XXXX ${digits.slice(-4)}` : "XXXX XXXX XXXX";
-}
-
 function getStatusLabel(statusColor: string, t: (key: string) => string) {
   if (statusColor === "GREEN") return t("myRecords.statusGreen");
   if (statusColor === "YELLOW") return t("myRecords.statusYellow");
@@ -45,7 +40,7 @@ function formatVoteDate(value?: string) {
 
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
-    timeStyle: "short",
+    timeStyle: "medium",
   }).format(parsed);
 }
 
@@ -82,25 +77,27 @@ function FarmerRecordCard({
   record: MyFarmerStatusRecord;
   t: (key: string) => string;
 }) {
+  const displayStatusColor = record.currentDealerVoteColor || record.statusColor;
+
   return (
     <details className="group rounded-3xl border border-white/80 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
       <summary className="list-none cursor-pointer p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
-                    {record.farmerName}
-                  </h3>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
+                {record.farmerName}
+              </h3>
               <Badge
                 variant={
-                  record.statusColor === "GREEN"
+                  displayStatusColor === "GREEN"
                     ? "success"
-                    : record.statusColor === "YELLOW"
+                    : displayStatusColor === "YELLOW"
                       ? "warning"
                       : "destructive"
                 }
               >
-                {getStatusLabel(record.statusColor, t)}
+                {getStatusLabel(displayStatusColor, t)}
               </Badge>
               {record.blacklisted ? <Badge variant="destructive">{t("myRecords.blacklisted")}</Badge> : null}
             </div>
@@ -108,10 +105,10 @@ function FarmerRecordCard({
               {record.district}, {record.mandal}, {record.village}
             </p>
             <p className="font-manrope type-small text-slate-500">
-              {t("myRecords.aadhaar")}: {maskAadhaar(record.aadhaar)}
+              {t("myRecords.mobile")}: {record.mobileNumber || t("myRecords.notProvided")}
             </p>
-              </div>
-              <div className="text-right">
+          </div>
+          <div className="text-right">
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
               {t("myRecords.votes")}
             </p>
@@ -122,12 +119,6 @@ function FarmerRecordCard({
 
       <div className="border-t border-slate-100 px-5 pb-5 pt-2">
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.aadhaar")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">{maskAadhaar(record.aadhaar)}</p>
-          </div>
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.mobile")}
@@ -183,9 +174,11 @@ function BlacklistRecordCard({
             </p>
           </div>
           <div className="text-right">
-            <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">Aadhaar</p>
+            <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
+              {t("myRecords.mobile")}
+            </p>
             <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
-              {maskAadhaar(record.aadhaar)}
+              {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
         </div>
@@ -193,6 +186,14 @@ function BlacklistRecordCard({
 
       <div className="border-t border-slate-100 px-5 pb-5 pt-2">
         <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
+              {t("myRecords.mobile")}
+            </p>
+            <p className="mt-2 font-manrope type-nav text-slate-900">
+              {record.mobileNumber || t("myRecords.notProvided")}
+            </p>
+          </div>
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.reason")}
@@ -220,53 +221,49 @@ function VoteRecordCard({
   record: MyVoteRecord;
   t: (key: string) => string;
 }) {
+  const displayVoteColor = record.voteColor || record.statusColor;
+
   return (
     <details className="group rounded-3xl border border-white/80 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
       <summary className="list-none cursor-pointer p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
-                {record.farmerName}
-              </h3>
-              <Badge
-                variant={
-                  record.statusColor === "GREEN"
-                    ? "success"
-                    : record.statusColor === "YELLOW"
-                      ? "warning"
-                      : "destructive"
-                }
-              >
-                {getStatusLabel(record.statusColor, t)}
-              </Badge>
-            </div>
+                <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
+                  {record.farmerName}
+                </h3>
+                <Badge
+                  variant={
+                    displayVoteColor === "GREEN"
+                      ? "success"
+                      : displayVoteColor === "YELLOW"
+                        ? "warning"
+                        : "destructive"
+                  }
+                >
+                  {getStatusLabel(displayVoteColor, t)}
+                </Badge>
+              </div>
             <p className="font-manrope type-small text-slate-500">
               {record.district}, {record.mandal}, {record.village}
             </p>
             <p className="font-manrope type-small text-slate-500">
-              {t("myRecords.aadhaar")}: {maskAadhaar(record.aadhaar)}
+              {t("myRecords.mobile")}: {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          <div className="text-right">
-            <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
-              {t("myRecords.votedAt")}
-            </p>
-            <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
-              {formatVoteDate(record.votedAt) || t("myRecords.notProvided")}
-            </p>
-          </div>
+            <div className="text-right">
+              <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
+                {t("myRecords.votedAt")}
+              </p>
+              <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
+                {formatVoteDate(record.votedAt) || t("myRecords.notProvided")}
+              </p>
+            </div>
         </div>
       </summary>
 
       <div className="border-t border-slate-100 px-5 pb-5 pt-2">
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.aadhaar")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">{maskAadhaar(record.aadhaar)}</p>
-          </div>
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.mobile")}
@@ -275,6 +272,14 @@ function VoteRecordCard({
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
+          {record.voteColor ? (
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
+                {t("myRecords.voteColor")}
+              </p>
+              <p className="mt-2 font-manrope type-nav text-slate-900">{record.voteColor}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </details>

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, X } from "lucide-react";
+import { translateRuntimeMessage } from "@/lib/kyfi-runtime-message";
 
 type KyfiToastProps = {
   open: boolean;
@@ -29,6 +30,8 @@ export function KyfiToast({
     };
   }, [open, message, tone, onClose]);
 
+  const displayMessage = translateRuntimeMessage(message);
+
   return (
     <AnimatePresence>
       {open ? (
@@ -40,17 +43,13 @@ export function KyfiToast({
             transition={{ duration: 0.35, ease: "easeOut" }}
             className={[
               "pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-2xl border bg-white px-4 py-3 shadow-[0_24px_90px_rgba(15,23,42,0.18)]",
-              tone === "error"
-                ? "border-red-200"
-                : "border-emerald-200",
+              tone === "error" ? "border-red-200" : "border-emerald-200",
             ].join(" ")}
           >
             <div
               className={[
                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                tone === "error"
-                  ? "bg-red-50 text-red-600"
-                  : "bg-emerald-50 text-emerald-700",
+                tone === "error" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700",
               ].join(" ")}
             >
               <CheckCircle2 className="h-5 w-5" />
@@ -63,7 +62,7 @@ export function KyfiToast({
                   tone === "error" ? "text-red-900" : "text-slate-900",
                 ].join(" ")}
               >
-                {message}
+                {displayMessage}
               </p>
             </div>
 

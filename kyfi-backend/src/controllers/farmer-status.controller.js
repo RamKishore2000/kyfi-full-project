@@ -4,6 +4,8 @@ const {
   searchFarmerStatuses,
   findFarmerStatusById,
   hasDealerVotedForFarmerStatus,
+  getDealerFarmerStatusVoteColor,
+  getFarmerStatusVoteBreakdown,
   voteFarmerStatus,
 } = require("../services/farmer-status.service");
 
@@ -14,8 +16,8 @@ const maskAadhaar = (aadhaar) => {
 
 const serializeFarmerStatus = (status) => ({
   id: status.id,
-  aadhaar: status.aadhaar,
-  aadhaarMasked: maskAadhaar(status.aadhaar),
+  aadhaar: status.aadhaar || null,
+  aadhaarMasked: status.aadhaar ? maskAadhaar(status.aadhaar) : null,
   farmerName: status.farmer_name,
   mobileNumber: status.mobile_number,
   district: status.district,
@@ -40,11 +42,17 @@ const buildFarmerStatusPayload = async (status, dealerId) => {
   const currentDealerVoted = dealerId
     ? await hasDealerVotedForFarmerStatus({ statusId: status.id, dealerId })
     : false;
+  const currentDealerVoteColor = dealerId
+    ? await getDealerFarmerStatusVoteColor({ statusId: status.id, dealerId })
+    : null;
+  const voteBreakdown = await getFarmerStatusVoteBreakdown(status.id);
 
   return {
     ...serialized,
     currentDealerVoted,
+    currentDealerVoteColor,
     canVote: !currentDealerVoted,
+    voteBreakdown,
   };
 };
 
@@ -73,21 +81,30 @@ const checkFarmerStatus = async (req, res, next) => {
 };
 
 const searchFarmerStatus = async (req, res, next) => {
-  const { term } = req.body || {};
+  const { term, mandal, village, farmer_name, farmerName } = req.body || {};
+  const normalizedTerm = String(term || "").trim();
+  const normalizedMandal = String(mandal || "").trim();
+  const normalizedVillage = String(village || "").trim();
+  const normalizedFarmerName = String(farmer_name || farmerName || "").trim();
 
-  if (!term || !String(term).trim()) {
+  if (!normalizedTerm && !normalizedMandal && !normalizedVillage && !normalizedFarmerName) {
     return res.status(400).json({
-      message: "Search term is required",
+      message: "Mandal, village, or farmer name is required",
     });
   }
 
   try {
     const farmerStatuses = await searchFarmerStatuses({
-      term: String(term).trim(),
+      term: normalizedTerm,
+      mandal: normalizedMandal,
+      village: normalizedVillage,
+      farmerName: normalizedFarmerName,
     });
 
     return res.status(200).json({
-      results: farmerStatuses.map((status) => serializeFarmerStatus(status)),
+      results: await Promise.all(
+        farmerStatuses.map((status) => buildFarmerStatusPayload(status, req.user?.dealerId)),
+      ),
     });
   } catch (error) {
     return next(error);
@@ -125,7 +142,6 @@ const addFarmerStatus = async (req, res, next) => {
   }
 
   if (
-    !aadhaar ||
     !farmerName ||
     !district ||
     !mandal ||
@@ -139,7 +155,7 @@ const addFarmerStatus = async (req, res, next) => {
 
   try {
     const existingFarmer = await findFarmerStatusByAadhaarOrMobile({
-      aadhaar: String(aadhaar).trim(),
+      aadhaar: aadhaar ? String(aadhaar).trim() : "",
       mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
     });
 
@@ -152,7 +168,7 @@ const addFarmerStatus = async (req, res, next) => {
     }
 
     const farmerStatus = await createFarmerStatus({
-      aadhaar: String(aadhaar).trim(),
+      aadhaar: aadhaar ? String(aadhaar).trim() : "",
       farmerName: String(farmerName).trim(),
       mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
       district: String(district).trim(),
@@ -181,6 +197,7 @@ const addFarmerStatus = async (req, res, next) => {
 const voteFarmerStatusById = async (req, res, next) => {
   const dealerId = req.user?.dealerId;
   const statusId = Number(req.params.id);
+  const voteColor = String(req.body?.voteColor || "").trim().toUpperCase();
 
   if (!dealerId) {
     return res.status(401).json({ message: "Authorization token required" });
@@ -190,21 +207,31 @@ const voteFarmerStatusById = async (req, res, next) => {
     return res.status(400).json({ message: "Invalid farmer status id" });
   }
 
+  if (!["GREEN", "YELLOW", "RED"].includes(voteColor)) {
+    return res.status(400).json({ message: "Vote color is required" });
+  }
+
   try {
-    await voteFarmerStatus({ statusId, dealerId });
+    const statusBeforeVote = await findFarmerStatusById(statusId);
+    const result = await voteFarmerStatus({
+      statusId,
+      dealerId,
+      voteColor,
+      createdByDealerId: statusBeforeVote?.created_by_dealer_id,
+    });
     const updatedFarmerStatus = await findFarmerStatusById(statusId);
+    const message =
+      result?.action === "locked"
+        ? "You can update your vote. Removal is not allowed."
+        : result?.action === "removed"
+        ? "Your vote has been removed."
+        : "Your vote has been applied.";
 
     return res.status(200).json({
-      message: "Vote recorded successfully",
+      message,
       farmerStatus: updatedFarmerStatus ? await buildFarmerStatusPayload(updatedFarmerStatus, dealerId) : null,
     });
   } catch (error) {
-    if (error && error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({
-        message: "You can vote only once for this farmer record",
-      });
-    }
-
     return next(error);
   }
 };
