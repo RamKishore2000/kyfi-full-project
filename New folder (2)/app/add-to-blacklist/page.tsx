@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-
 export default function AddToBlacklistPage() {
-  redirect("/blacklist-browser");
+  // Redirect disabled while blacklist UI is commented out across the frontend.
+  return null;
 }

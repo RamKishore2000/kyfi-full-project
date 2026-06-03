@@ -8,9 +8,13 @@ export type FarmerStatusRecord = {
   aadhaarMasked: string | null;
   farmerName: string;
   mobileNumber: string | null;
+  farmerType: "OLD" | "NEW";
   district: string;
   mandal: string;
   village: string;
+  districtId?: number | null;
+  mandalId?: number | null;
+  villageId?: number | null;
   statusColor: FarmerStatusColor;
   rationCardNumber: string | null;
   address: string | null;
@@ -23,6 +27,10 @@ export type FarmerStatusRecord = {
   currentDealerVoted?: boolean;
   canVote?: boolean;
   currentDealerVoteColor?: FarmerStatusColor | null;
+  currentDealerCountAction?: "INCREMENT" | "DECREMENT" | null;
+  canIncrement?: boolean;
+  canDecrement?: boolean;
+  canManageStatus?: boolean;
   blacklisted?: boolean;
   blacklistReason?: string | null;
   blacklistEntryId?: number | null;
@@ -69,11 +77,15 @@ export async function checkFarmerStatus(input: {
 
 export async function addFarmerStatus(input: {
   aadhaar?: string;
+  farmerType?: "OLD" | "NEW";
   farmerName: string;
   mobileNumber?: string;
   district: string;
   mandal: string;
   village: string;
+  districtId?: number | null;
+  mandalId?: number | null;
+  villageId?: number | null;
   statusColor: FarmerStatusColor;
   rationCardNumber?: string;
   address?: string;
@@ -95,6 +107,24 @@ export async function voteFarmerStatus(
     {
       method: "POST",
       body: JSON.stringify({ voteColor }),
+    },
+  );
+}
+
+export async function incrementFarmerStatusCount(statusId: number) {
+  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
+    `/farmer-statuses/${statusId}/increment`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+export async function decrementFarmerStatusCount(statusId: number) {
+  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
+    `/farmer-statuses/${statusId}/decrement`,
+    {
+      method: "POST",
     },
   );
 }

@@ -9,7 +9,6 @@ import {
   FolderOpen,
   ListChecks,
   Search,
-  ShieldAlert,
   FilePlus2,
   UserCog,
 } from "lucide-react";
@@ -18,9 +17,7 @@ export function DashboardPreview() {
   const { t } = useKyfiLanguage();
   const quickActions = [
     { icon: Search, label: t("hero.ctaSearch") },
-    { icon: ShieldAlert, label: t("blacklist.title") },
     { icon: FilePlus2, label: t("hero.ctaAdd") },
-    { icon: ListChecks, label: t("blacklist.records") },
     { icon: FolderOpen, label: t("menu.profile") },
     { icon: UserCog, label: t("menu.settings") },
   ];
@@ -44,7 +41,10 @@ export function DashboardPreview() {
                   {t("preview.title")}
                 </h3>
               </div>
-              <Badge variant="outline" className="border-white/20 bg-white/10 text-white">
+              <Badge
+                variant="outline"
+                className="border-white/20 bg-white/10 text-white"
+              >
                 {t("preview.teluguReady")}
               </Badge>
             </div>
@@ -55,39 +55,57 @@ export function DashboardPreview() {
                   <p className="font-manrope text-[1.06rem] font-bold tracking-[-0.02em] text-white">
                     {t("preview.name")}
                   </p>
-                  <p className="text-sm text-slate-300">{t("preview.location")}</p>
+                  <p className="text-sm text-slate-300">
+                    {t("preview.location")}
+                  </p>
                 </div>
                 <Badge variant="success">GREEN</Badge>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-white/5 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">{t("preview.maskedAadhaar")}</p>
-                  <p className="mt-1 text-sm font-semibold text-white">XXXX XXXX 1234</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
+                    {t("preview.maskedAadhaar")}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    XXXX XXXX 1234
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-white/5 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">{t("preview.voteCount")}</p>
-                  <p className="mt-1 text-sm font-semibold text-white">12 votes</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
+                    {t("preview.voteCount")}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    12 votes
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-white/5 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">{t("preview.dateAdded")}</p>
-                  <p className="mt-1 text-sm font-semibold text-white">26 May 2026</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
+                    {t("preview.dateAdded")}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    26 May 2026
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-white/5 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">{t("preview.remarks")}</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{t("preview.remarksValue")}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
+                    {t("preview.remarks")}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {t("preview.remarksValue")}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-red-400/20 bg-red-500/10 p-5">
+            {/* <div className="rounded-3xl border border-red-400/20 bg-red-500/10 p-5">
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-50">
                 {t("preview.blacklistedTitle")}
               </p>
               <p className="mt-2 text-sm leading-7 text-red-50/90">
                 {t("preview.blacklistedBody")}
               </p>
-            </div>
+            </div> */}
 
             <Button
               variant="outline"

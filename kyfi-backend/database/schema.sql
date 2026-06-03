@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS farmer_statuses (
   district VARCHAR(100) NOT NULL,
   mandal VARCHAR(100) NOT NULL,
   village VARCHAR(100) NOT NULL,
+  district_id BIGINT UNSIGNED DEFAULT NULL,
+  mandal_id BIGINT UNSIGNED DEFAULT NULL,
+  village_id BIGINT UNSIGNED DEFAULT NULL,
   status_color ENUM('GREEN', 'YELLOW', 'RED') NOT NULL,
   ration_card_number VARCHAR(50) DEFAULT NULL,
   address VARCHAR(255) DEFAULT NULL,
@@ -74,6 +77,21 @@ CREATE TABLE IF NOT EXISTS farmer_status_votes (
   UNIQUE KEY uq_vote_once (status_id, dealer_id),
   CONSTRAINT fk_vote_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
   CONSTRAINT fk_vote_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS farmer_status_count_actions (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  status_id BIGINT UNSIGNED NOT NULL,
+  dealer_id INT UNSIGNED NOT NULL,
+  action_type ENUM('INCREMENT', 'DECREMENT') NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_farmer_status_count_action_once (status_id, dealer_id),
+  KEY idx_farmer_status_count_action_status (status_id),
+  KEY idx_farmer_status_count_action_dealer (dealer_id),
+  CONSTRAINT fk_farmer_status_count_action_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_farmer_status_count_action_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS blacklist_entries (
@@ -147,18 +165,53 @@ CREATE TABLE IF NOT EXISTS site_hero_banner_settings (
 
 INSERT IGNORE INTO site_hero_banner_settings (id) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS districts (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  district_code VARCHAR(32) NOT NULL,
+  district_name VARCHAR(150) NOT NULL,
+  state_name VARCHAR(100) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_district_code (district_code),
+  KEY idx_district_name (district_name),
+  KEY idx_district_state_name (state_name)
+);
+
 CREATE TABLE IF NOT EXISTS mandals (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   state_name VARCHAR(100) NOT NULL,
   district_name VARCHAR(150) NOT NULL,
   mandal_name VARCHAR(150) NOT NULL,
   source_label VARCHAR(100) DEFAULT NULL,
+  mandal_code VARCHAR(32) DEFAULT NULL,
+  district_code VARCHAR(32) DEFAULT NULL,
+  district_id BIGINT UNSIGNED DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_mandal_state_district_name (state_name, district_name, mandal_name),
+  UNIQUE KEY uq_mandal_code (mandal_code),
   KEY idx_mandal_state_district (state_name, district_name),
-  KEY idx_mandal_name (mandal_name)
+  KEY idx_mandal_name (mandal_name),
+  KEY idx_mandal_district_id (district_id),
+  KEY idx_mandal_district_code (district_code)
+);
+
+CREATE TABLE IF NOT EXISTS villages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  village_code VARCHAR(32) NOT NULL,
+  village_name VARCHAR(150) NOT NULL,
+  mandal_code VARCHAR(32) NOT NULL,
+  mandal_id BIGINT UNSIGNED NOT NULL,
+  district_id BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_village_code (village_code),
+  KEY idx_village_name (village_name),
+  KEY idx_village_mandal_id (mandal_id),
+  KEY idx_village_district_id (district_id)
 );
 
 INSERT INTO dealers (id, role, name, mobile, password_hash, shop_name, district, state, mandal, village, aadhaar_or_gst_number, status, otp_code)

@@ -2,7 +2,15 @@
 
 import { motion } from "framer-motion";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
-import { ArrowRight, BadgeCheck, ChevronDown, ChevronRight, Search, ShieldCheck, ShieldX } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  ShieldCheck,
+  ShieldX,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -189,14 +197,14 @@ export function HowItWorks() {
                 </div>
                 <Badge variant="secondary">Step 1</Badge>
               </div>
-                <div className="space-y-2">
-                  <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
+              <div className="space-y-2">
+                <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
                   {t("how.step1Title")}
-                  </h3>
-                  <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
+                </h3>
+                <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
                   {t("how.step1Text")}
-                  </p>
-                </div>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -216,14 +224,14 @@ export function HowItWorks() {
                 </div>
                 <Badge variant="secondary">Step 2</Badge>
               </div>
-                <div className="space-y-2">
-                  <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
+              <div className="space-y-2">
+                <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
                   {t("how.step2Title")}
-                  </h3>
-                  <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
+                </h3>
+                <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
                   {t("how.step2Text")}
-                  </p>
-                </div>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -243,14 +251,14 @@ export function HowItWorks() {
                 </div>
                 <Badge variant="secondary">Step 3</Badge>
               </div>
-                <div className="space-y-2">
-                  <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
+              <div className="space-y-2">
+                <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
                   {t("how.step3Title")}
-                  </h3>
-                  <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
+                </h3>
+                <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
                   {t("how.step3Text")}
-                  </p>
-                </div>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -270,14 +278,14 @@ export function HowItWorks() {
                 </div>
                 <Badge variant="secondary">Step 4</Badge>
               </div>
-                <div className="space-y-2">
-                  <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
+              <div className="space-y-2">
+                <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
                   {t("how.step4Title")}
-                  </h3>
-                  <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
+                </h3>
+                <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
                   {t("how.step4Text")}
-                  </p>
-                </div>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

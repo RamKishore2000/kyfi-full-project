@@ -1,6 +1,6 @@
 "use client";
 
-import { CirclePlus, Home, Search, ShieldAlert, ShieldCheck } from "lucide-react";
+import { CirclePlus, Home, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -8,10 +8,14 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 const tabs = [
   { href: "/dashboard", labelKey: "header.home", icon: Home },
-  { href: "/add-farmer-status", labelKey: "header.addStatus", icon: CirclePlus },
+  {
+    href: "/add-farmer-status",
+    labelKey: "header.addStatus",
+    icon: CirclePlus,
+  },
   { href: "/search-farmer-status", labelKey: "header.search", icon: Search },
-  { href: "/add-to-blacklist", labelKey: "header.blacklist", icon: ShieldAlert },
-  { href: "/blacklist-browser", labelKey: "header.browser", icon: ShieldCheck },
+  // { href: "/add-to-blacklist", labelKey: "header.blacklist", icon: ShieldAlert },
+  // { href: "/blacklist-browser", labelKey: "header.browser", icon: ShieldCheck },
 ];
 
 export function MobileBottomTabs() {
@@ -23,8 +27,6 @@ export function MobileBottomTabs() {
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/search-farmer-status") ||
     pathname?.startsWith("/add-farmer-status") ||
-    pathname?.startsWith("/add-to-blacklist") ||
-    pathname?.startsWith("/blacklist-browser") ||
     pathname?.startsWith("/my-records") ||
     pathname?.startsWith("/profile") ||
     pathname?.startsWith("/settings");
@@ -36,7 +38,7 @@ export function MobileBottomTabs() {
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/70 bg-white/92 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-7xl grid-cols-5 gap-1">
+        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-1">
           {tabs.map((tab) => {
             const active = pathname === tab.href;
             const Icon = tab.icon;
@@ -57,7 +59,9 @@ export function MobileBottomTabs() {
                 <span
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-2xl transition",
-                    active ? "bg-emerald-50 text-emerald-800" : "bg-transparent text-current",
+                    active
+                      ? "bg-emerald-50 text-emerald-800"
+                      : "bg-transparent text-current",
                   )}
                 >
                   <Icon className="h-4.5 w-4.5" />

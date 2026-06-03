@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, FolderOpen, Loader2, ShieldAlert, Sparkles } from "lucide-react";
+import { FolderOpen, Loader2, Sparkles } from "lucide-react";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
 import { Footer } from "@/components/kyfi/footer";
@@ -19,8 +19,8 @@ import {
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 const tabs = [
-  { key: "farmers", labelKey: "myRecords.tabs.farmers" },
-  { key: "blacklist", labelKey: "myRecords.tabs.blacklist" },
+  { key: "oldFarmers", labelKey: "myRecords.tabs.oldFarmers" },
+  { key: "newFarmers", labelKey: "myRecords.tabs.newFarmers" },
   { key: "votes", labelKey: "myRecords.tabs.votes" },
 ] as const;
 
@@ -57,7 +57,9 @@ function SummaryCard({
     <Card className="border-white/80 bg-white/85 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
       <CardContent className="flex items-center justify-between gap-4 p-5">
         <div>
-          <p className="font-manrope type-small uppercase tracking-[0.22em] text-slate-500">{label}</p>
+          <p className="font-manrope type-small uppercase tracking-[0.22em] text-slate-500">
+            {label}
+          </p>
           <p className="mt-2 font-manrope text-[1.85rem] font-extrabold tracking-[-0.04em] text-slate-900">
             {value}
           </p>
@@ -77,7 +79,10 @@ function FarmerRecordCard({
   record: MyFarmerStatusRecord;
   t: (key: string) => string;
 }) {
-  const displayStatusColor = record.currentDealerVoteColor || record.statusColor;
+  const displayStatusColor =
+    record.currentDealerVoteColor || record.statusColor;
+  const farmerType =
+    String(record.farmerType || "OLD").toUpperCase() === "NEW" ? "NEW" : "OLD";
 
   return (
     <details className="group rounded-3xl border border-white/80 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
@@ -88,6 +93,11 @@ function FarmerRecordCard({
               <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
                 {record.farmerName}
               </h3>
+              <Badge variant={farmerType === "NEW" ? "outline" : "secondary"}>
+                {farmerType === "NEW"
+                  ? t("myRecords.tabs.newFarmers")
+                  : t("myRecords.tabs.oldFarmers")}
+              </Badge>
               <Badge
                 variant={
                   displayStatusColor === "GREEN"
@@ -99,20 +109,27 @@ function FarmerRecordCard({
               >
                 {getStatusLabel(displayStatusColor, t)}
               </Badge>
-              {record.blacklisted ? <Badge variant="destructive">{t("myRecords.blacklisted")}</Badge> : null}
+              {record.blacklisted ? (
+                <Badge variant="destructive">
+                  {t("myRecords.blacklisted")}
+                </Badge>
+              ) : null}
             </div>
             <p className="font-manrope type-small text-slate-500">
               {record.district}, {record.mandal}, {record.village}
             </p>
             <p className="font-manrope type-small text-slate-500">
-              {t("myRecords.mobile")}: {record.mobileNumber || t("myRecords.notProvided")}
+              {t("myRecords.mobile")}:{" "}
+              {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
           <div className="text-right">
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
               {t("myRecords.votes")}
             </p>
-            <p className="mt-1 font-manrope text-xl font-extrabold text-slate-900">{record.voteCount}</p>
+            <p className="mt-1 font-manrope text-xl font-extrabold text-slate-900">
+              {record.voteCount}
+            </p>
           </div>
         </div>
       </summary>
@@ -198,7 +215,9 @@ function BlacklistRecordCard({
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.reason")}
             </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">{record.reason}</p>
+            <p className="mt-2 font-manrope type-nav text-slate-900">
+              {record.reason}
+            </p>
           </div>
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
@@ -229,36 +248,37 @@ function VoteRecordCard({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
-                  {record.farmerName}
-                </h3>
-                <Badge
-                  variant={
-                    displayVoteColor === "GREEN"
-                      ? "success"
-                      : displayVoteColor === "YELLOW"
-                        ? "warning"
-                        : "destructive"
-                  }
-                >
-                  {getStatusLabel(displayVoteColor, t)}
-                </Badge>
-              </div>
+              <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
+                {record.farmerName}
+              </h3>
+              <Badge
+                variant={
+                  displayVoteColor === "GREEN"
+                    ? "success"
+                    : displayVoteColor === "YELLOW"
+                      ? "warning"
+                      : "destructive"
+                }
+              >
+                {getStatusLabel(displayVoteColor, t)}
+              </Badge>
+            </div>
             <p className="font-manrope type-small text-slate-500">
               {record.district}, {record.mandal}, {record.village}
             </p>
             <p className="font-manrope type-small text-slate-500">
-              {t("myRecords.mobile")}: {record.mobileNumber || t("myRecords.notProvided")}
+              {t("myRecords.mobile")}:{" "}
+              {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-            <div className="text-right">
-              <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
-                {t("myRecords.votedAt")}
-              </p>
-              <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
-                {formatVoteDate(record.votedAt) || t("myRecords.notProvided")}
-              </p>
-            </div>
+          <div className="text-right">
+            <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
+              {t("myRecords.votedAt")}
+            </p>
+            <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
+              {formatVoteDate(record.votedAt) || t("myRecords.notProvided")}
+            </p>
+          </div>
         </div>
       </summary>
 
@@ -277,7 +297,9 @@ function VoteRecordCard({
               <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
                 {t("myRecords.voteColor")}
               </p>
-              <p className="mt-2 font-manrope type-nav text-slate-900">{record.voteColor}</p>
+              <p className="mt-2 font-manrope type-nav text-slate-900">
+                {record.voteColor}
+              </p>
             </div>
           ) : null}
         </div>
@@ -288,7 +310,7 @@ function VoteRecordCard({
 
 export default function MyRecordsPage() {
   const { t } = useKyfiLanguage();
-  const [tab, setTab] = useState<TabKey>("farmers");
+  const [tab, setTab] = useState<TabKey>("oldFarmers");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [records, setRecords] = useState<MyRecordsResponse>({
@@ -297,6 +319,31 @@ export default function MyRecordsPage() {
     blacklistEntries: [],
     votes: [],
   });
+
+  const farmerStatuses = records.farmerStatuses;
+  const oldFarmers = farmerStatuses.filter(
+    (record) => String(record.farmerType || "OLD").toUpperCase() !== "NEW",
+  );
+  const newFarmers = farmerStatuses.filter(
+    (record) => String(record.farmerType || "OLD").toUpperCase() === "NEW",
+  );
+  const summaryCards = [
+    {
+      label: t("myRecords.summary.oldFarmers"),
+      value: String(oldFarmers.length),
+      icon: <FolderOpen className="h-5 w-5" />,
+    },
+    {
+      label: t("myRecords.summary.newFarmers"),
+      value: String(newFarmers.length),
+      icon: <Sparkles className="h-5 w-5" />,
+    },
+    {
+      label: t("myRecords.summary.votes"),
+      value: String(records.counts.votes),
+      icon: <Sparkles className="h-5 w-5" />,
+    },
+  ];
 
   useEffect(() => {
     let mounted = true;
@@ -308,7 +355,11 @@ export default function MyRecordsPage() {
         setRecords(data);
       } catch (loadError) {
         if (!mounted) return;
-        setError(loadError instanceof Error ? loadError.message : t("myRecords.loadFailed"));
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : t("myRecords.loadFailed"),
+        );
       } finally {
         if (mounted) setLoading(false);
       }
@@ -350,31 +401,26 @@ export default function MyRecordsPage() {
               >
                 {t("myRecords.addFarmer")}
               </Link>
+              {/*
               <Link
                 href="/add-to-blacklist"
                 className="inline-flex h-11 items-center justify-center rounded-2xl bg-emerald-700 px-5 font-manrope type-button text-white transition hover:bg-emerald-800"
               >
                 {t("myRecords.addBlacklist")}
               </Link>
+              */}
             </div>
           </motion.div>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            <SummaryCard
-              label={t("myRecords.summary.farmerStatuses")}
-              value={String(records.counts.farmerStatuses)}
-              icon={<FolderOpen className="h-5 w-5" />}
-            />
-            <SummaryCard
-              label={t("myRecords.summary.blacklistEntries")}
-              value={String(records.counts.blacklistEntries)}
-              icon={<ShieldAlert className="h-5 w-5" />}
-            />
-            <SummaryCard
-              label={t("myRecords.summary.votes")}
-              value={String(records.counts.votes)}
-              icon={<Sparkles className="h-5 w-5" />}
-            />
+            {summaryCards.map((card) => (
+              <SummaryCard
+                key={card.label}
+                label={card.label}
+                value={card.value}
+                icon={card.icon}
+              />
+            ))}
           </div>
 
           <div className="mt-8 rounded-[2rem] border border-white/80 bg-white/85 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
@@ -388,7 +434,9 @@ export default function MyRecordsPage() {
                     onClick={() => setTab(item.key)}
                     className={[
                       "rounded-[1.1rem] px-4 py-3 text-sm font-semibold transition",
-                      active ? "bg-white text-emerald-800 shadow-sm" : "text-slate-500 hover:text-slate-800",
+                      active
+                        ? "bg-white text-emerald-800 shadow-sm"
+                        : "text-slate-500 hover:text-slate-800",
                     ].join(" ")}
                   >
                     {t(item.labelKey)}
@@ -406,10 +454,10 @@ export default function MyRecordsPage() {
                 <div className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
                   {error}
                 </div>
-              ) : tab === "farmers" ? (
-                records.farmerStatuses.length ? (
+              ) : tab === "oldFarmers" ? (
+                oldFarmers.length ? (
                   <div className="space-y-4">
-                    {records.farmerStatuses.map((record) => (
+                    {oldFarmers.map((record) => (
                       <motion.div
                         key={record.id}
                         initial={{ opacity: 0, y: 12 }}
@@ -422,26 +470,26 @@ export default function MyRecordsPage() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500">
-                    {t("myRecords.noFarmerStatuses")}
+                    {t("myRecords.noOldFarmers")}
                   </div>
                 )
-              ) : tab === "blacklist" ? (
-                records.blacklistEntries.length ? (
+              ) : tab === "newFarmers" ? (
+                newFarmers.length ? (
                   <div className="space-y-4">
-                    {records.blacklistEntries.map((record) => (
+                    {newFarmers.map((record) => (
                       <motion.div
                         key={record.id}
                         initial={{ opacity: 0, y: 12 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, amount: 0.2 }}
                       >
-                        <BlacklistRecordCard record={record} t={t} />
+                        <FarmerRecordCard record={record} t={t} />
                       </motion.div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500">
-                    {t("myRecords.noBlacklistEntries")}
+                    {t("myRecords.noNewFarmers")}
                   </div>
                 )
               ) : records.votes.length ? (

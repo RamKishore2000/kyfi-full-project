@@ -1,7 +1,5 @@
 export type KyfiLanguage = "en" | "te";
-
 type Dictionary = Record<string, string>;
-
 const english: Dictionary = {
   "header.home": "Home",
   "header.search": "Search",
@@ -15,34 +13,53 @@ const english: Dictionary = {
   "menu.logout": "Logout",
   "menu.shortcuts": "KYFI shortcuts",
   "menu.menu": "Menu",
-  "dashboard.shortcutsTitle": "Core tools designed for practical dealer decisions",
-  "dashboard.shortcutsDescription": "The interface stays simple, readable, and grounded in dealer workflows rather than technical jargon.",
+  "dashboard.shortcutsTitle":
+    "Core tools designed for practical dealer decisions",
+  "dashboard.shortcutsDescription":
+    "Quick access to farmer search, status entry, and your saved records.",
   "dashboard.feature1.title": "Farmer Status Search",
-  "dashboard.feature1.description": "Search using Aadhaar, PAN, mobile number, or farmer name to quickly check repayment reputation.",
+  "dashboard.feature1.description":
+    "Search using mandal, village, or farmer name to quickly check repayment reputation.",
   "dashboard.feature2.title": "Add Farmer Status",
-  "dashboard.feature2.description": "Create a simple GREEN, YELLOW, or RED reputation record for a farmer using Aadhaar as the primary identifier.",
-  "dashboard.feature3.title": "Farmer Blacklist",
-  "dashboard.feature3.description": "View confirmed non-payment records by Mandal and Village before making credit decisions.",
+  "dashboard.feature2.description":
+    "Create a simple GREEN, YELLOW, or RED reputation record for a farmer using mobile number as the primary identifier.",
+  "dashboard.feature3.title": "Status Review",
+  "dashboard.feature3.description":
+    "Review GREEN, YELLOW, and RED status before making a credit decision.",
   "dashboard.feature4.title": "Dealer Voting",
-  "dashboard.feature4.description": "Dealers can vote once on existing farmer records to support shared community validation.",
-  "dashboard.feature5.title": "Add to Blacklist",
-  "dashboard.feature5.description": "Create a confirmed unpaid dues warning for a farmer when the record needs to be added to the blacklist.",
+  "dashboard.feature4.description":
+    "Dealers can vote once on existing farmer records to support shared community validation.",
+  "dashboard.feature5.title": "Record History",
+  "dashboard.feature5.description":
+    "Track the farmer records and updates created from your dealer account.",
   "dashboard.feature6.title": "My Records",
-  "dashboard.feature6.description": "Dealers can view and update farmer records they have personally added.",
+  "dashboard.feature6.description":
+    "View the farmer records and vote updates you have personally added.",
   "myRecords.kicker": "My Records",
   "myRecords.title": "Records you have personally added",
-  "myRecords.description": "View the farmer reputation and blacklist entries created from your dealer account.",
+  "myRecords.description":
+    "View the old farmers, new farmers, and vote updates created from your dealer account.",
   "myRecords.addFarmer": "Add farmer status",
   "myRecords.addBlacklist": "Add to blacklist",
+  "addFarmer.tabOld": "Old Farmer",
+  "addFarmer.tabNew": "New Farmer",
+  "addFarmer.oldHelp": "Visible to all dealers.",
+  "addFarmer.newHelp": "Visible only to you.",
   "myRecords.loading": "Loading records...",
   "myRecords.loadFailed": "Unable to load records",
   "myRecords.noFarmerStatuses": "No farmer status records found",
+  "myRecords.noOldFarmers": "No old farmer records found",
+  "myRecords.noNewFarmers": "No new farmer records found",
   "myRecords.noBlacklistEntries": "No blacklist entries found",
   "myRecords.noVotes": "No votes found",
   "myRecords.tabs.farmers": "Farmer statuses",
+  "myRecords.tabs.oldFarmers": "Old Farmers",
+  "myRecords.tabs.newFarmers": "New Farmers",
   "myRecords.tabs.blacklist": "Blacklist entries",
   "myRecords.tabs.votes": "My votes",
   "myRecords.summary.farmerStatuses": "Farmer statuses",
+  "myRecords.summary.oldFarmers": "Old farmers",
+  "myRecords.summary.newFarmers": "New farmers",
   "myRecords.summary.blacklistEntries": "Blacklist entries",
   "myRecords.summary.votes": "My votes",
   "myRecords.statusGreen": "GREEN",
@@ -74,7 +91,8 @@ const english: Dictionary = {
   "footer.terms": "Terms of Use",
   "footer.apTs": "Andhra Pradesh & Telangana",
   "footer.support": "Support for dealers",
-  "footer.description": "A trusted farmer credit reputation platform for pesticide dealers across Andhra Pradesh and Telangana.",
+  "footer.description":
+    "A trusted farmer credit reputation platform for pesticide dealers across Andhra Pradesh and Telangana.",
   "footer.copyright": "© 2026 KYFI. All rights reserved.",
   "login.dealerAccess": "Dealer access",
   "login.dealerAccessCaps": "Dealer access",
@@ -105,7 +123,8 @@ const english: Dictionary = {
   "login.invalidPassword": "Enter a valid password with at least 4 characters.",
   "login.invalidOtp": "Enter a valid 6-digit OTP.",
   "login.onlyDealer": "Only dealers can sign in here.",
-  "login.pending": "Dealer account is pending approval. You will receive an SMS after approval.",
+  "login.pending":
+    "Dealer account is pending approval. You will receive an SMS after approval.",
   "login.rejected": "Dealer account has been rejected.",
   "login.suspended": "Dealer account is suspended.",
   "login.notApproved": "Dealer account is not approved yet.",
@@ -157,18 +176,21 @@ const english: Dictionary = {
   "settings.display": "Display",
   "settings.defaultLanguage": "Default language",
   "settings.supportedLanguage": "Supported language",
-  "settings.description": "These settings reflect the document rules for registered and approved dealers.",
+  "settings.description":
+    "These settings reflect the document rules for registered and approved dealers.",
   "settings.languageCardTitle": "English default, Telugu supported",
   "settings.languageDefaultNote": "Default language",
   "settings.languageSupportedNote": "Supported language",
-  "settings.passwordDescription": "Use this option to update your password after dealer approval.",
+  "settings.passwordDescription":
+    "Use this option to update your password after dealer approval.",
   "settings.languageDisplay": "Display",
   "settings.currentPasswordPlaceholder": "Enter current password",
   "settings.newPasswordPlaceholder": "Enter new password",
   "settings.confirmPasswordPlaceholder": "Confirm new password",
   "settings.languageSavedEn": "Language updated successfully",
   "settings.languageSavedTe": "భాష విజయవంతంగా నవీకరించబడింది",
-  "settings.invalidPasswordShort": "New password must be at least 4 characters.",
+  "settings.invalidPasswordShort":
+    "New password must be at least 4 characters.",
   "settings.passwordMismatch": "New password and confirm password must match.",
   "settings.passwordSaved": "Password updated successfully",
   "settings.loadLanguageFailed": "Unable to update language",
@@ -191,7 +213,8 @@ const english: Dictionary = {
   "profile.updated": "Profile updated successfully",
   "profile.loadFailed": "Unable to load profile",
   "profile.updateFailed": "Unable to update profile",
-  "profile.onlyApproved": "Only the document fields are shown here. This screen is for approved dealers.",
+  "profile.onlyApproved":
+    "Only the document fields are shown here. This screen is for approved dealers.",
   "profile.loadingData": "Loading profile...",
   "profile.saved": "Profile updated successfully",
   "profile.unableSave": "Unable to update profile",
@@ -211,12 +234,13 @@ const english: Dictionary = {
   "cta.dealerOnlyBody":
     "Approved dealers can search farmer reputation and see blacklist warnings before extending credit.",
   "cta.languageSupport": "Language support",
-  "cta.languageSupportBody": "The selected language stays active across the site.",
+  "cta.languageSupportBody":
+    "The selected language stays active across the site.",
   "common.closeModal": "Close modal",
   "hero.kicker": "Trusted dealer-powered credit reputation",
-  "hero.title": "Check farmer credit reputation before giving credit",
+  "hero.title": "Check Farmer Credit Reputation Before Giving Credit",
   "hero.subtitle":
-    "KYFI helps pesticide dealers identify trusted, delayed, and risky farmers using a shared dealer-powered reputation database.",
+    "KYFI helps pesticide dealers quickly identify trusted, delayed, and risky farmers using a shared dealer-powered reputation database before extending credit, so every decision stays faster, safer, and more consistent.",
   "hero.ctaSearch": "Search Farmer Status",
   "hero.ctaAdd": "Add Farmer Status",
   "hero.dealerAccess": "Dealer access only",
@@ -231,12 +255,16 @@ const english: Dictionary = {
   "how.step1Title": "Register and get approved",
   "how.step1Text": "Only verified pesticide dealers can use the platform.",
   "how.step2Title": "Search a farmer profile",
-  "how.step2Text": "Use Aadhaar, mobile, PAN, or farmer name to find the record.",
-  "how.step3Title": "Review status and blacklist",
-  "how.step3Text": "Check GREEN, YELLOW, RED, and blacklist warnings together.",
+  "how.step2Text":
+    "Use mandal, village, or farmer name to find the record quickly.",
+  "how.step3Title": "Review status carefully",
+  "how.step3Text":
+    "Check GREEN, YELLOW, and RED together before making a decision.",
   "how.step4Title": "Make a credit decision",
-  "how.step4Text": "Use the reputation record to decide credit terms and vote if needed.",
-  "how.footer": "Built for trust-first dealer workflows, not technical dashboards.",
+  "how.step4Text":
+    "Use the reputation record to decide credit terms and vote if needed.",
+  "how.footer":
+    "Built for trust-first dealer workflows, not technical dashboards.",
   "preview.badge": "Dealer UI preview",
   "preview.title": "Search farmer and review key details",
   "preview.teluguReady": "Telugu ready",
@@ -260,23 +288,35 @@ const english: Dictionary = {
   "privacy.important": "Important",
   "privacy.importantBody":
     "The spec requires published privacy and terms pages before launch, with sensitive farmer information protected and access restricted to approved dealers and admins.",
-  "privacy.collectDealer": "Dealer account details needed for login and approval.",
+  "privacy.collectDealer":
+    "Dealer account details needed for login and approval.",
   "privacy.collectRecords": "Farmer records entered by registered dealers.",
-  "privacy.collectBlacklist": "Blacklist entries and status history maintained by the platform.",
-  "privacy.collectSensitive": "Sensitive identifiers such as Aadhaar, with masking in the UI where required.",
-  "privacy.useSearch": "To let approved dealers search farmer records and view status.",
-  "privacy.useBlacklist": "To support blacklist browsing by Mandal and Village.",
-  "privacy.useSignals": "To show GREEN, YELLOW, RED, and BLACKLISTED indicators.",
-  "privacy.useAccess": "To keep record access limited to approved dealer and admin accounts.",
-  "privacy.protectApproved": "Only registered and admin-approved dealers can view farmer records.",
+  "privacy.collectBlacklist":
+    "Blacklist entries and status history maintained by the platform.",
+  "privacy.collectSensitive":
+    "Sensitive identifiers such as Aadhaar, with masking in the UI where required.",
+  "privacy.useSearch":
+    "To let approved dealers search farmer records and view status.",
+  "privacy.useBlacklist":
+    "To support blacklist browsing by Mandal and Village.",
+  "privacy.useSignals":
+    "To show GREEN, YELLOW, RED, and BLACKLISTED indicators.",
+  "privacy.useAccess":
+    "To keep record access limited to approved dealer and admin accounts.",
+  "privacy.protectApproved":
+    "Only registered and admin-approved dealers can view farmer records.",
   "privacy.protectMasked": "Aadhaar numbers must not be shown in full.",
-  "privacy.protectAnonymous": "Dealers can see that a record exists, but not which dealer added it by name.",
-  "privacy.protectIndia": "The platform should keep data on Indian servers as required by the spec.",
+  "privacy.protectAnonymous":
+    "Dealers can see that a record exists, but not which dealer added it by name.",
+  "privacy.protectIndia":
+    "The platform should keep data on Indian servers as required by the spec.",
   "privacy.roleUse": "Use KYFI only for dealer-side credit reputation checks.",
   "privacy.roleSecure": "Keep your account credentials secure.",
   "privacy.roleFollow": "Follow the approval and access rules defined by KYFI.",
-  "privacy.roleNoPayments": "Do not treat KYFI as a payment, lending, or collection tool.",
-  "terms.intro": "These terms reflect the KYFI product specification and define the allowed use of the platform.",
+  "privacy.roleNoPayments":
+    "Do not treat KYFI as a payment, lending, or collection tool.",
+  "terms.intro":
+    "These terms reflect the KYFI product specification and define the allowed use of the platform.",
   "terms.whoCanUse": "Who can use KYFI",
   "terms.howUse": "How the platform should be used",
   "terms.accountRules": "Account rules",
@@ -284,21 +324,31 @@ const english: Dictionary = {
   "terms.reminder": "Reminder",
   "terms.reminderBody":
     "KYFI must keep sensitive farmer data protected, show Aadhaar only in masked form, and restrict record access to approved dealer and admin accounts.",
-  "terms.whoDealer": "Only registered and admin-approved dealers can use the dealer tools.",
-  "terms.whoAdmin": "Admin access is reserved for moderation, approval, and record management.",
+  "terms.whoDealer":
+    "Only registered and admin-approved dealers can use the dealer tools.",
+  "terms.whoAdmin":
+    "Admin access is reserved for moderation, approval, and record management.",
   "terms.whoFarmer": "Farmer access is not part of V1.",
-  "terms.useSearch": "Use farmer search, status, and blacklist features only for dealer-side reputation checks.",
-  "terms.useLookup": "Search by Aadhaar, PAN, mobile number, or name as supported by the workflow.",
-  "terms.useSeparate": "Treat blacklist as separate from GREEN, YELLOW, and RED status.",
-  "terms.useDuplicate": "Do not create duplicate records when a record already exists.",
+  "terms.useSearch":
+    "Use farmer search, status, and blacklist features only for dealer-side reputation checks.",
+  "terms.useLookup":
+    "Search by Aadhaar, PAN, mobile number, or name as supported by the workflow.",
+  "terms.useSeparate":
+    "Treat blacklist as separate from GREEN, YELLOW, and RED status.",
+  "terms.useDuplicate":
+    "Do not create duplicate records when a record already exists.",
   "terms.accountSecure": "Keep your password, OTP, and account session secure.",
-  "terms.accountRespect": "Respect approval, rejection, and suspension decisions.",
+  "terms.accountRespect":
+    "Respect approval, rejection, and suspension decisions.",
   "terms.accountBypass": "Do not attempt to bypass login or access controls.",
   "terms.accountShare": "Do not share your account with unauthorized users.",
-  "terms.limitLookup": "KYFI is a reputation lookup tool, not a lending platform.",
-  "terms.limitPayments": "Payment collection or credit tracking is out of scope.",
+  "terms.limitLookup":
+    "KYFI is a reputation lookup tool, not a lending platform.",
+  "terms.limitPayments":
+    "Payment collection or credit tracking is out of scope.",
   "terms.limitMessaging": "Dealer-to-dealer messaging is not required in V1.",
-  "terms.limitRegion": "The platform is limited to Andhra Pradesh and Telangana in V1.",
+  "terms.limitRegion":
+    "The platform is limited to Andhra Pradesh and Telangana in V1.",
   "tabs.home": "Home",
   "tabs.search": "Search",
   "tabs.addStatus": "Add Status",
@@ -309,34 +359,45 @@ const english: Dictionary = {
   "search.mandalLabel": "Mandal",
   "search.villageLabel": "Village",
   "search.farmerNameLabel": "Farmer Name",
-  "search.mandalPlaceholder": "Type 2 or more letters",
+  "search.mandalPlaceholder": "Type 3 or more letters",
   "search.villagePlaceholder": "Enter village",
   "search.farmerNamePlaceholder": "Enter farmer name",
   "search.searchingMandals": "Searching mandals...",
+  "search.searchingVillages": "Searching villages...",
   "search.noMandal": "No matching mandal found.",
+  "search.noVillage": "No matching village found.",
   "search.fillAtLeastOne": "Enter mandal, village, or farmer name.",
   "search.voteApplied": "Your vote has been applied.",
   "search.voteNow": "Vote now",
   "search.voteHint": "Choose GREEN, YELLOW, or RED to vote.",
-  "search.voteChangeHint": "You can change your vote by selecting another color.",
+  "search.voteChangeHint":
+    "You can change your vote by selecting another color.",
   "search.yourVote": "Your vote",
-  "search.legendGreen": "Safe to extend credit",
-  "search.legendYellow": "Proceed with caution",
-  "search.legendRed": "Avoid credit",
+  "search.legendGreen": "Paid",
+  "search.legendYellow": "Half payment",
+  "search.legendRed": "Not paid",
   "search.legendBlack": "Separate unpaid-dues warning",
   "search.searchTerm": "Search term",
   "search.placeholder": "Aadhaar, mobile number, or farmer name",
   "search.searchButton": "Search",
   "search.results": "Search results",
   "search.found": "found",
-  "search.empty": "Search results will appear here",
-  "search.emptyHint": "Search by Aadhaar, mobile number, or farmer name to view matching farmers.",
+  "search.empty": "Farmer status results will appear here",
+  "search.emptyHint":
+    "Search by mandal, village, or farmer name to view matching farmer status records.",
   "search.loading": "Searching...",
   "search.enterTerm": "Enter Aadhaar number, mobile number, or farmer name.",
   "search.noRecordFound": "No record found",
   "search.unable": "Unable to search farmer status",
   "search.maskedAadhaar": "Masked Aadhaar",
   "search.votes": "Votes",
+  "search.increment": "Increment",
+  "search.decrement": "Decrement",
+  "search.statusNotVoted": "Not Voted",
+  "search.statusVoted": "Voted",
+  "search.statusSupporter": "Supporter",
+  "search.farmerTypeOld": "OLD FARMER",
+  "search.farmerTypeNew": "NEW FARMER",
   "search.status": "Status",
   "search.district": "District",
   "search.location": "Location",
@@ -350,7 +411,8 @@ const english: Dictionary = {
   "search.live": "Live search",
   "search.masked": "Masked Aadhaar",
   "search.preview": "Search results will appear here",
-  "search.pressEnter": "Press Enter in the search field to look up farmer status.",
+  "search.pressEnter":
+    "Press Enter in the search field to look up farmer status.",
   "blacklist.title": "Review confirmed non-payment records",
   "blacklist.records": "Blacklisted records",
   "blacklist.searchButton": "Search blacklist",
@@ -370,7 +432,8 @@ const english: Dictionary = {
   "blacklist.noRecordFound": "No record found",
   "blacklist.unable": "Unable to search blacklist",
   "blacklist.review": "Review confirmed non-payment records",
-  "blacklist.searchHint": "Search confirmed unpaid-dues records by mandal and village.",
+  "blacklist.searchHint":
+    "Search confirmed unpaid-dues records by mandal and village.",
   "blacklist.entryHeader": "Blacklisted records",
   "blacklist.mandalLabel": "Mandal",
   "blacklist.villageLabel": "Village",
@@ -396,7 +459,6 @@ const english: Dictionary = {
   "header.profileMenu": "Profile menu",
   "menu.profileLabel": "Profile",
 };
-
 const telugu: Dictionary = {
   "header.home": "హోమ్",
   "header.search": "శోధన",
@@ -410,34 +472,53 @@ const telugu: Dictionary = {
   "menu.logout": "లాగౌట్",
   "menu.shortcuts": "KYFI షార్ట్‌కట్లు",
   "menu.menu": "మెనూ",
-  "dashboard.shortcutsTitle": "ప్రాక్టికల్ డీలర్ నిర్ణయాల కోసం రూపొందించిన ప్రధాన సాధనాలు",
-  "dashboard.shortcutsDescription": "ఇంటర్‌ఫేస్ సరళంగా, చదవడానికి సులభంగా, మరియు సాంకేతిక పదజాలం కంటే డీలర్ పనితీరుపై ఆధారంగా ఉంటుంది.",
+  "dashboard.shortcutsTitle":
+    "ప్రాక్టికల్ డీలర్ నిర్ణయాల కోసం రూపొందించిన ప్రధాన సాధనాలు",
+  "dashboard.shortcutsDescription":
+    "రైతు శోధన, స్టేటస్ నమోదు, మరియు మీ సేవ్ చేసిన రికార్డులకు త్వరిత యాక్సెస్.",
   "dashboard.feature1.title": "రైతు స్థితి శోధన",
-  "dashboard.feature1.description": "ఆధార్, PAN, మొబైల్ నంబర్, లేదా రైతు పేరు ద్వారా త్వరగా చెల్లింపు ప్రతిష్ఠను పరిశీలించండి.",
+  "dashboard.feature1.description":
+    "మండలం, గ్రామం, లేదా రైతు పేరు ద్వారా త్వరగా చెల్లింపు ప్రతిష్ఠను పరిశీలించండి.",
   "dashboard.feature2.title": "రైతు స్థితి జోడించు",
-  "dashboard.feature2.description": "ఆధార్‌ను ప్రధాన గుర్తింపుగా ఉపయోగించి రైతు కోసం సులభమైన GREEN, YELLOW, లేదా RED ప్రతిష్ఠ రికార్డును సృష్టించండి.",
+  "dashboard.feature2.description":
+    "మొబైల్ నంబర్‌ను ప్రధాన గుర్తింపుగా ఉపయోగించి రైతు కోసం సులభమైన GREEN, YELLOW, లేదా RED ప్రతిష్ఠ రికార్డును సృష్టించండి.",
   "dashboard.feature3.title": "రైతు బ్లాక్లిస్ట్",
-  "dashboard.feature3.description": "క్రెడిట్ నిర్ణయాలు తీసుకునే ముందు మండలం మరియు గ్రామం ప్రకారం నిర్ధారిత చెల్లింపు కాని రికార్డులను వీక్షించండి.",
+  "dashboard.feature3.description":
+    "క్రెడిట్ నిర్ణయాలు తీసుకునే ముందు మండలం మరియు గ్రామం ప్రకారం నిర్ధారిత చెల్లింపు కాని రికార్డులను వీక్షించండి.",
   "dashboard.feature4.title": "డీలర్ ఓటింగ్",
-  "dashboard.feature4.description": "సమూహ ధృవీకరణకు మద్దతుగా డీలర్లు ఉన్న రైతు రికార్డులపై ఒక్కసారి ఓటు వేయగలరు.",
+  "dashboard.feature4.description":
+    "సమూహ ధృవీకరణకు మద్దతుగా డీలర్లు ఉన్న రైతు రికార్డులపై ఒక్కసారి ఓటు వేయగలరు.",
   "dashboard.feature5.title": "బ్లాక్లిస్ట్‌కు జోడించు",
-  "dashboard.feature5.description": "రికార్డును బ్లాక్లిస్ట్‌లో చేర్చాల్సినప్పుడు రైతుకు నిర్ధారిత బాకీ హెచ్చరికను సృష్టించండి.",
+  "dashboard.feature5.description":
+    "రికార్డును బ్లాక్లిస్ట్‌లో చేర్చాల్సినప్పుడు రైతుకు నిర్ధారిత బాకీ హెచ్చరికను సృష్టించండి.",
   "dashboard.feature6.title": "నా రికార్డులు",
-  "dashboard.feature6.description": "డీలర్లు వారు వ్యక్తిగతంగా జోడించిన రైతు రికార్డులను చూడగలరు మరియు నవీకరించగలరు.",
+  "dashboard.feature6.description":
+    "మీరు వ్యక్తిగతంగా జోడించిన రైతు రికార్డులు మరియు ఓటు నవీకరణలను చూడండి.",
   "myRecords.kicker": "నా రికార్డులు",
   "myRecords.title": "మీరు వ్యక్తిగతంగా జోడించిన రికార్డులు",
-  "myRecords.description": "మీ డీలర్ ఖాతాతో సృష్టించిన రైతు ప్రతిష్ఠ మరియు బ్లాక్లిస్ట్ ఎంట్రీలను వీక్షించండి.",
+  "myRecords.description":
+    "మీ డీలర్ ఖాతాతో సృష్టించిన పాత రైతులు, కొత్త రైతులు, మరియు ఓటు నవీకరణలను వీక్షించండి.",
   "myRecords.addFarmer": "రైతు స్థితిని జోడించు",
   "myRecords.addBlacklist": "బ్లాక్లిస్ట్‌కు జోడించు",
+  "addFarmer.tabOld": "పాత రైతు",
+  "addFarmer.tabNew": "కొత్త రైతు",
+  "addFarmer.oldHelp": "అందరికీ కనిపిస్తుంది.",
+  "addFarmer.newHelp": "మీకు మాత్రమే కనిపిస్తుంది.",
   "myRecords.loading": "రికార్డులు లోడ్ అవుతున్నాయి...",
   "myRecords.loadFailed": "రికార్డులను లోడ్ చేయడం సాధ్యపడలేదు",
   "myRecords.noFarmerStatuses": "రైతు స్థితి రికార్డులు కనుగొనబడలేదు",
+  "myRecords.noOldFarmers": "పాత రైతు రికార్డులు కనుగొనబడలేదు",
+  "myRecords.noNewFarmers": "కొత్త రైతు రికార్డులు కనుగొనబడలేదు",
   "myRecords.noBlacklistEntries": "బ్లాక్లిస్ట్ ఎంట్రీలు కనుగొనబడలేదు",
   "myRecords.noVotes": "ఓట్లు కనుగొనబడలేదు",
   "myRecords.tabs.farmers": "రైతు స్థితులు",
+  "myRecords.tabs.oldFarmers": "పాత రైతులు",
+  "myRecords.tabs.newFarmers": "కొత్త రైతులు",
   "myRecords.tabs.blacklist": "బ్లాక్లిస్ట్ ఎంట్రీలు",
   "myRecords.tabs.votes": "నా ఓట్లు",
   "myRecords.summary.farmerStatuses": "రైతు స్థితులు",
+  "myRecords.summary.oldFarmers": "పాత రైతులు",
+  "myRecords.summary.newFarmers": "కొత్త రైతులు",
   "myRecords.summary.blacklistEntries": "బ్లాక్లిస్ట్ ఎంట్రీలు",
   "myRecords.summary.votes": "నా ఓట్లు",
   "myRecords.statusGreen": "ఆకుపచ్చ",
@@ -469,7 +550,8 @@ const telugu: Dictionary = {
   "footer.terms": "వినియోగ నిబంధనలు",
   "footer.apTs": "ఆంధ్రప్రదేశ్ & తెలంగాణ",
   "footer.support": "డీలర్ల కోసం మద్దతు",
-  "footer.description": "ఆంధ్రప్రదేశ్ మరియు తెలంగాణ అంతటా పీడన మందుల డీలర్ల కోసం నమ్మకమైన రైతు క్రెడిట్ ప్రతిష్ఠా ప్లాట్‌ఫారమ్.",
+  "footer.description":
+    "ఆంధ్రప్రదేశ్ మరియు తెలంగాణ అంతటా పీడన మందుల డీలర్ల కోసం నమ్మకమైన రైతు క్రెడిట్ ప్రతిష్ఠా ప్లాట్‌ఫారమ్.",
   "login.dealerAccess": "డీలర్ యాక్సెస్",
   "login.dealerAccessCaps": "డీలర్ యాక్సెస్",
   "login.subtitle": "మీ రైతు సమాచారాన్ని తెలుసుకోండి",
@@ -495,11 +577,14 @@ const telugu: Dictionary = {
   "login.otpHint": "మీ మొబైల్ నంబర్‌కి పంపిన 6 అంకెల OTP ను నమోదు చేయండి.",
   "login.changeMobile": "మొబైల్ మార్చండి",
   "login.loggingIn": "లాగిన్ అవుతోంది...",
-  "login.invalidMobile": "దయచేసి చెల్లుబాటు అయ్యే 10 అంకెల మొబైల్ నంబర్‌ను నమోదు చేయండి.",
-  "login.invalidPassword": "కనీసం 4 అక్షరాల చెల్లుబాటు అయ్యే పాస్‌వర్డ్‌ను నమోదు చేయండి.",
+  "login.invalidMobile":
+    "దయచేసి చెల్లుబాటు అయ్యే 10 అంకెల మొబైల్ నంబర్‌ను నమోదు చేయండి.",
+  "login.invalidPassword":
+    "కనీసం 4 అక్షరాల చెల్లుబాటు అయ్యే పాస్‌వర్డ్‌ను నమోదు చేయండి.",
   "login.invalidOtp": "చెల్లుబాటు అయ్యే 6 అంకెల OTP ను నమోదు చేయండి.",
   "login.onlyDealer": "ఇక్కడ డీలర్లు మాత్రమే లాగిన్ చేయగలరు.",
-  "login.pending": "డీలర్ ఖాతా ఆమోదం కోసం పెండింగ్‌లో ఉంది. ఆమోదం తర్వాత SMS వస్తుంది.",
+  "login.pending":
+    "డీలర్ ఖాతా ఆమోదం కోసం పెండింగ్‌లో ఉంది. ఆమోదం తర్వాత SMS వస్తుంది.",
   "login.rejected": "డీలర్ ఖాతా తిరస్కరించబడింది.",
   "login.suspended": "డీలర్ ఖాతా నిలిపివేయబడింది.",
   "login.notApproved": "డీలర్ ఖాతా ఇంకా ఆమోదించబడలేదు.",
@@ -531,8 +616,10 @@ const telugu: Dictionary = {
   "register.identifierPlaceholder": "ఆధార్ లేదా GST నంబర్ నమోదు చేయండి",
   "register.searchingMandals": "మండలాలను శోధిస్తోంది...",
   "register.noMandal": "సరిపోలే మండలం కనబడలేదు.",
-  "register.invalidMobile": "దయచేసి చెల్లుబాటు అయ్యే 10 అంకెల మొబైల్ నంబర్‌ను నమోదు చేయండి.",
-  "register.invalidIdentifier": "దయచేసి చెల్లుబాటు అయ్యే ఆధార్ నంబర్ లేదా GST నంబర్‌ను నమోదు చేయండి.",
+  "register.invalidMobile":
+    "దయచేసి చెల్లుబాటు అయ్యే 10 అంకెల మొబైల్ నంబర్‌ను నమోదు చేయండి.",
+  "register.invalidIdentifier":
+    "దయచేసి చెల్లుబాటు అయ్యే ఆధార్ నంబర్ లేదా GST నంబర్‌ను నమోదు చేయండి.",
   "register.aadhaarHelp": "ఆధార్: 12 అంకెలు. GST: 15 అక్షరాల GSTIN.",
   "settings.title": "డీలర్ సెట్టింగ్‌లు మరియు గోప్యత",
   "settings.language": "భాష",
@@ -553,7 +640,8 @@ const telugu: Dictionary = {
   "settings.languageSavedEn": "భాష విజయవంతంగా నవీకరించబడింది",
   "settings.languageSavedTe": "భాష విజయవంతంగా నవీకరించబడింది",
   "settings.invalidPasswordShort": "కొత్త పాస్‌వర్డ్ కనీసం 4 అక్షరాలు ఉండాలి.",
-  "settings.passwordMismatch": "కొత్త పాస్‌వర్డ్ మరియు నిర్ధారణ పాస్‌వర్డ్ సరిపోలాలి.",
+  "settings.passwordMismatch":
+    "కొత్త పాస్‌వర్డ్ మరియు నిర్ధారణ పాస్‌వర్డ్ సరిపోలాలి.",
   "settings.passwordSaved": "పాస్‌వర్డ్ విజయవంతంగా నవీకరించబడింది",
   "settings.loadLanguageFailed": "భాషను నవీకరించలేకపోయాం",
   "settings.loadPasswordFailed": "పాస్‌వర్డ్‌ను నవీకరించలేకపోయాం",
@@ -575,7 +663,8 @@ const telugu: Dictionary = {
   "profile.updated": "ప్రొఫైల్ విజయవంతంగా నవీకరించబడింది",
   "profile.loadFailed": "ప్రొఫైల్‌ను లోడ్ చేయలేకపోయాం",
   "profile.updateFailed": "ప్రొఫైల్‌ను నవీకరించలేకపోయాం",
-  "profile.onlyApproved": "ఇక్కడ డాక్యుమెంట్ ఫీల్డ్‌లే చూపించబడతాయి. ఇది ఆమోదించబడిన డీలర్ల కోసం.",
+  "profile.onlyApproved":
+    "ఇక్కడ డాక్యుమెంట్ ఫీల్డ్‌లే చూపించబడతాయి. ఇది ఆమోదించబడిన డీలర్ల కోసం.",
   "common.close": "మూసివేయండి",
   "common.loading": "లోడ్ అవుతోంది...",
   "common.success": "విజయం",
@@ -591,14 +680,19 @@ const telugu: Dictionary = {
   "how.title": "ఇది ఎలా పనిచేస్తుంది",
   "how.subtitle": "డీలర్ నిర్ణయాలకు సరిపోయే మార్గదర్శక ప్రవాహం",
   "how.step1Title": "నమోదు చేసి ఆమోదం పొందండి",
-  "how.step1Text": "ఆమోదించబడిన కీలక డీలర్లు మాత్రమే ప్లాట్‌ఫారమ్‌ను ఉపయోగించగలరు.",
+  "how.step1Text":
+    "ఆమోదించబడిన కీలక డీలర్లు మాత్రమే ప్లాట్‌ఫారమ్‌ను ఉపయోగించగలరు.",
   "how.step2Title": "రైతు ప్రొఫైల్‌ను శోధించండి",
-  "how.step2Text": "రికార్డు కనుగొనడానికి Aadhaar, mobile, PAN, లేదా రైతు పేరును వాడండి.",
+  "how.step2Text":
+    "రికార్డు కనుగొనడానికి Aadhaar, mobile, PAN, లేదా రైతు పేరును వాడండి.",
   "how.step3Title": "స్టేటస్ మరియు blacklist‌ను సమీక్షించండి",
-  "how.step3Text": "GREEN, YELLOW, RED, మరియు blacklist హెచ్చరికలను కలిపి చూడండి.",
+  "how.step3Text":
+    "GREEN, YELLOW, RED, మరియు blacklist హెచ్చరికలను కలిపి చూడండి.",
   "how.step4Title": "రుణ నిర్ణయం తీసుకోండి",
-  "how.step4Text": "క్రెడిట్ నిబంధనలు నిర్ణయించడానికి రేప్యుటేషన్‌ను ఉపయోగించండి, అవసరమైతే ఓటు వేయండి.",
-  "how.footer": "టెక్నికల్ డాష్‌బోర్డుల కోసం కాదు, నమ్మక కేంద్రిత డీలర్ వర్క్‌ఫ్లోల కోసం రూపొందించబడింది.",
+  "how.step4Text":
+    "క్రెడిట్ నిబంధనలు నిర్ణయించడానికి రేప్యుటేషన్‌ను ఉపయోగించండి, అవసరమైతే ఓటు వేయండి.",
+  "how.footer":
+    "టెక్నికల్ డాష్‌బోర్డుల కోసం కాదు, నమ్మక కేంద్రిత డీలర్ వర్క్‌ఫ్లోల కోసం రూపొందించబడింది.",
   "preview.badge": "డీలర్ UI ప్రివ్యూ",
   "preview.title": "రైతును శోధించి ముఖ్యమైన వివరాలను సమీక్షించండి",
   "preview.teluguReady": "తెలుగు సిద్ధంగా ఉంది",
@@ -610,57 +704,88 @@ const telugu: Dictionary = {
   "preview.remarks": "గమనికలు",
   "preview.remarksValue": "పంట కోత తర్వాత చెల్లిస్తాడు",
   "preview.blacklistedTitle": "BLACKLISTED",
-  "preview.blacklistedBody": "ఇక్కడ ఒకటి లేదా అంతకంటే ఎక్కువ డీలర్లు నిర్ధారిత బాకీలు ఉన్నట్లు నివేదించారు. క్రెడిట్ ఇవ్వడానికి ముందు స్టేటస్ మరియు blacklist రెండింటినీ సమీక్షించండి.",
+  "preview.blacklistedBody":
+    "ఇక్కడ ఒకటి లేదా అంతకంటే ఎక్కువ డీలర్లు నిర్ధారిత బాకీలు ఉన్నట్లు నివేదించారు. క్రెడిట్ ఇవ్వడానికి ముందు స్టేటస్ మరియు blacklist రెండింటినీ సమీక్షించండి.",
   "preview.button": "పూర్తి శోధన ఫలితాన్ని చూడండి",
-  "privacy.intro": "KYFI అనేది Andhra Pradesh మరియు Telangana కోసం డీలర్‌లకు మాత్రమే ఉండే రైతు రేప్యుటేషన్ ప్లాట్‌ఫారమ్. ఈ పాలసీ ఉత్పత్తి స్పెసిఫికేషన్‌తో గోప్యత నియమాలను సరిపోలేలా ఉంచుతుంది.",
+  "privacy.intro":
+    "KYFI అనేది Andhra Pradesh మరియు Telangana కోసం డీలర్‌లకు మాత్రమే ఉండే రైతు రేప్యుటేషన్ ప్లాట్‌ఫారమ్. ఈ పాలసీ ఉత్పత్తి స్పెసిఫికేషన్‌తో గోప్యత నియమాలను సరిపోలేలా ఉంచుతుంది.",
   "privacy.whatWeCollect": "మేము ఏమి సేకరిస్తాము",
   "privacy.whatWeUse": "మేము దీన్ని ఎలా ఉపయోగిస్తాము",
   "privacy.howProtect": "మేము దీన్ని ఎలా రక్షిస్తాము",
   "privacy.responsibilities": "మీ బాధ్యతలు",
   "privacy.important": "ముఖ్యం",
-  "privacy.importantBody": "లాంచ్‌కు ముందు privacy మరియు terms pages ప్రచురించాలి; సున్నితమైన రైతు సమాచారం రక్షించబడాలి మరియు approved dealers మరియు admins‌కే ప్రాప్యత ఉండాలి.",
-  "privacy.collectDealer": "లాగిన్ మరియు ఆమోదం కోసం అవసరమైన dealer account వివరాలు.",
-  "privacy.collectRecords": "రిజిస్టర్ అయిన డీలర్లు నమోదు చేసిన రైతు రికార్డులు.",
-  "privacy.collectBlacklist": "ప్లాట్‌ఫారమ్ నిర్వహించే blacklist entries మరియు status history.",
-  "privacy.collectSensitive": "Aadhaar వంటి సున్నితమైన గుర్తింపులు, అవసరమైన చోట UI లో మాస్కింగ్‌తో.",
-  "privacy.useSearch": "ఆమోదించబడిన డీలర్లకు రైతు రికార్డులను శోధించి status చూడటానికి.",
-  "privacy.useBlacklist": "Mandal మరియు Village ద్వారా blacklist browsing కు సహాయపడటానికి.",
-  "privacy.useSignals": "GREEN, YELLOW, RED, మరియు BLACKLISTED సూచికలను చూపించడానికి.",
-  "privacy.useAccess": "రికార్డు ప్రాప్యతను approved dealer మరియు admin ఖాతాలకు మాత్రమే పరిమితం చేయడానికి.",
-  "privacy.protectApproved": "రిజిస్టర్ అయిన మరియు admin-ఆమోదించిన డీలర్లకే రైతు రికార్డులు చూపించాలి.",
+  "privacy.importantBody":
+    "లాంచ్‌కు ముందు privacy మరియు terms pages ప్రచురించాలి; సున్నితమైన రైతు సమాచారం రక్షించబడాలి మరియు approved dealers మరియు admins‌కే ప్రాప్యత ఉండాలి.",
+  "privacy.collectDealer":
+    "లాగిన్ మరియు ఆమోదం కోసం అవసరమైన dealer account వివరాలు.",
+  "privacy.collectRecords":
+    "రిజిస్టర్ అయిన డీలర్లు నమోదు చేసిన రైతు రికార్డులు.",
+  "privacy.collectBlacklist":
+    "ప్లాట్‌ఫారమ్ నిర్వహించే blacklist entries మరియు status history.",
+  "privacy.collectSensitive":
+    "Aadhaar వంటి సున్నితమైన గుర్తింపులు, అవసరమైన చోట UI లో మాస్కింగ్‌తో.",
+  "privacy.useSearch":
+    "ఆమోదించబడిన డీలర్లకు రైతు రికార్డులను శోధించి status చూడటానికి.",
+  "privacy.useBlacklist":
+    "Mandal మరియు Village ద్వారా blacklist browsing కు సహాయపడటానికి.",
+  "privacy.useSignals":
+    "GREEN, YELLOW, RED, మరియు BLACKLISTED సూచికలను చూపించడానికి.",
+  "privacy.useAccess":
+    "రికార్డు ప్రాప్యతను approved dealer మరియు admin ఖాతాలకు మాత్రమే పరిమితం చేయడానికి.",
+  "privacy.protectApproved":
+    "రిజిస్టర్ అయిన మరియు admin-ఆమోదించిన డీలర్లకే రైతు రికార్డులు చూపించాలి.",
   "privacy.protectMasked": "Aadhaar సంఖ్యలు పూర్తిగా చూపించకూడదు.",
-  "privacy.protectAnonymous": "రికార్డు ఉన్నట్లు డీలర్లు చూడగలరు, కానీ దాన్ని పేరు సహా ఏ డీలర్ జోడించాడో చూడలేరు.",
-  "privacy.protectIndia": "స్పెసిఫికేషన్ ప్రకారం డేటాను భారతదేశ సర్వర్లలో ఉంచాలి.",
-  "privacy.roleUse": "డీలర్ వైపు క్రెడిట్ రేప్యుటేషన్ తనిఖీల కోసం మాత్రమే KYFI ని ఉపయోగించండి.",
+  "privacy.protectAnonymous":
+    "రికార్డు ఉన్నట్లు డీలర్లు చూడగలరు, కానీ దాన్ని పేరు సహా ఏ డీలర్ జోడించాడో చూడలేరు.",
+  "privacy.protectIndia":
+    "స్పెసిఫికేషన్ ప్రకారం డేటాను భారతదేశ సర్వర్లలో ఉంచాలి.",
+  "privacy.roleUse":
+    "డీలర్ వైపు క్రెడిట్ రేప్యుటేషన్ తనిఖీల కోసం మాత్రమే KYFI ని ఉపయోగించండి.",
   "privacy.roleSecure": "మీ ఖాతా వివరాలను సురక్షితంగా ఉంచండి.",
-  "privacy.roleFollow": "KYFI నిర్వచించిన ఆమోదం మరియు ప్రాప్యత నియమాలను పాటించండి.",
-  "privacy.roleNoPayments": "KYFI ను చెల్లింపు, రుణం లేదా కలెక్షన్ టూల్‌గా భావించవద్దు.",
-  "terms.intro": "ఈ నియమాలు KYFI ఉత్పత్తి స్పెసిఫికేషన్‌ను ప్రతిబింబిస్తాయి మరియు ప్లాట్‌ఫారమ్ యొక్క అనుమతించిన ఉపయోగాన్ని నిర్వచిస్తాయి.",
+  "privacy.roleFollow":
+    "KYFI నిర్వచించిన ఆమోదం మరియు ప్రాప్యత నియమాలను పాటించండి.",
+  "privacy.roleNoPayments":
+    "KYFI ను చెల్లింపు, రుణం లేదా కలెక్షన్ టూల్‌గా భావించవద్దు.",
+  "terms.intro":
+    "ఈ నియమాలు KYFI ఉత్పత్తి స్పెసిఫికేషన్‌ను ప్రతిబింబిస్తాయి మరియు ప్లాట్‌ఫారమ్ యొక్క అనుమతించిన ఉపయోగాన్ని నిర్వచిస్తాయి.",
   "terms.whoCanUse": "KYFI ను ఎవరు ఉపయోగించగలరు",
   "terms.howUse": "ప్లాట్‌ఫారమ్‌ను ఎలా ఉపయోగించాలి",
   "terms.accountRules": "ఖాతా నియమాలు",
   "terms.platformLimits": "ప్లాట్‌ఫారమ్ పరిమితులు",
   "terms.reminder": "గుర్తుంచుకోండి",
-  "terms.reminderBody": "KYFI సున్నితమైన రైతు డేటాను రక్షించాలి, Aadhaar ను మాస్క్ చేసిన రూపంలో మాత్రమే చూపించాలి, మరియు రికార్డు ప్రాప్యతను approved dealer మరియు admin ఖాతాలకు మాత్రమే పరిమితం చేయాలి.",
-  "terms.whoDealer": "రిజిస్టర్ అయిన మరియు admin-ఆమోదించిన డీలర్లకే dealer tools ఉపయోగించగలరు.",
-  "terms.whoAdmin": "మోడరేషన్, ఆమోదం, మరియు రికార్డు నిర్వహణ కోసం admin ప్రాప్యత ఉంటుంది.",
+  "terms.reminderBody":
+    "KYFI సున్నితమైన రైతు డేటాను రక్షించాలి, Aadhaar ను మాస్క్ చేసిన రూపంలో మాత్రమే చూపించాలి, మరియు రికార్డు ప్రాప్యతను approved dealer మరియు admin ఖాతాలకు మాత్రమే పరిమితం చేయాలి.",
+  "terms.whoDealer":
+    "రిజిస్టర్ అయిన మరియు admin-ఆమోదించిన డీలర్లకే dealer tools ఉపయోగించగలరు.",
+  "terms.whoAdmin":
+    "మోడరేషన్, ఆమోదం, మరియు రికార్డు నిర్వహణ కోసం admin ప్రాప్యత ఉంటుంది.",
   "terms.whoFarmer": "V1 లో farmer access భాగం కాదు.",
-  "terms.useSearch": "dealer-side reputation checks కోసం మాత్రమే farmer search, status, మరియు blacklist features ను ఉపయోగించండి.",
-  "terms.useLookup": "workflow మద్దతు ఇస్తే Aadhaar, PAN, mobile number, లేదా పేరుతో శోధించండి.",
-  "terms.useSeparate": "blacklist ను GREEN, YELLOW, RED status నుండి వేరు గా పరిగణించండి.",
-  "terms.useDuplicate": "రికార్డు ఇప్పటికే ఉన్నప్పుడు duplicate records సృష్టించవద్దు.",
-  "terms.accountSecure": "మీ password, OTP, మరియు account session ను సురక్షితంగా ఉంచండి.",
-  "terms.accountRespect": "ఆమోదం, తిరస్కరణ, మరియు suspension నిర్ణయాలను గౌరవించండి.",
-  "terms.accountBypass": "login లేదా access controls ను దాటవేయడానికి ప్రయత్నించవద్దు.",
+  "terms.useSearch":
+    "dealer-side reputation checks కోసం మాత్రమే farmer search, status, మరియు blacklist features ను ఉపయోగించండి.",
+  "terms.useLookup":
+    "workflow మద్దతు ఇస్తే Aadhaar, PAN, mobile number, లేదా పేరుతో శోధించండి.",
+  "terms.useSeparate":
+    "blacklist ను GREEN, YELLOW, RED status నుండి వేరు గా పరిగణించండి.",
+  "terms.useDuplicate":
+    "రికార్డు ఇప్పటికే ఉన్నప్పుడు duplicate records సృష్టించవద్దు.",
+  "terms.accountSecure":
+    "మీ password, OTP, మరియు account session ను సురక్షితంగా ఉంచండి.",
+  "terms.accountRespect":
+    "ఆమోదం, తిరస్కరణ, మరియు suspension నిర్ణయాలను గౌరవించండి.",
+  "terms.accountBypass":
+    "login లేదా access controls ను దాటవేయడానికి ప్రయత్నించవద్దు.",
   "terms.accountShare": "అనధికారిత వినియోగదారులతో మీ ఖాతాను పంచుకోవద్దు.",
-  "terms.limitLookup": "KYFI ఒక reputation lookup tool మాత్రమే, lending platform కాదు.",
-  "terms.limitPayments": "Payment collection లేదా credit tracking పరిధిలో లేదు.",
+  "terms.limitLookup":
+    "KYFI ఒక reputation lookup tool మాత్రమే, lending platform కాదు.",
+  "terms.limitPayments":
+    "Payment collection లేదా credit tracking పరిధిలో లేదు.",
   "terms.limitMessaging": "V1 లో dealer-to-dealer messaging అవసరం లేదు.",
-  "terms.limitRegion": "V1 లో ప్లాట్‌ఫారమ్ Andhra Pradesh మరియు Telangana కు మాత్రమే పరిమితం.",
+  "terms.limitRegion":
+    "V1 లో ప్లాట్‌ఫారమ్ Andhra Pradesh మరియు Telangana కు మాత్రమే పరిమితం.",
   "hero.kicker": "నమ్మదగిన డీలర్ ఆధారిత క్రెడిట్ ప్రతిష్ట",
   "hero.title": "రుణం ఇవ్వడానికి ముందు రైతు క్రెడిట్ ప్రతిష్టను చూడండి",
   "hero.subtitle":
-    "పంచుకున్న డీలర్ ఆధారిత ప్రతిష్ట డేటాబేస్‌తో నమ్మదగిన, ఆలస్య చెల్లింపులు ఉన్న, మరియు ప్రమాదకరమైన రైతులను KYFI గుర్తించడంలో సహాయపడుతుంది.",
+    "పంచుకున్న డీలర్ ఆధారిత ప్రతిష్ట డేటాబేస్‌తో నమ్మదగిన, ఆలస్య చెల్లింపులు ఉన్న, మరియు ప్రమాదకరమైన రైతులను KYFI త్వరగా గుర్తించడంలో సహాయపడుతుంది. రుణం ఇవ్వడానికి ముందు వేగంగా, సురక్షితంగా, మరియు ఒకే విధంగా నిర్ణయం తీసుకోవడానికి ఇది ఉపయోగపడుతుంది.",
   "hero.ctaSearch": "రైతు స్టేటస్ శోధించండి",
   "hero.ctaAdd": "రైతు స్టేటస్ జోడించండి",
   "hero.dealerAccess": "డీలర్ యాక్సెస్ మాత్రమే",
@@ -685,29 +810,39 @@ const telugu: Dictionary = {
   "search.farmerNamePlaceholder": "రైతు పేరును నమోదు చేయండి",
   "search.searchingMandals": "మండలాలను వెతుకుతోంది...",
   "search.noMandal": "సరిపోలే మండలం కనబడలేదు.",
-  "search.fillAtLeastOne": "మండలం, గ్రామం లేదా రైతు పేరు లో కనీసం ఒకటి నమోదు చేయండి.",
+  "search.fillAtLeastOne":
+    "మండలం, గ్రామం లేదా రైతు పేరు లో కనీసం ఒకటి నమోదు చేయండి.",
   "search.voteApplied": "మీ ఓటు వర్తింపజేయబడింది.",
   "search.voteNow": "ఇప్పుడు ఓటు వేయండి",
   "search.voteHint": "ఓటు వేయడానికి GREEN, YELLOW లేదా RED ఎంచుకోండి.",
   "search.voteChangeHint": "మరో రంగును ఎంచుకుని మీ ఓటును మార్చవచ్చు.",
   "search.yourVote": "మీ ఓటు",
-  "search.legendGreen": "క్రెడిట్ ఇవ్వడానికి సురక్షితం",
-  "search.legendYellow": "జాగ్రత్తగా కొనసాగండి",
-  "search.legendRed": "క్రెడిట్ ఇవ్వకండి",
+  "search.legendGreen": "చెల్లించారు",
+  "search.legendYellow": "సగం చెల్లింపు",
+  "search.legendRed": "చెల్లించలేదు",
   "search.legendBlack": "ప్రత్యేక చెల్లించని-బాకీ హెచ్చరిక",
   "search.searchTerm": "శోధన పదం",
   "search.placeholder": "ఆధార్, మొబైల్ నంబర్, లేదా రైతు పేరు",
   "search.searchButton": "శోధించండి",
   "search.results": "శోధన ఫలితాలు",
   "search.found": "కనుగొనబడ్డాయి",
-  "search.empty": "శోధన ఫలితాలు ఇక్కడ కనిపిస్తాయి",
-  "search.emptyHint": "సంబంధిత రైతులను చూడటానికి ఆధార్, మొబైల్ నంబర్ లేదా రైతు పేరుతో శోధించండి.",
+  "search.empty": "రైతు status ఫలితాలు ఇక్కడ కనిపిస్తాయి",
+  "search.emptyHint":
+    "సరిపోలే రైతు status రికార్డులను చూడటానికి మండలం, గ్రామం లేదా రైతు పేరుతో శోధించండి.",
   "search.loading": "శోధిస్తోంది...",
-  "search.enterTerm": "ఆధార్ నంబర్, మొబైల్ నంబర్, లేదా రైతు పేరును నమోదు చేయండి.",
+  "search.enterTerm":
+    "ఆధార్ నంబర్, మొబైల్ నంబర్, లేదా రైతు పేరును నమోదు చేయండి.",
   "search.noRecordFound": "రికార్డు కనబడలేదు",
   "search.unable": "రైతు స్టేటస్‌ను శోధించలేకపోయాం",
   "search.maskedAadhaar": "మాస్క్ చేసిన ఆధార్",
   "search.votes": "ఓట్లు",
+  "search.increment": "పెంచు",
+  "search.decrement": "తగ్గించు",
+  "search.statusNotVoted": "ఓటు వేయలేదు",
+  "search.statusVoted": "ఓటు వేశారు",
+  "search.statusSupporter": "మద్దతుదారు",
+  "search.farmerTypeOld": "పాత రైతు",
+  "search.farmerTypeNew": "కొత్త రైతు",
   "search.status": "స్టేటస్",
   "search.district": "జిల్లా",
   "search.location": "ప్రాంతం",
@@ -721,7 +856,8 @@ const telugu: Dictionary = {
   "search.live": "లైవ్ శోధన",
   "search.masked": "మాస్క్ చేసిన ఆధార్",
   "search.preview": "శోధన ఫలితాలు ఇక్కడ కనిపిస్తాయి",
-  "search.pressEnter": "రైతు స్టేటస్‌ను చూసేందుకు శోధన ఫీల్డ్‌లో Enter నొక్కండి.",
+  "search.pressEnter":
+    "రైతు స్టేటస్‌ను చూసేందుకు శోధన ఫీల్డ్‌లో Enter నొక్కండి.",
   "blacklist.title": "ఆమోదించబడిన చెల్లించని-బాకీ రికార్డులను సమీక్షించండి",
   "blacklist.records": "బ్లాక్‌లిస్ట్‌లో ఉన్న రికార్డులు",
   "blacklist.searchButton": "బ్లాక్‌లిస్ట్ శోధించండి",
@@ -760,11 +896,9 @@ const telugu: Dictionary = {
   "header.profileMenu": "ప్రొఫైల్ మెనూ",
   "menu.profileLabel": "ప్రొఫైల్",
 };
-
 export function getKyfiDictionary(language: KyfiLanguage) {
   return language === "te" ? telugu : english;
 }
-
 export function translate(language: KyfiLanguage, key: string) {
   const dictionary = getKyfiDictionary(language);
   return dictionary[key] ?? english[key] ?? key;

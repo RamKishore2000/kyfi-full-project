@@ -1,103 +1,123 @@
 "use client";
-
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Fingerprint, Loader2, MapPin, Phone, Search, ShieldAlert } from "lucide-react";
+import {
+  ChevronDown,
+  Plus,
+  Fingerprint,
+  Loader2,
+  MapPin,
+  Phone,
+  Search,
+  X,
+  ShieldAlert,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
-import { fetchMandals, type MandalRecord } from "@/lib/api/locations";
 import {
-  searchFarmerStatuses,
-} from "@/lib/api/farmer-status-search";
-import { voteFarmerStatus, type FarmerStatusColor } from "@/lib/api/farmer-status";
+  createMandal,
+  createVillage,
+  fetchVillagesByMandal,
+  searchDistricts,
+  searchMandals,
+  searchVillages,
+  type DistrictSearchResult,
+  type MandalSearchResult,
+  type VillageSearchResult,
+} from "@/lib/api/locations";
+import { searchFarmerStatuses } from "@/lib/api/farmer-status-search";
+import {
+  decrementFarmerStatusCount,
+  incrementFarmerStatusCount,
+  voteFarmerStatus,
+  type FarmerStatusColor,
+} from "@/lib/api/farmer-status";
 import type { FarmerStatusRecord } from "@/lib/api/farmer-status";
-
-type GooglePlace = {
-  formatted_address?: string;
-  address_components?: Array<{
-    long_name: string;
-    short_name: string;
-    types: string[];
-  }>;
-  name?: string;
-};
-
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
-
-const voteOptions: Array<{
-  value: FarmerStatusColor;
-  label: string;
-  tone: "green" | "yellow" | "red";
-}> = [
-  { value: "GREEN", label: "Green", tone: "green" },
-  { value: "YELLOW", label: "Yellow", tone: "yellow" },
-  { value: "RED", label: "Red", tone: "red" },
-];
-
-const getComponent = (components: GooglePlace["address_components"], names: string[]) => {
-  if (!components) return "";
-
-  for (const name of names) {
-    const component = components.find((entry) => entry.types.includes(name));
-    if (component?.long_name) {
-      return component.long_name;
-    }
-  }
-
-  return "";
-};
-
-const buildAutocompleteLabel = (place: GooglePlace) => place.formatted_address || place.name || "";
-
-const formatMandalSuggestion = (mandal: MandalRecord) =>
-  `${mandal.mandalName} mandal, ${mandal.districtName} district, ${mandal.stateName}`;
-
-const loadGooglePlaces = (apiKey: string) =>
-  new Promise<void>((resolve, reject) => {
-    if (typeof window === "undefined") {
-      resolve();
-      return;
-    }
-
-    if (window.google?.maps?.places) {
-      resolve();
-      return;
-    }
-
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[data-kyfi-google-places="true"]',
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener("load", () => resolve(), { once: true });
-      existingScript.addEventListener("error", () => reject(new Error("Google Maps failed to load")), {
-        once: true,
-      });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.kyfiGooglePlaces = "true";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Google Maps failed to load"));
-    document.head.appendChild(script);
-  });
-
+const formatMandalSuggestion = (mandal: MandalSearchResult) =>
+  `${mandal.name} mandal, ${mandal.districtName || "-"} district, ${mandal.stateName || "-"}`;
 function maskAadhaar(value: string | null | undefined) {
   const digits = String(value || "").replace(/\D/g, "");
-  return digits.length >= 4 ? `XXXX XXXX ${digits.slice(-4)}` : "XXXX XXXX XXXX";
+  return digits.length >= 4
+    ? `XXXX XXXX ${digits.slice(-4)}`
+    : "XXXX XXXX XXXX";
 }
-
+function getStatusBadge({
+  farmer,
+  t,
+}: {
+  farmer: FarmerStatusRecord;
+  t: ReturnType<typeof useKyfiLanguage>["t"];
+}) {
+  if (farmer.farmerType === "NEW") {
+    const activeColor = String(
+      farmer.currentDealerVoteColor || "",
+    ).toUpperCase();
+    if (!activeColor) {
+      return {
+        label: t("search.statusNotVoted"),
+        className:
+          "rounded-full border-slate-200 bg-slate-100 px-3 py-1.5 text-slate-700",
+      };
+    }
+    if (activeColor === "GREEN") {
+      return {
+        label: "GREEN",
+        className:
+          "rounded-full border-emerald-200 bg-emerald-100 px-3 py-1.5 text-emerald-700",
+      };
+    }
+    if (activeColor === "YELLOW") {
+      return {
+        label: "YELLOW",
+        className:
+          "rounded-full border-yellow-200 bg-yellow-50 px-3 py-1.5 text-yellow-700",
+      };
+    }
+    if (activeColor === "RED") {
+      return {
+        label: "RED",
+        className:
+          "rounded-full border-red-200 bg-red-100 px-3 py-1.5 text-red-700",
+      };
+    }
+  }
+  const statusColor = String(farmer.statusColor || "").toUpperCase();
+  if (statusColor === "GREEN") {
+    return {
+      label: "GREEN",
+      className:
+        "rounded-full border-emerald-200 bg-emerald-100 px-3 py-1.5 text-emerald-700",
+    };
+  }
+  if (statusColor === "YELLOW") {
+    return {
+      label: "YELLOW",
+      className:
+        "rounded-full border-yellow-200 bg-yellow-50 px-3 py-1.5 text-yellow-700",
+    };
+  }
+  if (statusColor === "RED") {
+    return {
+      label: "RED",
+      className:
+        "rounded-full border-red-200 bg-red-100 px-3 py-1.5 text-red-700",
+    };
+  }
+  return {
+    label: t("search.statusNotVoted"),
+    className:
+      "rounded-full border-slate-200 bg-slate-100 px-3 py-1.5 text-slate-700",
+  };
+}
 function formatDate(date: Date, language: "en" | "te") {
   return new Intl.DateTimeFormat(language === "te" ? "te-IN" : "en-GB", {
     day: "2-digit",
@@ -105,321 +125,552 @@ function formatDate(date: Date, language: "en" | "te") {
     year: "numeric",
   }).format(date);
 }
-
-function VoteCheckbox({
-  checked,
-  disabled,
-  tone,
-  label,
-  onClick,
-}: {
-  checked: boolean;
-  disabled: boolean;
-  tone: "green" | "yellow" | "red";
-  label: string;
-  onClick: () => void;
-}) {
-  const textTone =
-    tone === "green"
-      ? checked
-        ? "text-emerald-900"
-        : "text-emerald-800"
-      : tone === "yellow"
-        ? checked
-          ? "text-yellow-900"
-          : "text-yellow-800"
-        : checked
-          ? "text-red-900"
-          : "text-red-800";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={[
-        "inline-flex w-fit items-center justify-start gap-4 rounded-full px-4 py-2 text-left transition",
-        textTone,
-        disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer",
-      ].join(" ")}
-    >
-      <div className="min-w-0">
-        <p className="font-manrope text-[0.98rem] font-medium leading-none">{label}</p>
-      </div>
-
-      <span
-        className={[
-          "ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2",
-          checked ? "bg-current" : "bg-transparent",
-          tone === "green"
-            ? "border-emerald-500 text-emerald-500"
-            : tone === "yellow"
-              ? "border-yellow-500 text-yellow-500"
-              : "border-red-500 text-red-500",
-        ].join(" ")}
-      >
-        {checked ? (
-          <svg
-            viewBox="0 0 20 20"
-            fill="none"
-            className="h-3.5 w-3.5 text-white"
-            aria-hidden="true"
-          >
-            <path
-              d="M4 10.5L8 14.5L16 6"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : null}
-      </span>
-    </button>
-  );
-}
-
 function FarmerStatusCard({
   farmer,
   language,
   t,
-  votingStatusId,
+  actionStatusId,
   onVote,
+  onIncrement,
+  onDecrement,
 }: {
   farmer: FarmerStatusRecord;
   language: "en" | "te";
   t: ReturnType<typeof useKyfiLanguage>["t"];
-  votingStatusId: number | null;
+  actionStatusId: number | null;
   onVote: (statusId: number, voteColor: FarmerStatusColor) => void;
+  onIncrement: (statusId: number) => void;
+  onDecrement: (statusId: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const isVoting = votingStatusId === farmer.id;
-  const articleClasses = farmer.blacklisted
-    ? "overflow-hidden border border-rose-200/80 bg-[linear-gradient(180deg,rgba(255,241,242,0.98),rgba(255,228,230,0.95))] shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(15,23,42,0.1)]"
-    : "overflow-hidden border border-slate-200/70 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(15,23,42,0.1)]";
-
-    return (
-    <article className={articleClasses}>
-      <div className={["px-5 py-5", farmer.blacklisted ? "bg-transparent" : "bg-white"].join(" ")}>
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div className="min-w-0 space-y-4 xl:flex-1">
-              <div className="flex flex-wrap items-center gap-5">
-                <p className="font-manrope text-[1.05rem] font-extrabold tracking-[-0.02em] text-slate-900">
-                  {farmer.farmerName}
-                </p>
-                {farmer.blacklisted ? <Badge variant="destructive">{t("search.blacklisted")}</Badge> : null}
-                <div className="flex flex-wrap items-center gap-4">
-                  <Badge
-                    variant="outline"
-                  className="rounded-full border-emerald-200 bg-emerald-100 px-3 py-1.5 text-emerald-700"
-                >
-                  Green: {farmer.voteBreakdown?.GREEN ?? 0}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-yellow-200 bg-yellow-50 px-3 py-1.5 text-yellow-700"
-                >
-                  Yellow: {farmer.voteBreakdown?.YELLOW ?? 0}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-red-200 bg-red-100 px-3 py-1.5 text-red-700"
-                >
-                  Red: {farmer.voteBreakdown?.RED ?? 0}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-12 gap-y-4 text-sm text-slate-600 xl:flex-nowrap">
-              <MetaLine icon={MapPin} text={`${farmer.village}, ${farmer.mandal}`} />
-              <MetaLine icon={Phone} text={farmer.mobileNumber || "-"} />
-              <MetaLine icon={Fingerprint} text={maskAadhaar(farmer.aadhaar)} />
-              <MetaLine label={t("search.votes")} text={String(farmer.voteCount)} compact />
-              <VoteCheckbox
-                checked={farmer.currentDealerVoteColor === "GREEN"}
-                disabled={isVoting}
-                tone="green"
-                label="Green"
-                onClick={() => void onVote(farmer.id, "GREEN")}
-              />
-              <VoteCheckbox
-                checked={farmer.currentDealerVoteColor === "YELLOW"}
-                disabled={isVoting}
-                tone="yellow"
-                label="Yellow"
-                onClick={() => void onVote(farmer.id, "YELLOW")}
-              />
-              <VoteCheckbox
-                checked={farmer.currentDealerVoteColor === "RED"}
-                disabled={isVoting}
-                tone="red"
-                label="Red"
-                onClick={() => void onVote(farmer.id, "RED")}
-              />
+  const isActing = actionStatusId === farmer.id;
+  const canIncrement = farmer.canIncrement !== false;
+  const canDecrement = farmer.canDecrement === true;
+  const canManageStatus = farmer.canManageStatus !== false;
+  const statusBadge = getStatusBadge({ farmer, t });
+  const activeVoteColor = farmer.currentDealerVoteColor ?? null;
+  return (
+    <article className="border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+      <div className="px-4 py-4 sm:px-6 sm:py-5">
+        {" "}
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          {" "}
+          <div className="min-w-0 flex-1">
+            {" "}
+            <div className="flex flex-wrap items-center gap-2">
+              {" "}
+              <p className="font-manrope text-[1.05rem] font-extrabold tracking-[-0.04em] text-slate-950 sm:text-[1.15rem]">
+                {" "}
+                {farmer.farmerName}{" "}
+              </p>{" "}
+              <Badge
+                variant={farmer.farmerType === "NEW" ? "secondary" : "outline"}
+                className="rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]"
+              >
+                {" "}
+                {farmer.farmerType === "NEW"
+                  ? t("search.farmerTypeNew")
+                  : t("search.farmerTypeOld")}{" "}
+              </Badge>{" "}
+              {/*              {farmer.blacklisted ? (                <Badge                  variant="destructive"                  className="rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]"                >                  {t("search.blacklisted")}                </Badge>              ) : null}              */}{" "}
+              <Badge
+                variant="outline"
+                className={[
+                  statusBadge.className,
+                  "rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]",
+                ].join(" ")}
+              >
+                {" "}
+                {statusBadge.label}{" "}
+              </Badge>{" "}
+            </div>{" "}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
+              {" "}
+              <InfoCard
+                icon={MapPin}
+                label={t("search.location")}
+                value={`${farmer.village}, ${farmer.mandal}`}
+              />{" "}
+              <InfoCard
+                icon={Phone}
+                label={t("myRecords.mobile")}
+                value={farmer.mobileNumber || "-"}
+              />{" "}
+              <InfoCard
+                icon={Fingerprint}
+                label={t("search.maskedAadhaar")}
+                value={maskAadhaar(farmer.aadhaar)}
+              />{" "}
+              <div className="flex h-full min-h-[72px] w-full items-stretch">
+                {" "}
+                {farmer.farmerType === "NEW" ? (
+                  <div className="grid h-full w-full grid-cols-3 border border-slate-200 bg-white">
+                    {" "}
+                    {(["GREEN", "YELLOW", "RED"] as FarmerStatusColor[]).map(
+                      (voteColor) => {
+                        const isActive = activeVoteColor === voteColor;
+                        const colorClass =
+                          voteColor === "GREEN"
+                            ? isActive
+                              ? "bg-emerald-600 text-white shadow-[0_8px_18px_rgba(16,185,129,0.22)]"
+                              : "text-emerald-800 hover:bg-emerald-50"
+                            : voteColor === "YELLOW"
+                              ? isActive
+                                ? "bg-amber-500 text-white shadow-[0_8px_18px_rgba(245,158,11,0.22)]"
+                                : "text-amber-800 hover:bg-amber-50"
+                              : isActive
+                                ? "bg-rose-600 text-white shadow-[0_8px_18px_rgba(239,68,68,0.22)]"
+                                : "text-rose-800 hover:bg-rose-50";
+                        return (
+                          <button
+                            key={voteColor}
+                            type="button"
+                            onClick={() => onVote(farmer.id, voteColor)}
+                            disabled={isActing || !canManageStatus}
+                            className={[
+                              "flex h-full min-h-[40px] items-center justify-center border-r border-slate-200 px-2 py-2 text-[0.72rem] font-bold tracking-[0.05em] transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-40",
+                              colorClass,
+                            ].join(" ")}
+                            aria-pressed={isActive}
+                            aria-label={voteColor}
+                          >
+                            {voteColor}
+                          </button>
+                        );
+                      },
+                    )}{" "}
+                  </div>
+                ) : (
+                  <div className="inline-flex h-full min-h-[72px] w-full items-center gap-2.5 border border-slate-200 bg-white px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => onDecrement(farmer.id)}
+                      disabled={isActing || !canDecrement}
+                      className="inline-flex h-10 w-10 items-center justify-center border border-rose-200 text-base font-bold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={t("search.decrement")}
+                    >
+                      -
+                    </button>{" "}
+                    <div className="min-w-[4rem] flex-1 text-center">
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                        {t("search.votes")}
+                      </p>{" "}
+                      <p className="text-[1rem] font-extrabold text-slate-950">
+                        {farmer.voteCount}
+                      </p>{" "}
+                    </div>{" "}
+                    <button
+                      type="button"
+                      onClick={() => onIncrement(farmer.id)}
+                      disabled={isActing || !canIncrement}
+                      className="inline-flex h-10 w-10 items-center justify-center border border-emerald-200 text-base font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label={t("search.increment")}
+                    >
+                      +
+                    </button>{" "}
+                  </div>
+                )}{" "}
+              </div>{" "}
+            </div>{" "}
+            <div className="flex shrink-0 items-start justify-end xl:pt-1">
+              {" "}
               <button
-              type="button"
-              onClick={() => setExpanded((current) => !current)}
-              className="inline-flex items-center justify-center self-end rounded-full border border-slate-200 bg-white p-2 text-sm font-semibold text-slate-700 transition hover:border-[rgb(4,120,87)] hover:text-[rgb(4,120,87)]"
-              aria-expanded={expanded}
-              aria-label={expanded ? "Hide details" : "Show details"}
-            >
-              <ChevronDown className={["h-4 w-4 shrink-0 transition", expanded ? "rotate-180" : ""].join(" ")} />
-            </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4 xl:w-[520px] xl:items-end">
-            <div className="flex w-full flex-wrap items-center justify-end gap-6">
-            </div>
-
-          </div>
+                type="button"
+                onClick={() => setExpanded((current) => !current)}
+                className="inline-flex items-center justify-center border border-slate-200 bg-slate-50 p-2.5 text-sm font-semibold text-slate-700 transition hover:border-[rgb(4,120,87)] hover:text-[rgb(4,120,87)]"
+                aria-expanded={expanded}
+                aria-label={expanded ? "Hide details" : "Show details"}
+              >
+                <ChevronDown
+                  className={[
+                    "h-4 w-4 shrink-0 transition",
+                    expanded ? "rotate-180" : "",
+                  ].join(" ")}
+                />
+              </button>{" "}
+            </div>{" "}
+          </div>{" "}
         </div>
-
       </div>
-
       {expanded ? (
-        <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-5">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MiniInfo label={t("search.district")} value={farmer.district} />
-            <MiniInfo label={t("search.location")} value={`${farmer.village}, ${farmer.mandal}`} />
-            <MiniInfo label={t("search.dateAdded")} value={formatDate(new Date(farmer.createdAt), language)} />
+            <MiniInfo
+              label={t("search.location")}
+              value={`${farmer.village}, ${farmer.mandal}`}
+            />
+            <MiniInfo
+              label={t("search.remarks")}
+              value={farmer.remarks || "-"}
+            />
+            <MiniInfo
+              label={t("search.maskedAadhaar")}
+              value={maskAadhaar(farmer.aadhaar)}
+            />
           </div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <MiniInfo label={t("search.remarks")} value={farmer.remarks || "-"} />
-            <MiniInfo label={t("search.maskedAadhaar")} value={maskAadhaar(farmer.aadhaar)} />
-          </div>
-
-          {farmer.blacklisted ? (
-            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-900">
-                {t("search.blacklisted")}
-              </p>
-              <p className="mt-2 text-sm leading-7 text-rose-800">
-                {farmer.blacklistReason || t("search.blacklistWarningAttached")}
-              </p>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </article>
   );
 }
-
 export function SearchFarmerPreview() {
   const { language, t } = useKyfiLanguage();
-  const villageInputRef = useRef<HTMLInputElement | null>(null);
-  const villageAutocompleteRef = useRef<any>(null);
   const mandalInputRef = useRef<HTMLInputElement | null>(null);
-
+  const villageInputRef = useRef<HTMLInputElement | null>(null);
+  const mandalDropdownRef = useRef<HTMLDivElement | null>(null);
+  const villageDropdownRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState({
     mandal: "",
+    mandalId: null as number | null,
     village: "",
+    villageId: null as number | null,
     farmerName: "",
   });
-  const [mandalOptions, setMandalOptions] = useState<MandalRecord[]>([]);
+  const [mandalOptions, setMandalOptions] = useState<MandalSearchResult[]>([]);
+  const [villageOptions, setVillageOptions] = useState<VillageSearchResult[]>(
+    [],
+  );
   const [mandalSearchLoading, setMandalSearchLoading] = useState(false);
+  const [villageSearchLoading, setVillageSearchLoading] = useState(false);
   const [hideMandalSuggestions, setHideMandalSuggestions] = useState(false);
+  const [hideVillageSuggestions, setHideVillageSuggestions] = useState(false);
+  const [mandalActiveIndex, setMandalActiveIndex] = useState(-1);
+  const [villageActiveIndex, setVillageActiveIndex] = useState(-1);
+  const [locationModal, setLocationModal] = useState<
+    null | "mandal" | "village"
+  >(null);
+  const [districtQuery, setDistrictQuery] = useState("");
+  const [districtOptions, setDistrictOptions] = useState<
+    DistrictSearchResult[]
+  >([]);
+  const [districtSearchLoading, setDistrictSearchLoading] = useState(false);
+  const [districtActiveIndex, setDistrictActiveIndex] = useState(-1);
+  const [selectedDistrict, setSelectedDistrict] =
+    useState<DistrictSearchResult | null>(null);
+  const [selectedMandal, setSelectedMandal] =
+    useState<MandalSearchResult | null>(null);
+  const [pendingLocationName, setPendingLocationName] = useState("");
+  const [savingLocation, setSavingLocation] = useState(false);
   const [results, setResults] = useState<FarmerStatusRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [votingStatusId, setVotingStatusId] = useState<number | null>(null);
+  const [actionStatusId, setActionStatusId] = useState<number | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
-
   useEffect(() => {
-    const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
-    if (!googleApiKey) {
-      return;
-    }
-
-    let isCancelled = false;
-
-    loadGooglePlaces(googleApiKey)
-      .then(() => {
-        if (isCancelled || !window.google?.maps?.places) {
-          return;
-        }
-
-        if (villageInputRef.current) {
-          villageAutocompleteRef.current = new window.google.maps.places.Autocomplete(villageInputRef.current, {
-            fields: ["formatted_address", "address_components", "name"],
-            types: ["geocode"],
-            componentRestrictions: { country: "in" },
-          });
-
-          villageAutocompleteRef.current.addListener("place_changed", () => {
-            const place = villageAutocompleteRef.current.getPlace() as GooglePlace | undefined;
-            if (!place) return;
-
-            const value =
-              getComponent(place.address_components, [
-                "locality",
-                "sublocality_level_1",
-                "sublocality",
-                "neighborhood",
-                "administrative_area_level_3",
-              ]) || place.name || buildAutocompleteLabel(place);
-
-            setForm((current) => ({ ...current, village: value }));
-          });
-        }
-      })
-      .catch(() => {
-        // Keep manual entry available if Places fails to load.
-      });
-
-    return () => {
-      isCancelled = true;
-      if (villageAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(villageAutocompleteRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const mandalQuery = form.mandal.trim();
-
-    if (hideMandalSuggestions || mandalQuery.length < 2) {
+    const mandalQuery = String(form.mandal || "").trim();
+    if (hideMandalSuggestions || mandalQuery.length < 3) {
       setMandalOptions([]);
       setMandalSearchLoading(false);
       return;
     }
-
     let isCancelled = false;
     setMandalSearchLoading(true);
-
     const debounce = window.setTimeout(() => {
-      fetchMandals({
-        query: mandalQuery || undefined,
-      })
-        .then((response) => {
-          if (!isCancelled) {
-            setMandalOptions(response.mandals);
-            setMandalSearchLoading(false);
-          }
+      searchMandals(mandalQuery)
+        .then((items) => {
+          if (isCancelled) return;
+          setMandalOptions(items);
+          setMandalActiveIndex(items.length ? 0 : -1);
+          setMandalSearchLoading(false);
         })
         .catch(() => {
           if (!isCancelled) {
             setMandalOptions([]);
+            setMandalActiveIndex(-1);
             setMandalSearchLoading(false);
           }
         });
     }, 200);
-
     return () => {
       isCancelled = true;
       window.clearTimeout(debounce);
     };
   }, [form.mandal, hideMandalSuggestions]);
-
+  useEffect(() => {
+    const mandalId = Number(form.mandalId || 0);
+    const villageQuery = String(form.village || "").trim();
+    if (!mandalId || hideVillageSuggestions) {
+      setVillageOptions([]);
+      setVillageSearchLoading(false);
+      return;
+    }
+    let isCancelled = false;
+    setVillageSearchLoading(true);
+    const debounce = window.setTimeout(
+      () => {
+        const request = villageQuery
+          ? searchVillages({ mandalId, query: villageQuery })
+          : fetchVillagesByMandal(mandalId);
+        request
+          .then((items) => {
+            if (isCancelled) return;
+            setVillageOptions(items);
+            setVillageActiveIndex(items.length ? 0 : -1);
+            setVillageSearchLoading(false);
+          })
+          .catch(() => {
+            if (!isCancelled) {
+              setVillageOptions([]);
+              setVillageActiveIndex(-1);
+              setVillageSearchLoading(false);
+            }
+          });
+      },
+      villageQuery ? 220 : 0,
+    );
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(debounce);
+    };
+  }, [form.mandalId, form.village, hideVillageSuggestions]);
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (
+        mandalDropdownRef.current &&
+        target &&
+        !mandalDropdownRef.current.contains(target)
+      ) {
+        setHideMandalSuggestions(true);
+      }
+      if (
+        villageDropdownRef.current &&
+        target &&
+        !villageDropdownRef.current.contains(target)
+      ) {
+        setHideVillageSuggestions(true);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+  const chooseMandal = (mandal: MandalSearchResult) => {
+    setSelectedMandal(mandal);
+    setForm((current) => ({
+      ...current,
+      mandal: mandal.name,
+      mandalId: mandal.id,
+      village: "",
+      villageId: null,
+    }));
+    setHideMandalSuggestions(true);
+    setHideVillageSuggestions(false);
+    setMandalOptions([]);
+    setVillageOptions([]);
+    setMandalActiveIndex(-1);
+    setVillageActiveIndex(-1);
+  };
+  const chooseVillage = (village: VillageSearchResult) => {
+    setForm((current) => ({
+      ...current,
+      village: village.name,
+      villageId: village.id,
+    }));
+    setHideVillageSuggestions(true);
+    setVillageOptions([]);
+    setVillageActiveIndex(-1);
+  };
+  const handleMandalKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!mandalOptions.length || hideMandalSuggestions) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setMandalActiveIndex((current) => (current + 1) % mandalOptions.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setMandalActiveIndex((current) =>
+        current <= 0 ? mandalOptions.length - 1 : current - 1,
+      );
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const selected = mandalOptions[mandalActiveIndex] || mandalOptions[0];
+      if (selected) chooseMandal(selected);
+    } else if (event.key === "Escape") {
+      setHideMandalSuggestions(true);
+    }
+  };
+  const handleVillageKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!villageOptions.length || hideVillageSuggestions) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setVillageActiveIndex((current) => (current + 1) % villageOptions.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setVillageActiveIndex((current) =>
+        current <= 0 ? villageOptions.length - 1 : current - 1,
+      );
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const selected = villageOptions[villageActiveIndex] || villageOptions[0];
+      if (selected) chooseVillage(selected);
+    } else if (event.key === "Escape") {
+      setHideVillageSuggestions(true);
+    }
+  };
+  useEffect(() => {
+    if (locationModal !== "mandal") {
+      return;
+    }
+    const query = districtQuery.trim();
+    if (query.length < 2) {
+      setDistrictOptions([]);
+      setDistrictSearchLoading(false);
+      return;
+    }
+    let isCancelled = false;
+    setDistrictSearchLoading(true);
+    const debounce = window.setTimeout(() => {
+      searchDistricts(query)
+        .then((items) => {
+          if (isCancelled) return;
+          setDistrictOptions(items);
+          setDistrictActiveIndex(items.length ? 0 : -1);
+          setDistrictSearchLoading(false);
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setDistrictOptions([]);
+            setDistrictActiveIndex(-1);
+            setDistrictSearchLoading(false);
+          }
+        });
+    }, 200);
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(debounce);
+    };
+  }, [districtQuery, locationModal]);
+  const openMandalModal = () => {
+    setPendingLocationName(form.mandal.trim());
+    setSelectedDistrict(null);
+    setDistrictQuery("");
+    setDistrictOptions([]);
+    setDistrictActiveIndex(-1);
+    setLocationModal("mandal");
+  };
+  const openVillageModal = () => {
+    if (!form.mandalId) {
+      setToastMessage("Select a mandal first.");
+      setToastTone("error");
+      setToastOpen(true);
+      return;
+    }
+    setPendingLocationName(form.village.trim());
+    setLocationModal("village");
+  };
+  const closeLocationModal = () => {
+    setLocationModal(null);
+    setDistrictQuery("");
+    setDistrictOptions([]);
+    setDistrictActiveIndex(-1);
+    setSelectedDistrict(null);
+    setSelectedMandal(null);
+    setPendingLocationName("");
+    setSavingLocation(false);
+  };
+  const chooseDistrict = (district: DistrictSearchResult) => {
+    setSelectedDistrict(district);
+    setDistrictQuery(district.name);
+    setDistrictOptions([]);
+    setDistrictActiveIndex(-1);
+  };
+  const handleDistrictKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!districtOptions.length || locationModal !== "mandal") return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setDistrictActiveIndex(
+        (current) => (current + 1) % districtOptions.length,
+      );
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setDistrictActiveIndex((current) =>
+        current <= 0 ? districtOptions.length - 1 : current - 1,
+      );
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const selected =
+        districtOptions[districtActiveIndex] || districtOptions[0];
+      if (selected) chooseDistrict(selected);
+    } else if (event.key === "Escape") {
+      setDistrictOptions([]);
+    }
+  };
+  const handleCreateMandal = async () => {
+    const mandalName = pendingLocationName.trim();
+    if (!selectedDistrict?.id || !mandalName) {
+      setToastMessage("Select a district and enter a mandal name.");
+      setToastTone("error");
+      setToastOpen(true);
+      return;
+    }
+    setSavingLocation(true);
+    try {
+      const response = await createMandal({
+        districtId: selectedDistrict.id,
+        mandalName,
+      });
+      if (response.mandal) {
+        setForm((current) => ({
+          ...current,
+          mandal: response.mandal?.name || mandalName,
+          mandalId: response.mandal?.id ?? current.mandalId,
+          village: "",
+          villageId: null,
+        }));
+      }
+      setToastMessage(response.message);
+      setToastTone("success");
+      setToastOpen(true);
+      closeLocationModal();
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : "Unable to add mandal",
+      );
+      setToastTone("error");
+      setToastOpen(true);
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+  const handleCreateVillage = async () => {
+    const villageName = pendingLocationName.trim();
+    const mandalId = Number(form.mandalId || 0);
+    if (!mandalId || !villageName) {
+      setToastMessage("Select a mandal and enter a village name.");
+      setToastTone("error");
+      setToastOpen(true);
+      return;
+    }
+    setSavingLocation(true);
+    try {
+      const response = await createVillage({ mandalId, villageName });
+      if (response.village) {
+        setForm((current) => ({
+          ...current,
+          village: response.village?.name || villageName,
+          villageId: response.village?.id ?? current.villageId,
+        }));
+      }
+      setToastMessage(response.message);
+      setToastTone("success");
+      setToastOpen(true);
+      closeLocationModal();
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : "Unable to add village",
+      );
+      setToastTone("error");
+      setToastOpen(true);
+    } finally {
+      setSavingLocation(false);
+    }
+  };
   const summaryCount = useMemo(() => results.length, [results.length]);
-
   const runSearch = async () => {
     const mandal = form.mandal.trim();
     const village = form.village.trim();
     const farmer_name = form.farmerName.trim();
-
     if (!mandal && !village && !farmer_name) {
       setResults([]);
       setToastMessage(t("search.fillAtLeastOne"));
@@ -427,16 +678,13 @@ export function SearchFarmerPreview() {
       setToastOpen(true);
       return;
     }
-
     setLoading(true);
-
     try {
       const response = await searchFarmerStatuses({
         mandal,
         village,
         farmer_name,
       });
-
       setResults(response.results);
       if (!response.results.length) {
         setToastMessage(t("search.noRecordFound"));
@@ -445,72 +693,157 @@ export function SearchFarmerPreview() {
       }
     } catch (error) {
       setResults([]);
-      setToastMessage(error instanceof Error ? error.message : t("search.unable"));
+      setToastMessage(
+        error instanceof Error ? error.message : t("search.unable"),
+      );
       setToastTone("error");
       setToastOpen(true);
     } finally {
       setLoading(false);
     }
   };
-
-  const handleVote = async (statusId: number, voteColor: FarmerStatusColor) => {
-    setVotingStatusId(statusId);
-
+  const handleIncrement = async (statusId: number) => {
+    setActionStatusId(statusId);
     try {
-      const response = await voteFarmerStatus(statusId, voteColor);
+      const response = await incrementFarmerStatusCount(statusId);
       if (response.farmerStatus) {
         setResults((current) =>
-          current.map((farmer) => (farmer.id === statusId ? response.farmerStatus! : farmer)),
+          current.map((farmer) =>
+            farmer.id === statusId ? response.farmerStatus! : farmer,
+          ),
         );
       }
       setToastMessage(response.message);
       setToastTone("success");
       setToastOpen(true);
     } catch (error) {
-      setToastMessage(error instanceof Error ? error.message : t("search.unable"));
+      setToastMessage(
+        error instanceof Error ? error.message : t("search.unable"),
+      );
       setToastTone("error");
       setToastOpen(true);
     } finally {
-      setVotingStatusId(null);
+      setActionStatusId(null);
     }
   };
-
+  const handleDecrement = async (statusId: number) => {
+    setActionStatusId(statusId);
+    try {
+      const response = await decrementFarmerStatusCount(statusId);
+      if (response.farmerStatus) {
+        setResults((current) =>
+          current.map((farmer) =>
+            farmer.id === statusId ? response.farmerStatus! : farmer,
+          ),
+        );
+      }
+      setToastMessage(response.message);
+      setToastTone("success");
+      setToastOpen(true);
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : t("search.unable"),
+      );
+      setToastTone("error");
+      setToastOpen(true);
+    } finally {
+      setActionStatusId(null);
+    }
+  };
+  const handleVote = async (statusId: number, voteColor: FarmerStatusColor) => {
+    setActionStatusId(statusId);
+    try {
+      const response = await voteFarmerStatus(statusId, voteColor);
+      if (response.farmerStatus) {
+        setResults((current) =>
+          current.map((farmer) =>
+            farmer.id === statusId ? response.farmerStatus! : farmer,
+          ),
+        );
+      }
+      setToastMessage(response.message);
+      setToastTone("success");
+      setToastOpen(true);
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : t("search.unable"),
+      );
+      setToastTone("error");
+      setToastOpen(true);
+    } finally {
+      setActionStatusId(null);
+    }
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
     >
+      {" "}
       <section className="space-y-8">
+        {" "}
         <div className="space-y-4">
-          <p className="kyfi-section-kicker w-fit">{t("search.title")}</p>
+          {" "}
+          <p className="kyfi-section-kicker w-fit">{t("search.title")}</p>{" "}
           <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
+            {" "}
             <div className="space-y-3">
+              {" "}
               <h1 className="max-w-3xl font-manrope text-[clamp(1.85rem,3.4vw,3.25rem)] font-extrabold tracking-[-0.05em] text-slate-900 lg:max-w-none lg:whitespace-nowrap">
-                {t("search.heading")}
-              </h1>
-            </div>
-
+                {" "}
+                {t("search.heading")}{" "}
+              </h1>{" "}
+            </div>{" "}
             <div className="flex flex-wrap gap-2 lg:justify-end">
-              <Badge variant="secondary">{t("search.live")}</Badge>
-              <Badge variant="secondary">{t("search.masked")}</Badge>
-            </div>
-          </div>
-        </div>
-
+              {" "}
+              <Badge variant="secondary">{t("search.live")}</Badge>{" "}
+              <Badge variant="secondary">{t("search.masked")}</Badge>{" "}
+            </div>{" "}
+          </div>{" "}
+        </div>{" "}
         <div className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <LegendItem tone="success" label="GREEN" text={t("search.legendGreen")} helper={t("search.legendGreen")} />
-            <LegendItem tone="warning" label="YELLOW" text={t("search.legendYellow")} helper={t("search.legendYellow")} />
-            <LegendItem tone="destructive" label="RED" text={t("search.legendRed")} helper={t("search.legendRed")} />
-            <LegendItem tone="destructive" label="BLACKLIST" text={t("search.legendBlack")} helper={t("search.legendBlack")} />
-          </div>
-
+          {" "}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {" "}
+            <LegendItem
+              tone="success"
+              label="GREEN"
+              text={t("search.legendGreen")}
+              helper={t("search.legendGreen")}
+            />{" "}
+            <LegendItem
+              tone="warning"
+              label="YELLOW"
+              text={t("search.legendYellow")}
+              helper={t("search.legendYellow")}
+            />{" "}
+            <LegendItem
+              tone="destructive"
+              label="RED"
+              text={t("search.legendRed")}
+              helper={t("search.legendRed")}
+            />{" "}
+          </div>{" "}
           <div className="grid gap-4 border-b border-slate-200/80 pb-5 xl:grid-cols-[1fr_1fr_1fr_auto] xl:items-end">
-            <div className="relative space-y-2">
-              <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
-                {t("search.mandalLabel")}
-              </label>
+            {" "}
+            <div ref={mandalDropdownRef} className="relative space-y-2">
+              {" "}
+              <div className="flex items-center justify-between gap-3">
+                {" "}
+                <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                  {" "}
+                  {t("search.mandalLabel")}{" "}
+                </label>{" "}
+                <button
+                  type="button"
+                  onClick={openMandalModal}
+                  className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  {" "}
+                  <Plus className="h-3.5 w-3.5" /> Add{" "}
+                </button>{" "}
+              </div>{" "}
               <Input
                 ref={mandalInputRef}
                 className="h-12 rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
@@ -518,164 +851,472 @@ export function SearchFarmerPreview() {
                 value={form.mandal}
                 onChange={(event) => {
                   setHideMandalSuggestions(false);
-                  setForm((current) => ({ ...current, mandal: event.target.value }));
+                  setHideVillageSuggestions(false);
+                  setForm((current) => ({
+                    ...current,
+                    mandal: event.target.value,
+                    mandalId: null,
+                    village: "",
+                    villageId: null,
+                  }));
+                  setVillageOptions([]);
+                  setVillageActiveIndex(-1);
                 }}
-              />
-              {form.mandal.trim().length >= 2 && !hideMandalSuggestions ? (
+                onKeyDown={handleMandalKeyDown}
+              />{" "}
+              {form.mandal.trim().length >= 3 && !hideMandalSuggestions ? (
                 <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                  {" "}
                   {mandalSearchLoading ? (
                     <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                      {t("search.searchingMandals")}
+                      {" "}
+                      {t("search.searchingMandals")}{" "}
                     </div>
                   ) : mandalOptions.length ? (
-                    mandalOptions.map((mandal) => (
+                    mandalOptions.map((mandal, index) => (
                       <button
                         key={mandal.id}
                         type="button"
                         onClick={() => {
-                          setForm((current) => ({
-                            ...current,
-                            mandal: mandal.mandalName,
-                          }));
-                          setHideMandalSuggestions(true);
-                          setMandalOptions([]);
+                          chooseMandal(mandal);
                         }}
                         className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                        data-active={index === mandalActiveIndex}
                       >
+                        {" "}
                         <span className="font-manrope text-sm font-semibold text-slate-900">
-                          {formatMandalSuggestion(mandal)}
-                        </span>
+                          {" "}
+                          {formatMandalSuggestion(mandal)}{" "}
+                        </span>{" "}
+                        {index === mandalActiveIndex ? (
+                          <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-emerald-600">
+                            {" "}
+                            Select{" "}
+                          </span>
+                        ) : null}{" "}
                       </button>
                     ))
                   ) : (
                     <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                      {t("search.noMandal")}
+                      {" "}
+                      {t("search.noMandal")}{" "}
                     </div>
-                  )}
+                  )}{" "}
                 </div>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
-                {t("search.villageLabel")}
-              </label>
+              ) : null}{" "}
+            </div>{" "}
+            <div ref={villageDropdownRef} className="relative space-y-2">
+              {" "}
+              <div className="flex items-center justify-between gap-3">
+                {" "}
+                <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                  {" "}
+                  {t("search.villageLabel")}{" "}
+                </label>{" "}
+                <button
+                  type="button"
+                  onClick={openVillageModal}
+                  className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  {" "}
+                  <Plus className="h-3.5 w-3.5" /> Add{" "}
+                </button>{" "}
+              </div>{" "}
               <Input
                 ref={villageInputRef}
-                className="h-12 rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
+                className="h-12 rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)] disabled:cursor-not-allowed disabled:bg-slate-50"
                 placeholder={t("search.villagePlaceholder")}
                 value={form.village}
-                onChange={(event) => setForm((current) => ({ ...current, village: event.target.value }))}
-              />
-            </div>
-
+                disabled={!form.mandalId}
+                onChange={(event) => {
+                  setHideVillageSuggestions(false);
+                  setForm((current) => ({
+                    ...current,
+                    village: event.target.value,
+                    villageId: null,
+                  }));
+                  setVillageActiveIndex(-1);
+                }}
+                onKeyDown={handleVillageKeyDown}
+              />{" "}
+              {form.mandalId &&
+              form.village.trim().length >= 0 &&
+              !hideVillageSuggestions ? (
+                <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                  {" "}
+                  {villageSearchLoading ? (
+                    <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                      {" "}
+                      {t("search.searchingMandals")}{" "}
+                    </div>
+                  ) : villageOptions.length ? (
+                    villageOptions.map((village, index) => (
+                      <button
+                        key={village.id}
+                        type="button"
+                        onClick={() => chooseVillage(village)}
+                        className={[
+                          "flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50",
+                          index === villageActiveIndex ? "bg-emerald-50" : "",
+                        ].join(" ")}
+                      >
+                        {" "}
+                        <span className="font-manrope text-sm font-semibold text-slate-900">
+                          {" "}
+                          {village.name}{" "}
+                        </span>{" "}
+                        <span className="text-[0.68rem] font-medium text-slate-500">
+                          {" "}
+                          {village.mandalName}{" "}
+                        </span>{" "}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                      {" "}
+                      {t("search.noMandal")}{" "}
+                    </div>
+                  )}{" "}
+                </div>
+              ) : null}{" "}
+            </div>{" "}
             <div className="space-y-2">
+              {" "}
               <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
-                {t("search.farmerNameLabel")}
-              </label>
+                {" "}
+                {t("search.farmerNameLabel")}{" "}
+              </label>{" "}
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                {" "}
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />{" "}
                 <Input
                   className="h-12 rounded-full border border-slate-200 bg-white pl-10 shadow-none focus:border-[rgb(4,120,87)]"
                   placeholder={t("search.farmerNamePlaceholder")}
                   value={form.farmerName}
-                  onChange={(event) => setForm((current) => ({ ...current, farmerName: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      farmerName: event.target.value,
+                    }))
+                  }
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
                       void runSearch();
                     }
                   }}
-                />
-              </div>
-            </div>
-
+                />{" "}
+              </div>{" "}
+            </div>{" "}
             <Button
               className="h-12 w-full rounded-full !bg-[rgb(4,120,87)] px-6 font-semibold !text-white shadow-[0_12px_24px_rgba(4,120,87,0.18)] hover:!bg-[rgb(4,120,87)] hover:brightness-110 xl:w-[220px]"
               onClick={runSearch}
               disabled={loading}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {loading ? t("search.loading") : t("search.searchButton")}
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[0.72rem] font-black uppercase tracking-[0.22em] text-slate-500">
-              {t("search.results")}
-            </p>
-            <Badge variant="outline" className="border-slate-200">
-              {summaryCount} {t("search.found")}
-            </Badge>
-          </div>
-
-          <div className="space-y-4">
-            {results.map((farmer) => (
-              <FarmerStatusCard
-                key={farmer.id}
-                farmer={farmer}
-                language={language}
-                t={t}
-                votingStatusId={votingStatusId}
-                onVote={handleVote}
-              />
-            ))}
-
-            {!results.length ? (
-              <div className="px-1 py-10 text-center">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
-                  {t("search.empty")}
-                </p>
-                <p className="mt-2 text-sm text-slate-600">
-                  {t("search.emptyHint")}
-                </p>
-              </div>
-            ) : null}
-          </div>
+              {" "}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}{" "}
+              {loading ? t("search.loading") : t("search.searchButton")}{" "}
+            </Button>{" "}
+          </div>{" "}
+          <section className="space-y-3.5">
+            <div className="flex flex-col gap-3 border-b border-slate-200/80 bg-slate-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              {" "}
+              <div>
+                {" "}
+                <p className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                  {" "}
+                  {t("search.results")}{" "}
+                </p>{" "}
+                <p className="mt-1 text-[0.92rem] text-slate-600">
+                  {" "}
+                  {t("search.pressEnter")}{" "}
+                </p>{" "}
+              </div>{" "}
+              <Badge
+                variant="outline"
+                className="border-slate-200 bg-white px-3 py-1.5"
+              >
+                {" "}
+                {summaryCount} {t("search.found")}{" "}
+              </Badge>{" "}
+            </div>{" "}
+            <div className="space-y-3.5">
+              {results.map((farmer) => (
+                <FarmerStatusCard
+                  key={farmer.id}
+                  farmer={farmer}
+                  language={language}
+                  t={t}
+                  actionStatusId={actionStatusId}
+                  onVote={handleVote}
+                  onIncrement={handleIncrement}
+                  onDecrement={handleDecrement}
+                />
+              ))}{" "}
+              {!results.length ? (
+                <div className="rounded-[24px] border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    {t("search.empty")}{" "}
+                  </p>{" "}
+                  <p className="mt-2 text-[0.92rem] text-slate-600">
+                    {t("search.emptyHint")}{" "}
+                  </p>{" "}
+                </div>
+              ) : null}
+            </div>
+          </section>
         </div>
       </section>
-
+      {locationModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          onClick={closeLocationModal}
+        >
+          {" "}
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {" "}
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
+              {" "}
+              <div>
+                {" "}
+                <p className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-emerald-700">
+                  {" "}
+                  {locationModal === "mandal"
+                    ? "Add Mandal"
+                    : "Add Village"}{" "}
+                </p>{" "}
+                <h2 className="mt-1 font-manrope text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                  {" "}
+                  {locationModal === "mandal"
+                    ? "Create a mandal under an existing district"
+                    : "Create a village under the selected mandal"}{" "}
+                </h2>{" "}
+              </div>{" "}
+              <button
+                type="button"
+                onClick={closeLocationModal}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                aria-label="Close modal"
+              >
+                {" "}
+                <X className="h-4 w-4" />{" "}
+              </button>{" "}
+            </div>{" "}
+            <div className="space-y-5 px-6 py-6">
+              {" "}
+              {locationModal === "mandal" ? (
+                <>
+                  {" "}
+                  <div className="relative space-y-2">
+                    {" "}
+                    <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                      {" "}
+                      District{" "}
+                    </label>{" "}
+                    <Input
+                      value={districtQuery}
+                      onChange={(event) => {
+                        setSelectedDistrict(null);
+                        setDistrictQuery(event.target.value);
+                      }}
+                      onKeyDown={handleDistrictKeyDown}
+                      placeholder="Type district name"
+                      className="h-12 rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
+                    />{" "}
+                    {districtQuery.trim().length >= 2 ? (
+                      <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                        {" "}
+                        {districtSearchLoading ? (
+                          <div className="px-4 py-3 text-sm text-slate-500">
+                            {" "}
+                            Searching districts...{" "}
+                          </div>
+                        ) : districtOptions.length ? (
+                          districtOptions.map((district, index) => (
+                            <button
+                              key={district.id}
+                              type="button"
+                              onClick={() => chooseDistrict(district)}
+                              className={[
+                                "flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50",
+                                index === districtActiveIndex
+                                  ? "bg-emerald-50"
+                                  : "",
+                              ].join(" ")}
+                            >
+                              {" "}
+                              <span className="font-manrope text-sm font-semibold text-slate-900">
+                                {" "}
+                                {district.name}{" "}
+                              </span>{" "}
+                              <span className="text-[0.68rem] font-medium text-slate-500">
+                                {" "}
+                                {district.stateName || "-"}{" "}
+                              </span>{" "}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-500">
+                            {" "}
+                            No matching district found.{" "}
+                          </div>
+                        )}{" "}
+                      </div>
+                    ) : null}{" "}
+                  </div>{" "}
+                  <div className="space-y-2">
+                    {" "}
+                    <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                      {" "}
+                      Mandal name{" "}
+                    </label>{" "}
+                    <Input
+                      value={pendingLocationName}
+                      onChange={(event) =>
+                        setPendingLocationName(event.target.value)
+                      }
+                      placeholder="Enter mandal name"
+                      className="h-12 w-full rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
+                    />{" "}
+                  </div>{" "}
+                </>
+              ) : null}{" "}
+              {locationModal === "village" ? (
+                <>
+                  {" "}
+                  <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                    {" "}
+                    <p className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-slate-500">
+                      {" "}
+                      Selected mandal{" "}
+                    </p>{" "}
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {" "}
+                      {selectedMandal?.name || form.mandal}{" "}
+                    </p>{" "}
+                    <p className="mt-0.5 text-sm text-slate-600">
+                      {" "}
+                      {selectedMandal?.districtName || "-"} district,{" "}
+                      {selectedMandal?.stateName || "-"}{" "}
+                    </p>{" "}
+                  </div>{" "}
+                  <div className="space-y-2">
+                    {" "}
+                    <label className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                      {" "}
+                      Village name{" "}
+                    </label>{" "}
+                    <Input
+                      value={pendingLocationName}
+                      onChange={(event) =>
+                        setPendingLocationName(event.target.value)
+                      }
+                      placeholder="Enter village name"
+                      className="h-12 w-full rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
+                    />{" "}
+                  </div>{" "}
+                </>
+              ) : null}{" "}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4">
+                {" "}
+                <p className="text-sm text-slate-600">
+                  {" "}
+                  {locationModal === "mandal"
+                    ? "District is required. Mandal name is required."
+                    : "Mandal is already selected. Village name is required."}{" "}
+                </p>{" "}
+                <div className="flex items-center gap-3">
+                  {" "}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeLocationModal}
+                    className="rounded-full"
+                    disabled={savingLocation}
+                  >
+                    {" "}
+                    Cancel{" "}
+                  </Button>{" "}
+                  <Button
+                    type="button"
+                    onClick={
+                      locationModal === "mandal"
+                        ? handleCreateMandal
+                        : handleCreateVillage
+                    }
+                    className="rounded-full !bg-[rgb(4,120,87)] !text-white"
+                    disabled={savingLocation}
+                  >
+                    {" "}
+                    {savingLocation ? "Saving..." : "Save"}{" "}
+                  </Button>{" "}
+                </div>{" "}
+              </div>{" "}
+            </div>{" "}
+          </div>{" "}
+        </div>
+      ) : null}{" "}
       <KyfiToast
         open={toastOpen}
         message={toastMessage}
         tone={toastTone}
         onClose={() => setToastOpen(false)}
-      />
+      />{" "}
     </motion.div>
   );
 }
-
 function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-slate-200 bg-white px-4 py-4">
-      <p className="text-[0.78rem] font-black uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-2 text-[0.95rem] font-medium leading-7 text-slate-800">{value}</p>
+    <div className="rounded-[18px] border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.03)]">
+      {" "}
+      <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-slate-500">
+        {" "}
+        {label}{" "}
+      </p>{" "}
+      <p className="mt-1 text-[0.92rem] font-medium leading-5 text-slate-900">
+        {" "}
+        {value}{" "}
+      </p>{" "}
     </div>
   );
 }
-
-function MetaLine({
+function InfoCard({
   icon: Icon,
-  text,
   label,
-  compact = false,
+  value,
 }: {
   icon?: typeof MapPin;
-  text: string;
-  label?: string;
-  compact?: boolean;
+  label: string;
+  value: string;
 }) {
   return (
-    <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
-      {Icon ? <Icon className="h-4 w-4 text-slate-500" /> : null}
-      <span className={compact ? "text-sm font-semibold text-slate-800" : "text-sm text-slate-600"}>
-        {label ? `${label}: ` : null}
-        {text}
-      </span>
+    <div className="flex items-start gap-3 rounded-[18px] border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.03)]">
+      {" "}
+      {Icon ? (
+        <div className="mt-0.5 flex h-[32px] w-[32px] items-center justify-center rounded-full bg-slate-100 text-slate-600">
+          {" "}
+          <Icon className="h-3.5 w-3.5" />{" "}
+        </div>
+      ) : null}{" "}
+      <div className="min-w-0">
+        {" "}
+        <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-slate-500">
+          {" "}
+          {label}{" "}
+        </p>{" "}
+        <p className="mt-1 truncate text-[0.9rem] font-semibold text-slate-950">
+          {" "}
+          {value}{" "}
+        </p>{" "}
+      </div>{" "}
     </div>
   );
 }
-
 function LegendItem({
   tone,
   label,
@@ -695,10 +1336,11 @@ function LegendItem({
         : tone === "destructive"
           ? "border-red-100 bg-red-50/80"
           : "border-slate-200 bg-slate-50/90";
-
   return (
     <div className={`rounded-2xl border p-4 ${toneClass}`}>
+      {" "}
       <div className="flex flex-wrap items-center gap-2">
+        {" "}
         <Badge
           variant={
             tone === "success"
@@ -710,11 +1352,35 @@ function LegendItem({
                   : "secondary"
           }
         >
-          {label}
-        </Badge>
-        <p className="font-manrope text-sm font-bold text-slate-900">{text}</p>
-      </div>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>
+          {" "}
+          {label}{" "}
+        </Badge>{" "}
+        <p className="font-manrope text-sm font-bold text-slate-900">
+          {text}
+        </p>{" "}
+      </div>{" "}
+      <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>{" "}
+    </div>
+  );
+}
+function InfoPill({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon?: typeof MapPin;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+      {" "}
+      {Icon ? <Icon className="h-4 w-4 text-slate-500" /> : null}{" "}
+      <span className="font-black uppercase tracking-[0.16em] text-slate-500">
+        {" "}
+        {label}{" "}
+      </span>{" "}
+      <span className="font-semibold text-slate-800">{value}</span>{" "}
     </div>
   );
 }

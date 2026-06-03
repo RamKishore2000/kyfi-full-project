@@ -13,6 +13,7 @@ export type MyFarmerStatusRecord = {
   district: string;
   mandal: string;
   village: string;
+  farmerType?: "OLD" | "NEW";
   statusColor: "GREEN" | "YELLOW" | "RED";
   currentDealerVoteColor?: "GREEN" | "YELLOW" | "RED" | null;
   rationCardNumber?: string | null;
@@ -67,6 +68,7 @@ export type MyVoteRecord = {
   district: string;
   mandal: string;
   village: string;
+  farmerType?: "OLD" | "NEW";
   statusColor: "GREEN" | "YELLOW" | "RED";
   farmerCreatedAt?: string;
   farmerUpdatedAt?: string;
@@ -86,10 +88,15 @@ export async function fetchMyRecords() {
     },
   });
 
-  const data = (await response.json().catch(() => null)) as MyRecordsResponse | ApiErrorPayload | null;
+  const data = (await response.json().catch(() => null)) as
+    | MyRecordsResponse
+    | ApiErrorPayload
+    | null;
 
   if (!response.ok) {
-    throw new Error((data as ApiErrorPayload | null)?.message || "Request failed");
+    throw new Error(
+      (data as ApiErrorPayload | null)?.message || "Request failed",
+    );
   }
 
   return data as MyRecordsResponse;

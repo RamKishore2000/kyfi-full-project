@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
-    "import:mandals": "node scripts/import-mandals.js"
+    "import:mandals": "node scripts/import-mandals.js",
+    "import:lgd-locations": "node scripts/import-lgd-locations.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

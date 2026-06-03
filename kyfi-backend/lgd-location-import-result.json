@@ -1,0 +1,16 @@
+{
+  "archives": [
+    "C:\\Users\\electronics cart\\Downloads\\downloadDir2026_06_02_19_02_44_189 (1).zip",
+    "C:\\Users\\electronics cart\\Downloads\\downloadDir2026_06_02_19_06_09_371.zip"
+  ],
+  "parsed": {
+    "districts": 61,
+    "mandals": 1309,
+    "villages": 29265
+  },
+  "upserted": {
+    "districts": 61,
+    "mandals": 1309,
+    "villages": 29265
+  }
+}

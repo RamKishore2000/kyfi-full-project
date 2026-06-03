@@ -31,6 +31,7 @@ const listDealerFarmerRecords = async (dealerId) => {
       fs.district,
       fs.mandal,
       fs.village,
+      fs.farmer_type,
       fs.status_color,
       fsv.vote_color AS current_dealer_vote_color,
       fs.ration_card_number,

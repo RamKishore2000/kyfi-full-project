@@ -23,28 +23,42 @@ export function Footer() {
               </div>
             </div>
           </div>
-          <p className="max-w-md font-manrope type-body">{t("footer.description")}</p>
+          <p className="max-w-md font-manrope type-body">
+            {t("footer.description")}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:col-span-2">
           <div className="space-y-3">
-            <p className="font-manrope type-nav text-slate-900">{t("footer.links")}</p>
+            <p className="font-manrope type-nav text-slate-900">
+              {t("footer.links")}
+            </p>
             <ul className="space-y-2 font-manrope type-body text-slate-600">
               <li>
-                <a className="font-manrope type-nav text-slate-600 transition hover:text-primary" href="/dashboard">
+                <a
+                  className="font-manrope type-nav text-slate-600 transition hover:text-primary"
+                  href="/dashboard"
+                >
                   {t("footer.home")}
                 </a>
               </li>
               <li>
-                <a className="font-manrope type-nav text-slate-600 transition hover:text-primary" href="/search-farmer-status">
+                <a
+                  className="font-manrope type-nav text-slate-600 transition hover:text-primary"
+                  href="/search-farmer-status"
+                >
                   {t("footer.search")}
                 </a>
               </li>
               <li>
-                <a className="font-manrope type-nav text-slate-600 transition hover:text-primary" href="/add-farmer-status">
+                <a
+                  className="font-manrope type-nav text-slate-600 transition hover:text-primary"
+                  href="/add-farmer-status"
+                >
                   {t("footer.addStatus")}
                 </a>
               </li>
+              {/*
               <li>
                 <a className="font-manrope type-nav text-slate-600 transition hover:text-primary" href="/add-to-blacklist">
                   {t("footer.blacklist")}
@@ -55,25 +69,36 @@ export function Footer() {
                   {t("footer.browser")}
                 </a>
               </li>
+              */}
             </ul>
           </div>
           <div className="space-y-3">
-            <p className="font-manrope type-nav text-slate-900">{t("footer.policies")}</p>
+            <p className="font-manrope type-nav text-slate-900">
+              {t("footer.policies")}
+            </p>
             <ul className="space-y-2 font-manrope type-body text-slate-600">
               <li>
-                <a className="font-manrope type-nav text-slate-600 transition hover:text-primary" href="/privacy-policy">
+                <a
+                  className="font-manrope type-nav text-slate-600 transition hover:text-primary"
+                  href="/privacy-policy"
+                >
                   {t("footer.privacy")}
                 </a>
               </li>
               <li>
-                <a className="font-manrope type-nav text-slate-600 transition hover:text-primary" href="/terms-of-use">
+                <a
+                  className="font-manrope type-nav text-slate-600 transition hover:text-primary"
+                  href="/terms-of-use"
+                >
                   {t("footer.terms")}
                 </a>
               </li>
             </ul>
           </div>
           <div className="space-y-3">
-            <p className="font-manrope type-nav text-slate-900">{t("footer.contact")}</p>
+            <p className="font-manrope type-nav text-slate-900">
+              {t("footer.contact")}
+            </p>
             <ul className="space-y-2 font-manrope type-body text-slate-600">
               <li>{t("footer.apTs")}</li>
               <li>{t("footer.support")}</li>

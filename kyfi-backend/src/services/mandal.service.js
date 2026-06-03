@@ -37,9 +37,9 @@ async function listMandals({ stateName, districtName, query } = {}) {
   }
 
   if (query) {
-    conditions.push("(mandal_name LIKE ? OR district_name LIKE ?)");
-    const searchValue = `%${query}%`;
-    params.push(searchValue, searchValue);
+    conditions.push("LOWER(mandal_name) LIKE LOWER(?)");
+    const searchValue = `${query}%`;
+    params.push(searchValue);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -49,10 +49,18 @@ async function listMandals({ stateName, districtName, query } = {}) {
       SELECT id, state_name, district_name, mandal_name, source_label, created_at, updated_at
       FROM ${TABLE_NAME}
       ${whereClause}
-      ORDER BY state_name, district_name, mandal_name
+      ORDER BY
+        CASE
+          WHEN LOWER(mandal_name) = LOWER(?) THEN 0
+          WHEN LOWER(mandal_name) LIKE LOWER(?) THEN 1
+          ELSE 2
+        END,
+        state_name,
+        district_name,
+        mandal_name
       LIMIT 500
     `,
-    params,
+    query ? [...params, query, `${query}%`] : params,
   );
 
   return rows;

@@ -9,7 +9,7 @@ import { fetchSiteBanner, type SiteBannerRecord } from "@/lib/api/site-banner";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 export function HeroBanner() {
-  const { t } = useKyfiLanguage();
+  const { t, language } = useKyfiLanguage();
   const [banner, setBanner] = useState<SiteBannerRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,17 +37,45 @@ export function HeroBanner() {
 
   const desktopImage = banner?.desktopImageUrl || "/hero-banner.png";
   const mobileImage = banner?.mobileImageUrl || desktopImage;
+  const heroTitle =
+    language === "te" ? (
+      <>
+        <span className="block whitespace-nowrap">
+          రైతు క్రెడిట్ ప్రతిష్టను చూడండి
+        </span>
+        <span className="block whitespace-nowrap">రుణం ఇవ్వడానికి ముందు</span>
+      </>
+    ) : (
+      <>
+        <span className="block whitespace-nowrap">
+          Check Farmer Credit Reputation
+        </span>
+        <span className="block whitespace-nowrap">Before Giving Credit</span>
+      </>
+    );
   const highlights = [
-    { label: t("hero.dealerAccess"), value: t("hero.statusPreview") },
-    { label: t("footer.apTs"), value: t("hero.teluguReady") },
-    { label: t("hero.statusText"), value: t("hero.premiumUx") },
+    {
+      label: "GREEN",
+      value: "Safe to extend credit",
+      tone: "green",
+    },
+    {
+      label: "YELLOW",
+      value: "Proceed with caution",
+      tone: "yellow",
+    },
+    {
+      label: "RED",
+      value: "Avoid credit",
+      tone: "red",
+    },
   ];
 
   return (
-    <section id="home" className="relative overflow-hidden pt-4 sm:pt-12">
-      <div className="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top_left,rgba(4,120,87,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(15,23,42,0.06),transparent_26%),linear-gradient(180deg,rgba(248,247,244,0.96)_0%,rgba(247,242,234,0.98)_58%,rgba(248,247,244,1)_100%)]" />
-      <div className="absolute left-1/2 top-4 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-[rgb(4,120,87)]/10 blur-3xl" />
-
+    <section
+      id="home"
+      className="relative overflow-hidden bg-[#F5F5F5] pt-4 sm:pt-12"
+    >
       <div className="mx-auto max-w-7xl px-4 pb-2 sm:px-6 lg:px-8 lg:pb-14">
         <div className="lg:hidden">
           <motion.div
@@ -62,8 +90,13 @@ export function HeroBanner() {
                 {t("hero.kicker")}
               </div>
 
-              <h1 className="max-w-2xl font-manrope text-[clamp(2rem,8vw,2.8rem)] font-black leading-[0.98] tracking-[-0.06em] text-slate-950">
-                {t("hero.title")}
+              <h1
+                className="max-w-4xl font-manrope text-[44px] font-bold leading-[1.08] tracking-[0.005em] text-slate-950"
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                }}
+              >
+                {heroTitle}
               </h1>
 
               <p className="max-w-xl font-manrope text-[0.98rem] leading-7 text-slate-600">
@@ -115,9 +148,12 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.05 }}
-              className="max-w-3xl font-manrope text-[clamp(2.35rem,4.8vw,4.45rem)] font-black leading-[0.96] tracking-[-0.07em] text-slate-950"
+              className="max-w-4xl font-manrope text-[44px] font-bold leading-[1.08] tracking-[0.005em] text-slate-950"
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+              }}
             >
-              {t("hero.title")}
+              {heroTitle}
             </motion.h1>
 
             <motion.p
@@ -160,12 +196,25 @@ export function HeroBanner() {
               {highlights.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-[1.4rem] border border-white/80 bg-white/85 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur"
+                  className={[
+                    "rounded-[1.4rem] border p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur",
+                    "border-slate-200 bg-white/90",
+                  ].join(" ")}
                 >
-                  <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <p
+                    className={[
+                      "text-[0.68rem] font-black uppercase tracking-[0.2em]",
+                      "text-slate-900",
+                    ].join(" ")}
+                  >
                     {item.label}
                   </p>
-                  <p className="mt-2 font-manrope text-[0.95rem] font-semibold text-slate-900">
+                  <p
+                    className={[
+                      "mt-2 font-manrope text-[0.95rem] font-semibold",
+                      "text-slate-900",
+                    ].join(" ")}
+                  >
                     {item.value}
                   </p>
                 </div>
@@ -178,13 +227,22 @@ export function HeroBanner() {
               transition={{ duration: 0.45, delay: 0.3 }}
               className="mt-8 flex flex-wrap gap-3"
             >
-              <Badge variant="secondary" className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-800">
+              <Badge
+                variant="secondary"
+                className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-800"
+              >
                 {t("hero.dealerAccess")}
               </Badge>
-              <Badge variant="secondary" className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">
+              <Badge
+                variant="secondary"
+                className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"
+              >
                 {t("hero.teluguReady")}
               </Badge>
-              <Badge variant="secondary" className="rounded-full border-emerald-200 bg-white px-3 py-1.5 text-emerald-800">
+              <Badge
+                variant="secondary"
+                className="rounded-full border-emerald-200 bg-white px-3 py-1.5 text-emerald-800"
+              >
                 {t("hero.maskedAadhaar")}
               </Badge>
             </motion.div>
@@ -199,7 +257,7 @@ export function HeroBanner() {
             <div className="absolute -left-8 top-10 h-28 w-28 rounded-full bg-[rgb(4,120,87)]/14 blur-3xl" />
             <div className="absolute -right-6 top-1/2 h-24 w-24 rounded-full bg-[rgb(4,120,87)]/10 blur-3xl" />
 
-            <div className="kyfi-panel relative overflow-hidden rounded-[2rem] border-white/70 shadow-[0_30px_90px_rgba(15,23,42,0.14)]">
+            <div className="kyfi-panel relative overflow-hidden rounded-none border-0 shadow-[0_30px_90px_rgba(15,23,42,0.14)]">
               <div className="relative aspect-[5/6] w-full sm:aspect-[4/5] lg:aspect-[5/6]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -207,26 +265,6 @@ export function HeroBanner() {
                   alt="KYFI banner image"
                   className="absolute inset-0 h-full w-full object-cover"
                 />
-              </div>
-
-              <div className="absolute inset-x-4 bottom-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.35rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.82)_0%,rgba(248,244,255,0.72)_35%,rgba(236,253,245,0.72)_100%)] p-4 shadow-[0_18px_50px_rgba(15,23,42,0.10)] backdrop-blur-md">
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-emerald-800">
-                    {t("hero.statusPreview")}
-                  </p>
-                  <p className="mt-2 font-manrope text-sm font-semibold leading-7 text-slate-900">
-                    {t("hero.statusText")}
-                  </p>
-                </div>
-                <div className="rounded-[1.35rem] border border-white/55 bg-[linear-gradient(135deg,rgba(255,255,255,0.82)_0%,rgba(248,244,255,0.72)_35%,rgba(236,253,245,0.72)_100%)] p-4 shadow-[0_18px_50px_rgba(15,23,42,0.10)] backdrop-blur-md">
-                  <p className="flex items-center gap-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-emerald-800">
-                    <Sparkles className="h-4 w-4" />
-                    {t("hero.premiumUx")}
-                  </p>
-                  <p className="mt-2 font-manrope text-sm font-semibold leading-7 text-slate-900">
-                    {t("hero.premiumUxBody")}
-                  </p>
-                </div>
               </div>
             </div>
           </motion.div>

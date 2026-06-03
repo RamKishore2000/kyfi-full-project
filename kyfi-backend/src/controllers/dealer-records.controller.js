@@ -1,10 +1,14 @@
-const { listDealerFarmerRecords } = require("../services/dealer-records.service");
+const {
+  listDealerFarmerRecords,
+} = require("../services/dealer-records.service");
 const { serializeBlacklistEntry } = require("../services/blacklist.service");
 
 const maskAadhaar = (aadhaar) => {
   const digits = String(aadhaar || "").replace(/\D/g, "");
 
-  return digits.length >= 4 ? `XXXX XXXX ${digits.slice(-4)}` : "XXXX XXXX XXXX";
+  return digits.length >= 4
+    ? `XXXX XXXX ${digits.slice(-4)}`
+    : "XXXX XXXX XXXX";
 };
 
 const serializeFarmerStatusRecord = (record) => ({
@@ -16,6 +20,7 @@ const serializeFarmerStatusRecord = (record) => ({
   district: record.district,
   mandal: record.mandal,
   village: record.village,
+  farmerType: record.farmer_type || "OLD",
   statusColor: record.status_color,
   currentDealerVoteColor: record.current_dealer_vote_color || null,
   rationCardNumber: record.ration_card_number,
@@ -60,8 +65,12 @@ const getCurrentDealerRecords = async (req, res, next) => {
 
     return res.status(200).json({
       counts: records.counts,
-      farmerStatuses: records.farmerStatuses.map((status) => serializeFarmerStatusRecord(status)),
-      blacklistEntries: records.blacklistEntries.map((entry) => serializeBlacklistEntry(entry)),
+      farmerStatuses: records.farmerStatuses.map((status) =>
+        serializeFarmerStatusRecord(status),
+      ),
+      blacklistEntries: records.blacklistEntries.map((entry) =>
+        serializeBlacklistEntry(entry),
+      ),
       votes: records.votes.map((vote) => serializeDealerVoteRecord(vote)),
     });
   } catch (error) {
