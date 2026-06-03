@@ -9,7 +9,6 @@ import {
   Landmark,
   Leaf,
   Settings,
-  ShieldAlert,
   UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,6 @@ const links = [
   { href: "/dashboard", label: "nav.dashboard", icon: CircleGauge },
   { href: "/dashboard/dealers", label: "nav.dealers", icon: Landmark },
   { href: "/dashboard/farmers", label: "nav.farmers", icon: Leaf },
-  { href: "/dashboard/blacklist", label: "nav.blacklist", icon: ShieldAlert },
   { href: "/dashboard/notifications", label: "nav.notifications", icon: Bell },
   { href: "/dashboard/banner", label: "nav.banner", icon: Image },
   { href: "/dashboard/settings", label: "nav.settings", icon: Settings },

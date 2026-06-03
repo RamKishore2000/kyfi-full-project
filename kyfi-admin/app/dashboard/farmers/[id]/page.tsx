@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { farmers } from "@/data/mock-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BlacklistWarning } from "@/components/dashboard/blacklist-warning";
 import { PageHeader } from "@/components/navigation/page-header";
 import { FarmerStatusBadge } from "@/components/tables/status-badge";
 
@@ -18,14 +17,13 @@ export default async function FarmerDetailPage({ params }: FarmerDetailPageProps
     <>
       <PageHeader title={farmer.name} description={`${farmer.id} - ${farmer.village}, ${farmer.mandal} farmer status record`} />
       <div className="space-y-6">
-        <BlacklistWarning farmer={farmer} />
         <Card>
           <CardHeader>
             <CardTitle>Verification overview</CardTitle>
-            <CardDescription>Status is independent from blacklist membership.</CardDescription>
+            <CardDescription>Status overview for the selected farmer.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Info label="Status" value={<FarmerStatusBadge status={farmer.status} blacklisted={farmer.blacklisted} />} />
+            <Info label="Status" value={<FarmerStatusBadge status={farmer.status} />} />
             <Info label="Aadhaar" value={farmer.aadhaarMasked} />
             <Info label="Phone" value={farmer.phone} />
             <Info label="Crop" value={farmer.crop} />

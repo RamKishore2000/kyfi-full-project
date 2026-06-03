@@ -1,17 +1,39 @@
 "use client";
 
-import { type ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  FormEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useAdminLanguage } from "@/components/admin-language-provider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/navigation/page-header";
 import { fetchMandals, type MandalRecord } from "@/lib/api/locations";
-import { fetchAdminProfile, updateAdminProfile, type AdminProfile } from "@/lib/api/profile";
+import {
+  fetchAdminProfile,
+  updateAdminProfile,
+  type AdminProfile,
+} from "@/lib/api/profile";
 
 type ProfileEditForm = {
   name: string;
@@ -40,7 +62,10 @@ declare global {
   }
 }
 
-const getComponent = (components: GooglePlace["address_components"], names: string[]) => {
+const getComponent = (
+  components: GooglePlace["address_components"],
+  names: string[],
+) => {
   if (!components) return "";
 
   for (const name of names) {
@@ -53,7 +78,8 @@ const getComponent = (components: GooglePlace["address_components"], names: stri
   return "";
 };
 
-const buildAutocompleteLabel = (place: GooglePlace) => place.formatted_address || place.name || "";
+const buildAutocompleteLabel = (place: GooglePlace) =>
+  place.formatted_address || place.name || "";
 
 const formatMandalSuggestion = (mandal: MandalRecord) =>
   `${mandal.mandalName} mandal, ${mandal.districtName} district, ${mandal.stateName}`;
@@ -76,9 +102,13 @@ const loadGooglePlaces = (apiKey: string) =>
 
     if (existingScript) {
       existingScript.addEventListener("load", () => resolve(), { once: true });
-      existingScript.addEventListener("error", () => reject(new Error("Google Maps failed to load")), {
-        once: true,
-      });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("Google Maps failed to load")),
+        {
+          once: true,
+        },
+      );
       return;
     }
 
@@ -147,7 +177,11 @@ export default function AdminProfileEditPage() {
         setForm(toFormState(response.dealer));
       } catch (loadError) {
         if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : t("profile.loadError"));
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : t("profile.loadError"),
+        );
       } finally {
         if (active) {
           setIsLoading(false);
@@ -184,11 +218,14 @@ export default function AdminProfileEditPage() {
           input: HTMLInputElement,
           onPlaceSelected: (place: GooglePlace) => void,
         ) => {
-          const autocomplete = new window.google.maps.places.Autocomplete(input, {
-            fields: ["formatted_address", "address_components", "name"],
-            types: ["geocode"],
-            componentRestrictions: { country: "in" },
-          });
+          const autocomplete = new window.google.maps.places.Autocomplete(
+            input,
+            {
+              fields: ["formatted_address", "address_components", "name"],
+              types: ["geocode"],
+              componentRestrictions: { country: "in" },
+            },
+          );
 
           autocomplete.addListener("place_changed", () => {
             const place = autocomplete.getPlace() as GooglePlace | undefined;
@@ -200,37 +237,47 @@ export default function AdminProfileEditPage() {
         };
 
         if (districtInputRef.current) {
-          districtAutocompleteRef.current = createAutocomplete(districtInputRef.current, (place) => {
-            const value =
-              getComponent(place.address_components, [
-                "administrative_area_level_2",
-                "administrative_area_level_3",
-              ]) || place.name || buildAutocompleteLabel(place);
+          districtAutocompleteRef.current = createAutocomplete(
+            districtInputRef.current,
+            (place) => {
+              const value =
+                getComponent(place.address_components, [
+                  "administrative_area_level_2",
+                  "administrative_area_level_3",
+                ]) ||
+                place.name ||
+                buildAutocompleteLabel(place);
 
-            setForm((current) => ({
-              ...current,
-              district: value,
-              mandal: "",
-            }));
-          });
+              setForm((current) => ({
+                ...current,
+                district: value,
+                mandal: "",
+              }));
+            },
+          );
         }
 
         if (villageInputRef.current) {
-          villageAutocompleteRef.current = createAutocomplete(villageInputRef.current, (place) => {
-            const value =
-              getComponent(place.address_components, [
-                "locality",
-                "sublocality_level_1",
-                "sublocality",
-                "neighborhood",
-                "administrative_area_level_3",
-              ]) || place.name || buildAutocompleteLabel(place);
+          villageAutocompleteRef.current = createAutocomplete(
+            villageInputRef.current,
+            (place) => {
+              const value =
+                getComponent(place.address_components, [
+                  "locality",
+                  "sublocality_level_1",
+                  "sublocality",
+                  "neighborhood",
+                  "administrative_area_level_3",
+                ]) ||
+                place.name ||
+                buildAutocompleteLabel(place);
 
-            setForm((current) => ({
-              ...current,
-              village: value,
-            }));
-          });
+              setForm((current) => ({
+                ...current,
+                village: value,
+              }));
+            },
+          );
         }
       })
       .catch(() => {
@@ -240,10 +287,14 @@ export default function AdminProfileEditPage() {
     return () => {
       isCancelled = true;
       if (districtAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(districtAutocompleteRef.current);
+        window.google?.maps?.event?.clearInstanceListeners(
+          districtAutocompleteRef.current,
+        );
       }
       if (villageAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(villageAutocompleteRef.current);
+        window.google?.maps?.event?.clearInstanceListeners(
+          villageAutocompleteRef.current,
+        );
       }
     };
   }, [isLoading]);
@@ -253,7 +304,12 @@ export default function AdminProfileEditPage() {
     const districtName = form.district.trim();
     const mandalQuery = form.mandal.trim();
 
-    if (hideMandalSuggestions || !stateName || !districtName || mandalQuery.length < 2) {
+    if (
+      hideMandalSuggestions ||
+      !stateName ||
+      !districtName ||
+      mandalQuery.length < 2
+    ) {
       setMandalOptions([]);
       setMandalSearchLoading(false);
       return;
@@ -330,13 +386,18 @@ export default function AdminProfileEditPage() {
       setProfile(response.dealer);
       setForm(toFormState(response.dealer));
 
-      if (response.dealer.languagePreference === "en" || response.dealer.languagePreference === "te") {
+      if (
+        response.dealer.languagePreference === "en" ||
+        response.dealer.languagePreference === "te"
+      ) {
         setLanguage(response.dealer.languagePreference);
       }
 
       router.push("/dashboard/profile");
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : t("profile.loadError"));
+      setError(
+        saveError instanceof Error ? saveError.message : t("profile.loadError"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -351,7 +412,7 @@ export default function AdminProfileEditPage() {
           <Button asChild variant="outline">
             <Link href="/dashboard/profile">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {t("common.cancel")}
+              Back
             </Link>
           </Button>
         }
@@ -424,7 +485,9 @@ export default function AdminProfileEditPage() {
                       <SelectValue placeholder={t("register.stateSelect")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
+                      <SelectItem value="Andhra Pradesh">
+                        Andhra Pradesh
+                      </SelectItem>
                       <SelectItem value="Telangana">Telangana</SelectItem>
                     </SelectContent>
                   </Select>
@@ -516,8 +579,12 @@ export default function AdminProfileEditPage() {
                       <SelectValue placeholder={t("common.selectLanguage")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="en">{t("profile.languageEnglish")}</SelectItem>
-                      <SelectItem value="te">{t("profile.languageTelugu")}</SelectItem>
+                      <SelectItem value="en">
+                        {t("profile.languageEnglish")}
+                      </SelectItem>
+                      <SelectItem value="te">
+                        {t("profile.languageTelugu")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </label>

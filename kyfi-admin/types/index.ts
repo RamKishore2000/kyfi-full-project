@@ -15,8 +15,6 @@ export type Farmer = {
   rationCard?: string;
   address?: string;
   status: FarmerStatus;
-  blacklisted: boolean;
-  blacklistReason?: string;
   remarks: string;
   voteCount: number;
   reports: number;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Bell, CircleGauge, Landmark, Leaf, Menu, Moon, Settings, ShieldAlert, Sun, UserRound } from "lucide-react";
+import { Bell, CircleGauge, Landmark, Leaf, Menu, Moon, Settings, Sun, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAdminLanguage } from "@/components/admin-language-provider";
@@ -11,7 +11,6 @@ const mobileLinks = [
   { href: "/dashboard", label: "nav.dashboard", icon: CircleGauge },
   { href: "/dashboard/dealers", label: "nav.dealers", icon: Landmark },
   { href: "/dashboard/farmers", label: "nav.farmers", icon: Leaf },
-  { href: "/dashboard/blacklist", label: "nav.blacklist", icon: ShieldAlert },
   { href: "/dashboard/notifications", label: "nav.notifications", icon: Bell },
   { href: "/dashboard/settings", label: "nav.settings", icon: Settings },
   { href: "/dashboard/profile", label: "nav.profile", icon: UserRound },

@@ -26,12 +26,10 @@ export type DashboardSummaryResponse = {
   monthlyActivity: DashboardMonthlyActivity[];
   statusDistribution: DashboardStatusDistribution[];
   recentFarmers: Farmer[];
-  greenBlacklisted: Farmer | null;
   summary: {
     totalFarmers: number;
     registeredDealers: number;
     statusVotes: number;
-    blacklistEntries: number;
   };
 };
 

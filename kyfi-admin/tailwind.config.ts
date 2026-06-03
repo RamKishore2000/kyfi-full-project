@@ -44,7 +44,6 @@ const config: Config = {
         success: "#16A34A",
         warning: "#F59E0B",
         danger: "#DC2626",
-        blacklist: "#7F1D1D",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

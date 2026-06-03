@@ -4,25 +4,20 @@ import { useAdminLanguage } from "@/components/admin-language-provider";
 
 export function FarmerStatusBadge({
   status,
-  blacklisted,
   showStatusBadge = true,
 }: {
   status: FarmerStatus;
-  blacklisted?: boolean;
   showStatusBadge?: boolean;
 }) {
   const { t } = useAdminLanguage();
-  const normalizedStatus = String(status).toUpperCase();
-  const isBlacklistOnly = normalizedStatus === "BLACKLISTED";
   const variant = status === "GREEN" ? "green" : status === "YELLOW" ? "yellow" : "red";
   return (
     <div className="flex flex-col items-start gap-1.5 whitespace-nowrap">
-      {showStatusBadge && !isBlacklistOnly ? (
+      {showStatusBadge ? (
         <Badge className="w-24 justify-center" variant={variant}>
           {t(`badges.${status.toLowerCase()}`)}
         </Badge>
       ) : null}
-      {blacklisted ? <Badge className="w-24 justify-center" variant="blacklisted">{t("badges.blacklisted")}</Badge> : null}
     </div>
   );
 }

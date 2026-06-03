@@ -36,9 +36,6 @@ export function SearchFilterBar({
     if (item === "Green") return t("badges.green");
     if (item === "Yellow") return t("badges.yellow");
     if (item === "Red") return t("badges.red");
-    if (item === "GREEN + Blacklisted") return `GREEN + ${t("badges.blacklisted")}`;
-    if (item === "YELLOW + Blacklisted") return `YELLOW + ${t("badges.blacklisted")}`;
-    if (item === "RED + Blacklisted") return `RED + ${t("badges.blacklisted")}`;
     return item;
   };
   const handleFilterChange = (filter: string) => {

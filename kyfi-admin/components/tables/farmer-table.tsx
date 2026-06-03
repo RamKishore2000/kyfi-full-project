@@ -11,7 +11,6 @@ import { SearchFilterBar } from "@/components/forms/search-filter-bar";
 import { FarmerStatusBadge } from "@/components/tables/status-badge";
 import { Pagination } from "@/components/tables/pagination";
 import { TableShell, TableToolbar } from "@/components/tables/table-shell";
-import { BlacklistWarning } from "@/components/dashboard/blacklist-warning";
 import { useAdminLanguage } from "@/components/admin-language-provider";
 
 export function FarmerTable({ farmerRecords = farmers }: { farmerRecords?: Farmer[] } = {}) {
@@ -71,7 +70,7 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
       </TableToolbar>
       <div className="space-y-3 md:hidden">
         {paginatedFarmers.map((farmer) => (
-          <div key={farmer.id} className={`rounded-lg border p-4 ${farmer.blacklisted ? "bg-red-50/80 dark:bg-red-950/30" : "bg-card"}`}>
+          <div key={farmer.id} className="rounded-lg border bg-card p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate font-medium leading-5">{farmer.name}</p>
@@ -96,7 +95,7 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
               <div className="rounded-md border p-3">
                 <p className="text-xs text-muted-foreground">{t("table.status")}</p>
                 <div className="mt-2">
-                  <FarmerStatusBadge status={farmer.status} blacklisted={farmer.blacklisted} />
+                  <FarmerStatusBadge status={farmer.status} />
                 </div>
               </div>
             </div>
@@ -125,7 +124,7 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
           </thead>
           <tbody className="divide-y">
             {paginatedFarmers.map((farmer) => (
-              <tr key={farmer.id} className={farmer.blacklisted ? "bg-red-50/80 dark:bg-red-950/30" : "hover:bg-muted/40"}>
+              <tr key={farmer.id} className="hover:bg-muted/40">
                 <td className="px-4 py-4 align-middle">
                   <div className="truncate font-medium leading-5">{farmer.name}</div>
                   <div className="text-xs text-muted-foreground">{farmer.id}</div>
@@ -140,7 +139,7 @@ export function FarmerTableContent({ farmerRecords = farmers }: { farmerRecords?
                 </td>
                 <td className="px-4 py-4 align-middle">
                   <div className="flex justify-center">
-                    <FarmerStatusBadge status={farmer.status} blacklisted={farmer.blacklisted} />
+                    <FarmerStatusBadge status={farmer.status} />
                   </div>
                 </td>
                 <td className="px-4 py-4 align-middle tabular-nums">{farmer.voteCount}</td>
@@ -178,7 +177,6 @@ function FarmerDialog({ farmer }: { farmer: Farmer }) {
         <DialogDescription>{farmer.id} {t("table.detailView")}</DialogDescription>
       </DialogHeader>
       <div className="space-y-4">
-        <BlacklistWarning farmer={farmer} />
         <div className="grid gap-3 text-sm sm:grid-cols-2">
           <Info label={t("table.aadhaarMobile")} value={farmer.aadhaarMasked} />
           <Info label={t("table.mobile")} value={farmer.phone} />
