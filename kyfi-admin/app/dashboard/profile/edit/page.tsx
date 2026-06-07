@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/navigation/page-header";
+import { getStoredAdminAccess } from "@/lib/admin-permissions";
 import { fetchMandals, type MandalRecord } from "@/lib/api/locations";
 import {
   fetchAdminProfile,
@@ -161,8 +162,17 @@ export default function AdminProfileEditPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
+    const isSuperAdmin = getStoredAdminAccess()?.adminRole === "SUPER_ADMIN";
+    setHasAccess(isSuperAdmin);
+
+    if (!isSuperAdmin) {
+      setIsLoading(false);
+      return;
+    }
+
     let active = true;
 
     async function loadProfile() {
@@ -424,7 +434,13 @@ export default function AdminProfileEditPage() {
         </div>
       ) : null}
 
-      {isLoading ? (
+      {!hasAccess ? (
+        <Card>
+          <CardContent className="p-8 text-sm text-muted-foreground">
+            Profile editing is available only for Super Admin.
+          </CardContent>
+        </Card>
+      ) : isLoading ? (
         <Card>
           <CardContent className="flex min-h-80 items-center justify-center p-6">
             <div className="flex items-center gap-3 text-sm text-muted-foreground">

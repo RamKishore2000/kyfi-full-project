@@ -131,7 +131,7 @@ export function Header() {
                 KYFI
               </div>
               {!hideSubtitle ? (
-                <div className="font-manrope text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="hidden font-manrope text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:block">
                   {t("header.subtitle")}
                 </div>
               ) : null}

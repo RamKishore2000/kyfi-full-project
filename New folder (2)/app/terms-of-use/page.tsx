@@ -8,20 +8,11 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 const sections = [
   {
     titleKey: "terms.whoCanUse",
-    items: [
-      "terms.whoDealer",
-      "terms.whoAdmin",
-      "terms.whoFarmer",
-    ],
+    items: ["terms.whoDealer", "terms.whoAdmin", "terms.whoFarmer"],
   },
   {
     titleKey: "terms.howUse",
-    items: [
-      "terms.useSearch",
-      "terms.useLookup",
-      "terms.useSeparate",
-      "terms.useDuplicate",
-    ],
+    items: ["terms.useSearch", "terms.useLookup", "terms.useDuplicate"],
   },
   {
     titleKey: "terms.accountRules",
@@ -70,7 +61,9 @@ export default function TermsOfUsePage() {
               className="rounded-3xl border border-white/80 bg-white/85 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
             >
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-manrope type-card text-slate-900">{t(section.titleKey)}</h2>
+                <h2 className="font-manrope type-card text-slate-900">
+                  {t(section.titleKey)}
+                </h2>
                 <Badge variant="secondary">KYFI</Badge>
               </div>
               <ul className="mt-4 space-y-3 font-manrope type-body text-slate-600">
@@ -86,7 +79,9 @@ export default function TermsOfUsePage() {
         </div>
 
         <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50/70 p-6">
-          <p className="font-manrope type-nav text-amber-900">{t("terms.reminder")}</p>
+          <p className="font-manrope type-nav text-amber-900">
+            {t("terms.reminder")}
+          </p>
           <p className="mt-2 font-manrope type-body text-slate-700">
             {t("terms.reminderBody")}
           </p>

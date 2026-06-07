@@ -11,6 +11,8 @@ export type DashboardMetric = {
 export type DashboardMonthlyActivity = {
   month: string;
   farmers: number;
+  oldFarmers: number;
+  newFarmers: number;
   reports: number;
   approvals: number;
 };
@@ -28,14 +30,18 @@ export type DashboardSummaryResponse = {
   recentFarmers: Farmer[];
   summary: {
     totalFarmers: number;
+    oldFarmers: number;
+    newFarmers: number;
     registeredDealers: number;
-    statusVotes: number;
+    oldFarmerVotes: number;
   };
 };
 
 async function authFetch(path: string) {
   const token =
-    typeof window !== "undefined" ? window.localStorage.getItem("kyfi_admin_token") : null;
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("kyfi_admin_token")
+      : null;
 
   const response = await fetch(`${KYFI_API_BASE_URL}${path}`, {
     headers: {

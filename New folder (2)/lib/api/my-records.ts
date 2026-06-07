@@ -49,18 +49,45 @@ export type MyRecordsResponse = {
     farmerStatuses: number;
     blacklistEntries: number;
     votes: number;
+    countActions: number;
   };
   farmerStatuses: MyFarmerStatusRecord[];
   blacklistEntries: MyBlacklistRecord[];
   votes: MyVoteRecord[];
+  countActions: MyCountActionRecord[];
 };
 
 export type MyVoteRecord = {
   id: number;
   statusId: number;
   dealerId: number;
+  actionType?: "INCREMENT" | "DECREMENT" | string | null;
+  actedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
   voteColor?: "GREEN" | "YELLOW" | "RED" | null;
   votedAt?: string;
+  aadhaar: string;
+  aadhaarMasked?: string;
+  farmerName: string;
+  mobileNumber?: string | null;
+  district: string;
+  mandal: string;
+  village: string;
+  farmerType?: "OLD" | "NEW";
+  statusColor: "GREEN" | "YELLOW" | "RED";
+  farmerCreatedAt?: string;
+  farmerUpdatedAt?: string;
+};
+
+export type MyCountActionRecord = {
+  id: number;
+  statusId: number;
+  dealerId: number;
+  actionType?: "INCREMENT" | "DECREMENT" | string | null;
+  actedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
   aadhaar: string;
   aadhaarMasked?: string;
   farmerName: string;

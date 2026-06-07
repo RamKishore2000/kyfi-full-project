@@ -1,4 +1,9 @@
 const { verifyJwt } = require("../utils/jwt");
+const {
+  getAdminAccess,
+  hasPermission,
+  hasAnyPermission,
+} = require("../services/admin-access.service");
 
 const requireAuth = (req, res, next) => {
   const authHeader = req.headers.authorization || "";
@@ -19,7 +24,7 @@ const requireAuth = (req, res, next) => {
   return next();
 };
 
-const requireAdmin = (req, res, next) => {
+const requireAdmin = async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   const secret = process.env.JWT_SECRET || "kyfi-secret-key";
@@ -38,8 +43,44 @@ const requireAdmin = (req, res, next) => {
     return res.status(403).json({ message: "Admin access only" });
   }
 
-  req.user = payload;
-  return next();
+  try {
+    const adminAccess = await getAdminAccess(payload.dealerId);
+
+    if (!adminAccess) {
+      return res.status(403).json({ message: "Admin account is not active" });
+    }
+
+    req.user = payload;
+    req.admin = adminAccess;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 };
 
-module.exports = { requireAuth, requireAdmin };
+const requirePermission = (permission) => {
+  return (req, res, next) => {
+    if (!hasPermission(req.admin, permission)) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    return next();
+  };
+};
+
+const requireAnyPermission = (permissions) => {
+  return (req, res, next) => {
+    if (!hasAnyPermission(req.admin, permissions)) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    return next();
+  };
+};
+
+module.exports = {
+  requireAuth,
+  requireAdmin,
+  requirePermission,
+  requireAnyPermission,
+};

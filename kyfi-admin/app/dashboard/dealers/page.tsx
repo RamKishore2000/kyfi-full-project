@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/navigation/page-header";
 import { DealerTable } from "@/components/tables/dealer-table";
 import { fetchDealers, updateDealerStatus } from "@/lib/api/dealers";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 
 const statusMap: Record<string, Dealer["status"]> = {
   pending: "Pending",
@@ -26,6 +27,11 @@ function mapDealerRecord(dealer: {
   village: string;
   aadhaarOrGstNumber: string;
   status: string;
+  subscriptionStatus?: "active" | "inactive";
+  subscriptionPlanName?: string | null;
+  subscriptionYearlyPrice?: number | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
   createdAt?: string;
 }): Dealer {
   return {
@@ -39,6 +45,11 @@ function mapDealerRecord(dealer: {
     licenseId: dealer.aadhaarOrGstNumber,
     aadhaarOrGst: dealer.aadhaarOrGstNumber,
     status: statusMap[dealer.status] ?? "Pending",
+    subscriptionStatus: dealer.subscriptionStatus ?? "inactive",
+    subscriptionPlanName: dealer.subscriptionPlanName ?? null,
+    subscriptionYearlyPrice: dealer.subscriptionYearlyPrice ?? null,
+    subscriptionStartedAt: dealer.subscriptionStartedAt ?? null,
+    subscriptionExpiresAt: dealer.subscriptionExpiresAt ?? null,
     farmersLinked: 0,
     joined: dealer.createdAt
       ? new Date(dealer.createdAt).toLocaleDateString("en-GB", {
@@ -59,6 +70,13 @@ export default function DealersPage() {
   const [dealerRecords, setDealerRecords] = useState<Dealer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [canAddDealers, setCanAddDealers] = useState(false);
+  const [canChangeStatus, setCanChangeStatus] = useState(false);
+
+  useEffect(() => {
+    setCanAddDealers(hasAdminPermission("dealers.add"));
+    setCanChangeStatus(hasAdminPermission("dealers.change_status"));
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -71,7 +89,11 @@ export default function DealersPage() {
       })
       .catch((fetchError) => {
         if (mounted) {
-          setError(fetchError instanceof Error ? fetchError.message : t("dealers.failed"));
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : t("dealers.failed"),
+          );
         }
       })
       .finally(() => {
@@ -85,7 +107,10 @@ export default function DealersPage() {
     };
   }, [t]);
 
-  async function handleStatusChange(dealerId: string, nextStatus: Dealer["status"]) {
+  async function handleStatusChange(
+    dealerId: string,
+    nextStatus: Dealer["status"],
+  ) {
     setError("");
 
     const numericDealerId = Number(dealerId.replace(/^DLR-/, ""));
@@ -110,7 +135,11 @@ export default function DealersPage() {
         ),
       );
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : t("dealers.failedUpdate"));
+      setError(
+        updateError instanceof Error
+          ? updateError.message
+          : t("dealers.failedUpdate"),
+      );
     }
   }
 
@@ -120,9 +149,11 @@ export default function DealersPage() {
         title={t("dealers.title")}
         description={t("dealers.description")}
         actions={
-          <Button asChild>
-            <Link href="/dashboard/dealers/add">{t("dealers.add")}</Link>
-          </Button>
+          canAddDealers ? (
+            <Button asChild>
+              <Link href="/dashboard/dealers/add">{t("dealers.add")}</Link>
+            </Button>
+          ) : null
         }
       />
 
@@ -136,7 +167,11 @@ export default function DealersPage() {
         </div>
       ) : (
         <div className="mt-6">
-          <DealerTable dealerRecords={dealerRecords} onStatusChange={handleStatusChange} />
+          <DealerTable
+            dealerRecords={dealerRecords}
+            onStatusChange={handleStatusChange}
+            canChangeStatus={canChangeStatus}
+          />
         </div>
       )}
     </>

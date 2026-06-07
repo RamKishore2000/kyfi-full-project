@@ -8,21 +8,84 @@ import {
   Image,
   Landmark,
   Leaf,
+  LayoutGrid,
+  ShieldCheck,
   Settings,
   UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminLanguage } from "@/components/admin-language-provider";
+import {
+  hasAnyAdminPermission,
+  type AdminPermission,
+} from "@/lib/admin-permissions";
 
 const links = [
-  { href: "/dashboard", label: "nav.dashboard", icon: CircleGauge },
-  { href: "/dashboard/dealers", label: "nav.dealers", icon: Landmark },
-  { href: "/dashboard/farmers", label: "nav.farmers", icon: Leaf },
-  { href: "/dashboard/notifications", label: "nav.notifications", icon: Bell },
-  { href: "/dashboard/banner", label: "nav.banner", icon: Image },
-  { href: "/dashboard/settings", label: "nav.settings", icon: Settings },
-  { href: "/dashboard/profile", label: "nav.profile", icon: UserRound },
-];
+  {
+    href: "/dashboard",
+    label: "nav.dashboard",
+    icon: CircleGauge,
+    permissions: ["dashboard.view"],
+  },
+  {
+    href: "/dashboard/dealers",
+    label: "nav.dealers",
+    icon: Landmark,
+    permissions: ["dealers.view", "dealers.add", "dealers.change_status"],
+  },
+  {
+    href: "/dashboard/farmers",
+    label: "nav.farmers",
+    icon: Leaf,
+    permissions: ["farmers.view"],
+  },
+  {
+    href: "/dashboard/notifications",
+    label: "nav.notifications",
+    icon: Bell,
+    permissions: ["notifications.view", "notifications.send"],
+  },
+  {
+    href: "/dashboard/banner",
+    label: "nav.banner",
+    icon: Image,
+    permissions: ["banner.view", "banner.update"],
+  },
+  {
+    href: "/dashboard/subscription",
+    label: "nav.subscription",
+    icon: LayoutGrid,
+    permissions: ["subscription.view", "subscription.update"],
+  },
+  {
+    href: "/dashboard/admins",
+    label: "nav.admins",
+    icon: ShieldCheck,
+    permissions: [
+      "admins.view",
+      "admins.add",
+      "admins.update_permissions",
+      "admins.update_status",
+    ],
+  },
+  {
+    href: "/dashboard/settings",
+    label: "nav.settings",
+    icon: Settings,
+    permissions: [],
+  },
+  {
+    href: "/dashboard/profile",
+    label: "nav.profile",
+    icon: UserRound,
+    permissions: [],
+  },
+] satisfies Array<{
+  href: string;
+  label: string;
+  icon: typeof CircleGauge;
+  permissions: AdminPermission[];
+}>;
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -35,28 +98,38 @@ export function Sidebar() {
           <Leaf className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-base font-semibold leading-5 text-primary">KYFI Admin</p>
-          <p className="text-xs font-normal leading-5 text-muted-foreground">{t("sidebar.subtitle")}</p>
+          <p className="text-base font-semibold leading-5 text-primary">
+            KYFI Admin
+          </p>
+          <p className="text-xs font-normal leading-5 text-muted-foreground">
+            {t("sidebar.subtitle")}
+          </p>
         </div>
       </Link>
       <nav className="space-y-1">
-        {links.map((item) => {
-          const active = pathname === item.href;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium leading-none text-muted-foreground transition hover:bg-accent hover:text-foreground",
-                active && "bg-accent text-foreground shadow-sm",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {t(item.label)}
-            </Link>
-          );
-        })}
+        {links
+          .filter(
+            (item) =>
+              !item.permissions.length ||
+              hasAnyAdminPermission(item.permissions),
+          )
+          .map((item) => {
+            const active = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium leading-none text-muted-foreground transition hover:bg-accent hover:text-foreground",
+                  active && "bg-accent text-foreground shadow-sm",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {t(item.label)}
+              </Link>
+            );
+          })}
       </nav>
     </aside>
   );

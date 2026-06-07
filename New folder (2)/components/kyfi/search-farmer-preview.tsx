@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type KeyboardEvent,
 } from "react";
 import { motion } from "framer-motion";
@@ -11,6 +12,7 @@ import {
   ChevronDown,
   Plus,
   Fingerprint,
+  ImagePlus,
   Loader2,
   MapPin,
   Phone,
@@ -36,12 +38,18 @@ import {
 } from "@/lib/api/locations";
 import { searchFarmerStatuses } from "@/lib/api/farmer-status-search";
 import {
+  checkFarmerStatus,
   decrementFarmerStatusCount,
+  fetchFarmerStatusVoters,
   incrementFarmerStatusCount,
+  moveFarmerStatusToOld,
   voteFarmerStatus,
   type FarmerStatusColor,
+  type FarmerStatusVoteVoter,
 } from "@/lib/api/farmer-status";
 import type { FarmerStatusRecord } from "@/lib/api/farmer-status";
+import { KYFI_API_BASE_URL } from "@/lib/config";
+import { imageFileToWebpDataUrl } from "@/lib/image-proof";
 const formatMandalSuggestion = (mandal: MandalSearchResult) =>
   `${mandal.name} mandal, ${mandal.districtName || "-"} district, ${mandal.stateName || "-"}`;
 function maskAadhaar(value: string | null | undefined) {
@@ -49,6 +57,11 @@ function maskAadhaar(value: string | null | undefined) {
   return digits.length >= 4
     ? `XXXX XXXX ${digits.slice(-4)}`
     : "XXXX XXXX XXXX";
+}
+function buildAssetUrl(path: string | null | undefined) {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${KYFI_API_BASE_URL.replace(/\/api$/, "")}${path}`;
 }
 function getStatusBadge({
   farmer,
@@ -125,6 +138,32 @@ function formatDate(date: Date, language: "en" | "te") {
     year: "numeric",
   }).format(date);
 }
+
+function formatVotedDate(value: string, language: "en" | "te") {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat(language === "te" ? "te-IN" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function getVoteColorBadgeClass(voteColor: FarmerStatusVoteVoter["voteColor"]) {
+  const normalized = String(voteColor || "").toUpperCase();
+  if (normalized === "GREEN") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (normalized === "YELLOW") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+  if (normalized === "RED") {
+    return "border-rose-200 bg-rose-50 text-rose-700";
+  }
+  return "border-slate-200 bg-slate-100 text-slate-600";
+}
 function FarmerStatusCard({
   farmer,
   language,
@@ -133,6 +172,8 @@ function FarmerStatusCard({
   onVote,
   onIncrement,
   onDecrement,
+  onMoveToOld,
+  onViewVotes,
 }: {
   farmer: FarmerStatusRecord;
   language: "en" | "te";
@@ -141,143 +182,171 @@ function FarmerStatusCard({
   onVote: (statusId: number, voteColor: FarmerStatusColor) => void;
   onIncrement: (statusId: number) => void;
   onDecrement: (statusId: number) => void;
+  onMoveToOld: (statusId: number) => void;
+  onViewVotes: (statusId: number, farmerName: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const isActing = actionStatusId === farmer.id;
   const canIncrement = farmer.canIncrement !== false;
   const canDecrement = farmer.canDecrement === true;
   const canManageStatus = farmer.canManageStatus !== false;
+  const canMoveToOld = farmer.canMoveToOld !== false;
+  const hideCountControls =
+    farmer.farmerType !== "NEW" && farmer.statusColor === "GREEN";
+  const rowGridClass = hideCountControls
+    ? "grid gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto_auto] xl:items-center max-sm:gap-2"
+    : "grid gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_minmax(220px,1.08fr)_auto] xl:items-center max-sm:gap-2";
   const statusBadge = getStatusBadge({ farmer, t });
+  const shouldShowStatusBadge =
+    farmer.farmerType !== "OLD" ||
+    statusBadge.label !== t("search.statusNotVoted");
   const activeVoteColor = farmer.currentDealerVoteColor ?? null;
+
   return (
-    <article className="border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-      <div className="px-4 py-4 sm:px-6 sm:py-5">
-        {" "}
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          {" "}
-          <div className="min-w-0 flex-1">
-            {" "}
+    <article className="border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)] max-sm:overflow-hidden max-sm:rounded-[22px] max-sm:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+      <div className="px-4 py-4 sm:px-6 sm:py-5 max-sm:px-3 max-sm:py-3">
+        <div className="space-y-4 max-sm:space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-sm:gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              {" "}
-              <p className="font-manrope text-[1.05rem] font-extrabold tracking-[-0.04em] text-slate-950 sm:text-[1.15rem]">
-                {" "}
-                {farmer.farmerName}{" "}
-              </p>{" "}
+              <p className="font-manrope text-[1rem] font-extrabold tracking-[-0.04em] text-slate-950 sm:text-[1.15rem]">
+                {farmer.farmerName}
+              </p>
               <Badge
                 variant={farmer.farmerType === "NEW" ? "secondary" : "outline"}
                 className="rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]"
               >
-                {" "}
                 {farmer.farmerType === "NEW"
                   ? t("search.farmerTypeNew")
-                  : t("search.farmerTypeOld")}{" "}
-              </Badge>{" "}
-              {/*              {farmer.blacklisted ? (                <Badge                  variant="destructive"                  className="rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]"                >                  {t("search.blacklisted")}                </Badge>              ) : null}              */}{" "}
-              <Badge
-                variant="outline"
-                className={[
-                  statusBadge.className,
-                  "rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]",
-                ].join(" ")}
+                  : t("search.farmerTypeOld")}
+              </Badge>
+              {shouldShowStatusBadge ? (
+                <Badge
+                  variant="outline"
+                  className={[
+                    statusBadge.className,
+                    "rounded-full px-3 py-0.5 text-[0.68rem] font-bold tracking-[0.12em]",
+                  ].join(" ")}
+                >
+                  {statusBadge.label}
+                </Badge>
+              ) : null}
+            </div>
+            {farmer.farmerType === "NEW" ? (
+              <button
+                type="button"
+                onClick={() => onMoveToOld(farmer.id)}
+                disabled={isActing || !canMoveToOld}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 text-[0.68rem] font-black uppercase tracking-[0.18em] text-amber-700 transition hover:border-amber-400 hover:bg-amber-100 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40 sm:self-start max-sm:h-9 max-sm:px-3 max-sm:text-[0.62rem]"
+                aria-label="Move to old"
               >
-                {" "}
-                {statusBadge.label}{" "}
-              </Badge>{" "}
-            </div>{" "}
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
-              {" "}
-              <InfoCard
-                icon={MapPin}
-                label={t("search.location")}
-                value={`${farmer.village}, ${farmer.mandal}`}
-              />{" "}
-              <InfoCard
-                icon={Phone}
-                label={t("myRecords.mobile")}
-                value={farmer.mobileNumber || "-"}
-              />{" "}
-              <InfoCard
-                icon={Fingerprint}
-                label={t("search.maskedAadhaar")}
-                value={maskAadhaar(farmer.aadhaar)}
-              />{" "}
-              <div className="flex h-full min-h-[72px] w-full items-stretch">
-                {" "}
-                {farmer.farmerType === "NEW" ? (
-                  <div className="grid h-full w-full grid-cols-3 border border-slate-200 bg-white">
-                    {" "}
-                    {(["GREEN", "YELLOW", "RED"] as FarmerStatusColor[]).map(
-                      (voteColor) => {
-                        const isActive = activeVoteColor === voteColor;
-                        const colorClass =
-                          voteColor === "GREEN"
+                Move to Old
+              </button>
+            ) : null}
+          </div>
+
+          <div className={rowGridClass}>
+            <InfoCard
+              icon={MapPin}
+              label={t("search.location")}
+              value={`${farmer.village}, ${farmer.mandal}`}
+              className="h-full max-sm:rounded-[16px] max-sm:px-3 max-sm:py-3"
+            />
+            <InfoCard
+              icon={Phone}
+              label={t("myRecords.mobile")}
+              value={farmer.mobileNumber || "-"}
+              className="h-full max-sm:rounded-[16px] max-sm:px-3 max-sm:py-3"
+            />
+            <InfoCard
+              icon={Fingerprint}
+              label={t("search.maskedAadhaar")}
+              value={maskAadhaar(farmer.aadhaar)}
+              className="h-full max-sm:rounded-[16px] max-sm:px-3 max-sm:py-3"
+            />
+
+            <div className="flex items-center self-center max-sm:mt-0.5">
+              {farmer.farmerType === "NEW" ? (
+                <div className="grid min-h-[56px] w-full grid-cols-3 content-center gap-0.5 rounded-[22px] border border-slate-200 bg-slate-50 p-1 shadow-none max-sm:min-h-[50px] max-sm:rounded-[18px] max-sm:p-[3px]">
+                  {(["GREEN", "YELLOW", "RED"] as FarmerStatusColor[]).map(
+                    (voteColor) => {
+                      const isActive = activeVoteColor === voteColor;
+                      const colorClass =
+                        voteColor === "GREEN"
+                          ? isActive
+                            ? "bg-emerald-500 text-white"
+                            : "text-emerald-800 hover:bg-emerald-50"
+                          : voteColor === "YELLOW"
                             ? isActive
-                              ? "bg-emerald-600 text-white shadow-[0_8px_18px_rgba(16,185,129,0.22)]"
+                              ? "bg-amber-400 text-white"
                               : "text-emerald-800 hover:bg-emerald-50"
-                            : voteColor === "YELLOW"
-                              ? isActive
-                                ? "bg-amber-500 text-white shadow-[0_8px_18px_rgba(245,158,11,0.22)]"
-                                : "text-amber-800 hover:bg-amber-50"
-                              : isActive
-                                ? "bg-rose-600 text-white shadow-[0_8px_18px_rgba(239,68,68,0.22)]"
-                                : "text-rose-800 hover:bg-rose-50";
-                        return (
-                          <button
-                            key={voteColor}
-                            type="button"
-                            onClick={() => onVote(farmer.id, voteColor)}
-                            disabled={isActing || !canManageStatus}
-                            className={[
-                              "flex h-full min-h-[40px] items-center justify-center border-r border-slate-200 px-2 py-2 text-[0.72rem] font-bold tracking-[0.05em] transition last:border-r-0 disabled:cursor-not-allowed disabled:opacity-40",
-                              colorClass,
-                            ].join(" ")}
-                            aria-pressed={isActive}
-                            aria-label={voteColor}
-                          >
-                            {voteColor}
-                          </button>
-                        );
-                      },
-                    )}{" "}
-                  </div>
-                ) : (
-                  <div className="inline-flex h-full min-h-[72px] w-full items-center gap-2.5 border border-slate-200 bg-white px-3 py-2">
+                            : isActive
+                              ? "bg-rose-500 text-white"
+                              : "text-emerald-800 hover:bg-emerald-50";
+                      return (
+                        <button
+                          key={voteColor}
+                          type="button"
+                          onClick={() => onVote(farmer.id, voteColor)}
+                          disabled={isActing || !canManageStatus}
+                          className={[
+                            "flex h-[34px] items-center justify-center rounded-[12px] px-1 py-0 text-[0.68rem] font-bold leading-none tracking-[0.04em] transition disabled:cursor-not-allowed disabled:opacity-40 max-sm:h-[30px] max-sm:text-[0.62rem]",
+                            colorClass,
+                          ].join(" ")}
+                          aria-pressed={isActive}
+                          aria-label={voteColor}
+                        >
+                          {voteColor}
+                        </button>
+                      );
+                    },
+                  )}
+                </div>
+              ) : hideCountControls ? null : (
+                <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col max-sm:items-stretch">
+                  <div className="flex h-[56px] min-w-0 flex-1 items-center gap-2 rounded-[22px] border border-slate-200 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.04)] max-sm:h-[50px] max-sm:rounded-[18px] max-sm:px-2.5 max-sm:py-1.5">
                     <button
                       type="button"
                       onClick={() => onDecrement(farmer.id)}
                       disabled={isActing || !canDecrement}
-                      className="inline-flex h-10 w-10 items-center justify-center border border-rose-200 text-base font-bold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-sm font-bold text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40 max-sm:h-8 max-sm:w-8"
                       aria-label={t("search.decrement")}
                     >
                       -
-                    </button>{" "}
-                    <div className="min-w-[4rem] flex-1 text-center">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                    </button>
+                    <div className="min-w-[4.5rem] flex-1 rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-1.5 text-center max-sm:px-2 max-sm:py-1">
+                      <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-slate-500">
                         {t("search.votes")}
-                      </p>{" "}
-                      <p className="text-[1rem] font-extrabold text-slate-950">
+                      </p>
+                      <p className="text-[0.95rem] font-extrabold leading-none text-slate-950 max-sm:text-[0.88rem]">
                         {farmer.voteCount}
-                      </p>{" "}
-                    </div>{" "}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => onIncrement(farmer.id)}
                       disabled={isActing || !canIncrement}
-                      className="inline-flex h-10 w-10 items-center justify-center border border-emerald-200 text-base font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-sm font-bold text-emerald-600 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-40 max-sm:h-8 max-sm:w-8"
                       aria-label={t("search.increment")}
                     >
                       +
-                    </button>{" "}
+                    </button>
                   </div>
-                )}{" "}
-              </div>{" "}
-            </div>{" "}
-            <div className="flex shrink-0 items-start justify-end xl:pt-1">
-              {" "}
+                  <button
+                    type="button"
+                    onClick={() => onViewVotes(farmer.id, farmer.farmerName)}
+                    className="inline-flex h-[56px] shrink-0 items-center justify-center rounded-[22px] border border-slate-200 bg-slate-50 px-3 text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-700 transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50 hover:text-[rgb(4,120,87)] max-sm:h-9 max-sm:w-full max-sm:rounded-[18px] max-sm:px-3 max-sm:text-[0.62rem]"
+                  >
+                    View Votes
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end self-center max-sm:justify-end">
               <button
                 type="button"
                 onClick={() => setExpanded((current) => !current)}
-                className="inline-flex items-center justify-center border border-slate-200 bg-slate-50 p-2.5 text-sm font-semibold text-slate-700 transition hover:border-[rgb(4,120,87)] hover:text-[rgb(4,120,87)]"
+                className="inline-flex items-center justify-center border border-slate-200 bg-slate-50 p-2.5 text-sm font-semibold text-slate-700 transition hover:border-[rgb(4,120,87)] hover:text-[rgb(4,120,87)] max-sm:p-2"
                 aria-expanded={expanded}
                 aria-label={expanded ? "Hide details" : "Show details"}
               >
@@ -287,13 +356,13 @@ function FarmerStatusCard({
                     expanded ? "rotate-180" : "",
                   ].join(" ")}
                 />
-              </button>{" "}
-            </div>{" "}
-          </div>{" "}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       {expanded ? (
-        <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6">
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6 max-sm:px-3 max-sm:py-3">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MiniInfo label={t("search.district")} value={farmer.district} />
             <MiniInfo
@@ -355,6 +424,24 @@ export function SearchFarmerPreview() {
   const [results, setResults] = useState<FarmerStatusRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionStatusId, setActionStatusId] = useState<number | null>(null);
+  const [votesDialogOpen, setVotesDialogOpen] = useState(false);
+  const [votesDialogLoading, setVotesDialogLoading] = useState(false);
+  const [votesDialogError, setVotesDialogError] = useState("");
+  const [votesDialogFarmerName, setVotesDialogFarmerName] = useState("");
+  const [votesDialogVotes, setVotesDialogVotes] = useState<
+    FarmerStatusVoteVoter[]
+  >([]);
+  const [proofVoteFarmer, setProofVoteFarmer] =
+    useState<FarmerStatusRecord | null>(null);
+  const [proofVoteMode, setProofVoteMode] = useState<
+    "vote" | "moveToOld" | "moveAndVoteExisting"
+  >("vote");
+  const [proofVoteSourceStatusId, setProofVoteSourceStatusId] = useState<
+    number | null
+  >(null);
+  const [proofVoteImage, setProofVoteImage] = useState("");
+  const [proofVoteError, setProofVoteError] = useState("");
+  const [proofVoteSubmitting, setProofVoteSubmitting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
@@ -702,7 +789,119 @@ export function SearchFarmerPreview() {
       setLoading(false);
     }
   };
+  const closeProofVoteModal = () => {
+    setProofVoteFarmer(null);
+    setProofVoteMode("vote");
+    setProofVoteSourceStatusId(null);
+    setProofVoteImage("");
+    setProofVoteError("");
+    setProofVoteSubmitting(false);
+  };
+  const handleProofVoteImageChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      setProofVoteError("");
+      setProofVoteImage(await imageFileToWebpDataUrl(file));
+    } catch (proofError) {
+      setProofVoteImage("");
+      setProofVoteError(
+        proofError instanceof Error
+          ? proofError.message
+          : "Unable to prepare proof image.",
+      );
+    }
+  };
+  const submitProofVote = async () => {
+    if (!proofVoteFarmer) return;
+    if (!proofVoteImage) {
+      setProofVoteError(
+        proofVoteMode === "moveToOld" || proofVoteMode === "moveAndVoteExisting"
+          ? "Select proof image before moving to old."
+          : "Select proof image before voting.",
+      );
+      return;
+    }
+
+    setProofVoteSubmitting(true);
+    const actionId = proofVoteSourceStatusId || proofVoteFarmer.id;
+    setActionStatusId(actionId);
+    try {
+      if (proofVoteMode === "moveAndVoteExisting") {
+        const moveResponse = await moveFarmerStatusToOld(
+          actionId,
+          proofVoteImage,
+        );
+        setResults((current) =>
+          current
+            .filter((farmer) => farmer.id !== actionId)
+            .map((farmer) =>
+              farmer.id === proofVoteFarmer.id && moveResponse.farmerStatus
+                ? moveResponse.farmerStatus
+                : farmer,
+            ),
+        );
+        closeProofVoteModal();
+        setToastMessage(
+          moveResponse.message ||
+            "Existing old farmer voted and duplicate new farmer removed.",
+        );
+        setToastTone("success");
+        setToastOpen(true);
+        return;
+      }
+
+      const response =
+        proofVoteMode === "moveToOld"
+          ? await moveFarmerStatusToOld(actionId, proofVoteImage)
+          : await incrementFarmerStatusCount(
+              proofVoteFarmer.id,
+              proofVoteImage,
+            );
+      if (response.farmerStatus) {
+        const updatedFarmer = response.farmerStatus;
+        setResults((current) =>
+          current.map((farmer) =>
+            farmer.id ===
+            (proofVoteMode === "moveToOld" ? actionId : proofVoteFarmer.id)
+              ? updatedFarmer
+              : farmer,
+          ),
+        );
+      }
+      closeProofVoteModal();
+      setToastMessage(
+        response.message ||
+          (proofVoteMode === "moveToOld"
+            ? "Moved to old farmer successfully."
+            : "Your vote has been added successfully."),
+      );
+      setToastTone("success");
+      setToastOpen(true);
+    } catch (error) {
+      setProofVoteError(
+        error instanceof Error ? error.message : t("search.unable"),
+      );
+    } finally {
+      setProofVoteSubmitting(false);
+      setActionStatusId(null);
+    }
+  };
   const handleIncrement = async (statusId: number) => {
+    const farmer = results.find((item) => item.id === statusId);
+    if (farmer?.farmerType === "OLD") {
+      setProofVoteFarmer(farmer);
+      setProofVoteMode("vote");
+      setProofVoteSourceStatusId(null);
+      setProofVoteImage("");
+      setProofVoteError("");
+      return;
+    }
+
     setActionStatusId(statusId);
     try {
       const response = await incrementFarmerStatusCount(statusId);
@@ -713,7 +912,7 @@ export function SearchFarmerPreview() {
           ),
         );
       }
-      setToastMessage(response.message);
+      setToastMessage("Your vote has been added successfully.");
       setToastTone("success");
       setToastOpen(true);
     } catch (error) {
@@ -737,7 +936,7 @@ export function SearchFarmerPreview() {
           ),
         );
       }
-      setToastMessage(response.message);
+      setToastMessage("Your vote has been removed successfully.");
       setToastTone("success");
       setToastOpen(true);
     } catch (error) {
@@ -748,6 +947,57 @@ export function SearchFarmerPreview() {
       setToastOpen(true);
     } finally {
       setActionStatusId(null);
+    }
+  };
+  const handleMoveToOld = async (statusId: number) => {
+    const farmer = results.find((item) => item.id === statusId);
+    if (!farmer) return;
+
+    setActionStatusId(statusId);
+    try {
+      const response = await checkFarmerStatus({
+        mobileNumber: farmer.mobileNumber || "",
+        farmerType: "OLD",
+      });
+      if (response.farmerStatus) {
+        setProofVoteFarmer(response.farmerStatus);
+        setProofVoteMode("moveAndVoteExisting");
+        setProofVoteSourceStatusId(statusId);
+      } else {
+        setProofVoteFarmer(farmer);
+        setProofVoteMode("moveToOld");
+        setProofVoteSourceStatusId(statusId);
+      }
+      setProofVoteImage("");
+      setProofVoteError("");
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : t("search.unable"),
+      );
+      setToastTone("error");
+      setToastOpen(true);
+    } finally {
+      setActionStatusId(null);
+    }
+  };
+  const handleViewVotes = async (statusId: number, farmerName: string) => {
+    setVotesDialogOpen(true);
+    setVotesDialogLoading(true);
+    setVotesDialogError("");
+    setVotesDialogFarmerName(farmerName);
+    setVotesDialogVotes([]);
+
+    try {
+      const response = await fetchFarmerStatusVoters(statusId);
+      setVotesDialogVotes(response.voters);
+    } catch (voteError) {
+      setVotesDialogError(
+        voteError instanceof Error
+          ? voteError.message
+          : "Unable to load voters",
+      );
+    } finally {
+      setVotesDialogLoading(false);
     }
   };
   const handleVote = async (statusId: number, voteColor: FarmerStatusColor) => {
@@ -1053,6 +1303,8 @@ export function SearchFarmerPreview() {
                   onVote={handleVote}
                   onIncrement={handleIncrement}
                   onDecrement={handleDecrement}
+                  onMoveToOld={handleMoveToOld}
+                  onViewVotes={handleViewVotes}
                 />
               ))}{" "}
               {!results.length ? (
@@ -1100,7 +1352,7 @@ export function SearchFarmerPreview() {
               <button
                 type="button"
                 onClick={closeLocationModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
                 aria-label="Close modal"
               >
                 {" "}
@@ -1266,7 +1518,252 @@ export function SearchFarmerPreview() {
         message={toastMessage}
         tone={toastTone}
         onClose={() => setToastOpen(false)}
-      />{" "}
+      />
+      {proofVoteFarmer ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          onClick={closeProofVoteModal}
+        >
+          <div
+            className="w-full max-w-xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
+              <div>
+                <p className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-emerald-700">
+                  {proofVoteMode === "moveToOld" ||
+                  proofVoteMode === "moveAndVoteExisting"
+                    ? "Move to Old"
+                    : "Vote proof"}
+                </p>
+                <h2 className="mt-1 font-manrope text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                  {proofVoteFarmer.farmerName}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closeProofVoteModal}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                aria-label="Close modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-4 px-6 py-6">
+              {proofVoteMode !== "moveToOld" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                      Farmer name
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {proofVoteFarmer.farmerName}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                      Mobile
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {proofVoteFarmer.mobileNumber || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                      Location
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {proofVoteFarmer.village}, {proofVoteFarmer.mandal}
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                      District
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {proofVoteFarmer.district}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {proofVoteMode === "vote" &&
+              proofVoteFarmer.currentDealerCountAction === "INCREMENT" ? (
+                <div className="rounded-[20px] border border-emerald-200 bg-emerald-50/80 px-4 py-4">
+                  <p className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-emerald-700">
+                    You already voted
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950">
+                    You have already voted for this farmer.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-5 text-center transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50">
+                    {proofVoteImage ? (
+                      <img
+                        src={proofVoteImage}
+                        alt="Selected vote proof preview"
+                        className="max-h-56 w-full rounded-2xl object-contain"
+                      />
+                    ) : (
+                      <>
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[rgb(4,120,87)] shadow-sm">
+                          <ImagePlus className="h-5 w-5" />
+                        </span>
+                        <span className="font-manrope text-sm font-semibold text-slate-800">
+                          Select one proof image
+                        </span>
+                        <span className="font-manrope text-xs text-slate-500">
+                          JPG, JPEG, or PNG will be converted to WebP.
+                        </span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      className="sr-only"
+                      onChange={handleProofVoteImageChange}
+                    />
+                  </label>
+                  {proofVoteError ? (
+                    <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                      {proofVoteError}
+                    </p>
+                  ) : null}
+                  <Button
+                    type="button"
+                    onClick={submitProofVote}
+                    disabled={!proofVoteImage || proofVoteSubmitting}
+                    className="w-full rounded-full !bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {proofVoteMode === "moveToOld" ||
+                    proofVoteMode === "moveAndVoteExisting"
+                      ? proofVoteSubmitting
+                        ? "Moving..."
+                        : "Move to Old"
+                      : proofVoteSubmitting
+                        ? "Voting..."
+                        : "Vote"}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {votesDialogOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          onClick={() => {
+            setVotesDialogOpen(false);
+            setVotesDialogError("");
+            setVotesDialogVotes([]);
+            setVotesDialogFarmerName("");
+          }}
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
+              <div>
+                <p className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-emerald-700">
+                  View Votes
+                </p>
+                <h2 className="mt-1 font-manrope text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                  {votesDialogFarmerName
+                    ? `${votesDialogFarmerName} voter details`
+                    : "Dealer vote history"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setVotesDialogOpen(false);
+                  setVotesDialogError("");
+                  setVotesDialogVotes([]);
+                  setVotesDialogFarmerName("");
+                }}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                aria-label="Close modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[65vh] space-y-3 overflow-y-auto px-6 py-6">
+              {votesDialogLoading ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                  Loading voters...
+                </div>
+              ) : votesDialogError ? (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm font-medium text-red-700">
+                  {votesDialogError}
+                </div>
+              ) : votesDialogVotes.length ? (
+                votesDialogVotes.map((voter) => (
+                  <div
+                    key={`${voter.statusId}-${voter.dealerId}`}
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)]"
+                  >
+                    <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
+                      <div className="min-w-0">
+                        <p className="font-manrope text-base font-bold text-slate-950">
+                          {voter.dealerName}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Dealer ID: {voter.dealerId} - {voter.dealerMobile}
+                        </p>
+                        <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
+                          <p>
+                            <span className="font-semibold text-slate-800">
+                              District:
+                            </span>{" "}
+                            {voter.district || "-"}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-slate-800">
+                              Mandal:
+                            </span>{" "}
+                            {voter.mandal || "-"}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-slate-800">
+                              Village:
+                            </span>{" "}
+                            {voter.village || "-"}
+                          </p>
+                        </div>
+                        <p className="mt-3 text-sm text-slate-600">
+                          Voted at {formatVotedDate(voter.votedAt, language)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                        {voter.proofImageUrl ? (
+                          <img
+                            src={buildAssetUrl(voter.proofImageUrl)}
+                            alt="Vote proof"
+                            className="h-32 w-full rounded-xl object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-32 items-center justify-center rounded-xl bg-white text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            No proof
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                  No voters found for this farmer.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </motion.div>
   );
 }
@@ -1289,13 +1786,20 @@ function InfoCard({
   icon: Icon,
   label,
   value,
+  className,
 }: {
   icon?: typeof MapPin;
   label: string;
   value: string;
+  className?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-[18px] border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.03)]">
+    <div
+      className={[
+        "flex items-start gap-3 rounded-[18px] border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.03)]",
+        className || "",
+      ].join(" ")}
+    >
       {" "}
       {Icon ? (
         <div className="mt-0.5 flex h-[32px] w-[32px] items-center justify-center rounded-full bg-slate-100 text-slate-600">

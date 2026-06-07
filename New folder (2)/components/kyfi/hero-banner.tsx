@@ -76,52 +76,15 @@ export function HeroBanner() {
       id="home"
       className="relative overflow-hidden bg-[#F5F5F5] pt-4 sm:pt-12"
     >
-      <div className="mx-auto max-w-7xl px-4 pb-2 sm:px-6 lg:px-8 lg:pb-14">
+      <div className="mx-auto max-w-7xl px-4 pb-2 sm:px-6 lg:pl-8 lg:pr-0 lg:pb-14">
         <div className="lg:hidden">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="mb-6"
+            className="mb-5"
           >
-            <div className="mb-5 space-y-4">
-              <div className="kyfi-section-kicker w-fit border-emerald-200/70 bg-white/85 text-emerald-800 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-                <ShieldCheck className="h-4 w-4" />
-                {t("hero.kicker")}
-              </div>
-
-              <h1
-                className="max-w-4xl font-manrope text-[44px] font-bold leading-[1.08] tracking-[0.005em] text-slate-950"
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                }}
-              >
-                {heroTitle}
-              </h1>
-
-              <p className="max-w-xl font-manrope text-[0.98rem] leading-7 text-slate-600">
-                {t("hero.subtitle")}
-              </p>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/search-farmer-status"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#047857_0%,#0f766e_100%)] px-6 text-sm font-semibold text-white shadow-[0_16px_35px_rgba(4,120,87,0.28)]"
-                >
-                  <Search className="h-4 w-4" />
-                  {t("hero.ctaSearch")}
-                </Link>
-                <Link
-                  href="/add-farmer-status"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/90 px-6 text-sm font-semibold text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.06)]"
-                >
-                  {t("hero.ctaAdd")}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/70 shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
+            <div className="relative overflow-hidden border border-white/70 shadow-[0_18px_50px_rgba(15,23,42,0.10)] sm:rounded-[2rem] sm:shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={loading ? "/hero-banner.png" : mobileImage}
@@ -191,7 +154,7 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.24 }}
-              className="mt-8 grid gap-3 sm:grid-cols-3"
+              className="mt-8 hidden gap-3 sm:grid sm:grid-cols-3"
             >
               {highlights.map((item) => (
                 <div
@@ -225,7 +188,7 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.3 }}
-              className="mt-8 flex flex-wrap gap-3"
+              className="mt-8 hidden flex-wrap gap-3 sm:flex"
             >
               <Badge
                 variant="secondary"
@@ -257,7 +220,7 @@ export function HeroBanner() {
             <div className="absolute -left-8 top-10 h-28 w-28 rounded-full bg-[rgb(4,120,87)]/14 blur-3xl" />
             <div className="absolute -right-6 top-1/2 h-24 w-24 rounded-full bg-[rgb(4,120,87)]/10 blur-3xl" />
 
-            <div className="kyfi-panel relative overflow-hidden rounded-none border-0 shadow-[0_30px_90px_rgba(15,23,42,0.14)]">
+            <div className="kyfi-panel relative overflow-hidden rounded-[28px] border-0 shadow-[0_30px_90px_rgba(15,23,42,0.14)]">
               <div className="relative aspect-[5/6] w-full sm:aspect-[4/5] lg:aspect-[5/6]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

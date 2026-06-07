@@ -1,14 +1,19 @@
 const {
   createFarmerStatus,
   findFarmerStatusByAadhaarOrMobile,
+  findFarmerStatusByAadhaarOrMobileAndDealer,
+  findOldFarmerStatusByMobile,
+  getAadhaarNewFarmerDuplicatePolicy,
   searchFarmerStatuses,
   findFarmerStatusById,
   hasDealerVotedForFarmerStatus,
   getDealerFarmerStatusVoteColor,
   getFarmerStatusVoteBreakdown,
   getDealerFarmerStatusCountAction,
+  getFarmerStatusVoters,
   changeFarmerStatusCount,
   voteFarmerStatus,
+  moveFarmerStatusToOld,
 } = require("../services/farmer-status.service");
 const {
   findMandalById,
@@ -38,6 +43,8 @@ const serializeFarmerStatus = (status) => ({
   address: status.address,
   amountPending: status.amount_pending,
   remarks: status.remarks,
+  proofImageUrl: status.proof_image_path || status.proofImagePath || null,
+  dealerId: status.created_by_dealer_id,
   createdByDealerId: status.created_by_dealer_id,
   voteCount: status.vote_count,
   createdAt: status.created_at,
@@ -71,13 +78,14 @@ const buildFarmerStatusPayload = async (status, dealerId) => {
     canIncrement: canManageStatus && currentDealerCountAction !== "INCREMENT",
     canDecrement: canManageStatus && currentDealerCountAction === "INCREMENT",
     canManageStatus,
+    canMoveToOld: isNewFarmer && isStatusOwner,
     canVote: !currentDealerVoted,
     voteBreakdown,
   };
 };
 
 const checkFarmerStatus = async (req, res, next) => {
-  const { aadhaar, mobileNumber } = req.body || {};
+  const { aadhaar, mobileNumber, farmerType } = req.body || {};
 
   if (!aadhaar && !mobileNumber) {
     return res.status(400).json({
@@ -86,14 +94,51 @@ const checkFarmerStatus = async (req, res, next) => {
   }
 
   try {
-    const farmerStatus = await findFarmerStatusByAadhaarOrMobile({
-      aadhaar: aadhaar ? String(aadhaar).trim() : "",
-      mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
-    });
+    const dealerId = req.user?.dealerId;
+    const isNewFarmerCheck = String(farmerType || "").trim().toUpperCase() === "NEW";
+    const isOldFarmerCheck = String(farmerType || "").trim().toUpperCase() === "OLD";
+    const duplicatePolicy =
+      isNewFarmerCheck && aadhaar
+        ? await getAadhaarNewFarmerDuplicatePolicy({
+            aadhaar: String(aadhaar).trim(),
+            dealerId,
+          })
+        : null;
+    const oldFarmerStatus =
+      isOldFarmerCheck && mobileNumber
+        ? await findOldFarmerStatusByMobile({
+            mobileNumber: String(mobileNumber).trim(),
+          })
+        : null;
+
+    if (isOldFarmerCheck) {
+      return res.status(200).json({
+        exists: Boolean(oldFarmerStatus),
+        farmerStatus: oldFarmerStatus ? await buildFarmerStatusPayload(oldFarmerStatus, dealerId) : null,
+        duplicatePolicy: null,
+      });
+    }
+
+    const dealerSpecificFarmerStatus = dealerId
+      ? await findFarmerStatusByAadhaarOrMobileAndDealer({
+          aadhaar: aadhaar ? String(aadhaar).trim() : "",
+          mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
+          dealerId,
+        })
+      : null;
+
+    const farmerStatus =
+      oldFarmerStatus ||
+      dealerSpecificFarmerStatus ||
+      (await findFarmerStatusByAadhaarOrMobile({
+        aadhaar: aadhaar ? String(aadhaar).trim() : "",
+        mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
+      }));
 
     return res.status(200).json({
       exists: Boolean(farmerStatus),
       farmerStatus: farmerStatus ? await buildFarmerStatusPayload(farmerStatus, req.user?.dealerId) : null,
+      duplicatePolicy,
     });
   } catch (error) {
     return next(error);
@@ -148,6 +193,7 @@ const addFarmerStatus = async (req, res, next) => {
     address,
     amountPending,
     remarks,
+    proofImageDataUrl,
   } = req.body || {};
 
   const dealerId = req.user?.dealerId;
@@ -165,7 +211,13 @@ const addFarmerStatus = async (req, res, next) => {
     });
   }
 
-  if (!farmerName || !mandalId || !villageId || !statusColor) {
+  const normalizedFarmerType = String(farmerType || "OLD").trim().toUpperCase() === "NEW" ? "NEW" : "OLD";
+  const resolvedStatusColor =
+    normalizedFarmerType === "NEW"
+      ? String(statusColor || "").trim().toUpperCase()
+      : null;
+
+  if (!farmerName || !mandalId || !villageId || (normalizedFarmerType === "NEW" && !resolvedStatusColor)) {
     return res.status(400).json({
       message: "Required farmer status fields are missing",
     });
@@ -197,12 +249,46 @@ const addFarmerStatus = async (req, res, next) => {
       return res.status(400).json({ message: "Village does not belong to the selected mandal" });
     }
 
-    const existingFarmer = await findFarmerStatusByAadhaarOrMobile({
-      aadhaar: aadhaar ? String(aadhaar).trim() : "",
-      mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
-    });
+    const normalizedAadhaar = aadhaar ? String(aadhaar).trim() : "";
+    const normalizedMobileNumber = mobileNumber ? String(mobileNumber).trim() : "";
 
-    if (existingFarmer) {
+    if (normalizedFarmerType === "NEW" && normalizedAadhaar) {
+      const duplicatePolicy = await getAadhaarNewFarmerDuplicatePolicy({
+        aadhaar: normalizedAadhaar,
+        dealerId,
+      });
+
+      if (duplicatePolicy.sameDealerExists || duplicatePolicy.hasBlockingStatus) {
+        const existingStatus = await findFarmerStatusByAadhaarOrMobile({
+          aadhaar: normalizedAadhaar,
+          mobileNumber: "",
+        });
+
+        return res.status(409).json({
+          message: duplicatePolicy.sameDealerExists
+            ? "This Aadhaar already exists in your dealer account"
+            : "This Aadhaar already has a Yellow or Red farmer status",
+          exists: true,
+          duplicatePolicy,
+          farmerStatus: existingStatus ? await buildFarmerStatusPayload(existingStatus, dealerId) : null,
+        });
+      }
+    }
+
+    const existingFarmer =
+      normalizedFarmerType === "OLD"
+        ? await findOldFarmerStatusByMobile({
+            mobileNumber: normalizedMobileNumber,
+          })
+        : await findFarmerStatusByAadhaarOrMobile({
+            aadhaar: normalizedAadhaar,
+            mobileNumber: "",
+          });
+
+    if (
+      existingFarmer &&
+      Number(existingFarmer.created_by_dealer_id) === Number(dealerId)
+    ) {
       return res.status(409).json({
         message: "Farmer status already exists",
         exists: true,
@@ -212,16 +298,16 @@ const addFarmerStatus = async (req, res, next) => {
 
     const farmerStatus = await createFarmerStatus({
       aadhaar: aadhaar ? String(aadhaar).trim() : "",
-      farmerType: farmerType ? String(farmerType).trim() : "OLD",
+      farmerType: normalizedFarmerType,
       farmerName: String(farmerName).trim(),
-      mobileNumber: mobileNumber ? String(mobileNumber).trim() : "",
+      mobileNumber: normalizedMobileNumber,
       district: String(selectedMandal.district_name || "").trim(),
       mandal: String(selectedMandal.mandal_name || mandal || "").trim(),
       village: String(selectedVillage.village_name || village || "").trim(),
       districtId: selectedMandal.district_id ? Number(selectedMandal.district_id) : null,
       mandalId: selectedMandalId,
       villageId: selectedVillageId,
-      statusColor: String(statusColor).trim().toUpperCase(),
+      statusColor: resolvedStatusColor,
       rationCardNumber: rationCardNumber ? String(rationCardNumber).trim() : "",
       address: address ? String(address).trim() : "",
       amountPending:
@@ -229,6 +315,7 @@ const addFarmerStatus = async (req, res, next) => {
           ? Number(amountPending)
           : null,
       remarks: remarks ? String(remarks).trim() : "",
+      proofImageDataUrl: proofImageDataUrl ? String(proofImageDataUrl) : "",
       createdByDealerId: dealerId,
     });
 
@@ -318,6 +405,7 @@ const incrementFarmerStatusCountById = async (req, res, next) => {
       statusId,
       dealerId,
       actionType: "INCREMENT",
+      proofImageDataUrl: req.body?.proofImageDataUrl ? String(req.body.proofImageDataUrl) : "",
     });
     const updatedFarmerStatus = await findFarmerStatusById(statusId);
 
@@ -378,6 +466,81 @@ const decrementFarmerStatusCountById = async (req, res, next) => {
   }
 };
 
+const moveFarmerStatusToOldById = async (req, res, next) => {
+  const dealerId = req.user?.dealerId;
+  const statusId = Number(req.params.id);
+
+  if (!dealerId) {
+    return res.status(401).json({ message: "Authorization token required" });
+  }
+
+  if (!Number.isFinite(statusId)) {
+    return res.status(400).json({ message: "Invalid farmer status id" });
+  }
+
+  try {
+    const result = await moveFarmerStatusToOld({
+      statusId,
+      dealerId,
+      proofImageDataUrl: req.body?.proofImageDataUrl ? String(req.body.proofImageDataUrl) : "",
+    });
+
+    if (result?.action === "missing") {
+      return res.status(404).json({ message: "Farmer status not found" });
+    }
+
+    if (result?.action === "forbidden") {
+      return res.status(403).json({ message: "Only the dealer who added this new farmer can move it to old" });
+    }
+
+    if (result?.action === "locked") {
+      return res.status(400).json({ message: "This farmer is already an old farmer" });
+    }
+
+    const updatedFarmerStatus = await findFarmerStatusById(result?.targetStatusId || statusId);
+
+    return res.status(200).json({
+      message:
+        result?.action === "voted_existing_and_removed_new"
+          ? "Existing old farmer voted and duplicate new farmer removed."
+          : "Moved to old farmer successfully.",
+      farmerStatus: updatedFarmerStatus ? await buildFarmerStatusPayload(updatedFarmerStatus, dealerId) : null,
+      removedStatusId: result?.removedStatusId || null,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const listFarmerStatusVotesById = async (req, res, next) => {
+  const dealerId = req.user?.dealerId;
+  const statusId = Number(req.params.id);
+
+  if (!dealerId) {
+    return res.status(401).json({ message: "Authorization token required" });
+  }
+
+  if (!Number.isFinite(statusId)) {
+    return res.status(400).json({ message: "Invalid farmer status id" });
+  }
+
+  try {
+    const status = await findFarmerStatusById(statusId);
+    if (!status) {
+      return res.status(404).json({ message: "Farmer status not found" });
+    }
+
+    const voters = await getFarmerStatusVoters(statusId);
+
+    return res.status(200).json({
+      totalVotes: voters.length,
+      voters,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   checkFarmerStatus,
   searchFarmerStatus,
@@ -385,4 +548,6 @@ module.exports = {
   voteFarmerStatusById,
   incrementFarmerStatusCountById,
   decrementFarmerStatusCountById,
+  moveFarmerStatusToOldById,
+  listFarmerStatusVotesById,
 };

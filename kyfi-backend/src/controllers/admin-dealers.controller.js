@@ -1,4 +1,9 @@
-const { findDealerById, listDealers, updateDealerStatusById } = require("../services/dealer.service");
+const {
+  createDealer,
+  findDealerById,
+  listDealers,
+  updateDealerStatusById,
+} = require("../services/dealer.service");
 const {
   createAdminNotification,
   buildDealerStatusNotificationContent,
@@ -21,6 +26,11 @@ const getDealers = async (req, res, next) => {
         village: dealer.village,
         aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
         status: dealer.status,
+        subscriptionStatus: dealer.subscription_status,
+        subscriptionPlanName: dealer.subscription_plan_name,
+        subscriptionYearlyPrice: dealer.subscription_yearly_price,
+        subscriptionStartedAt: dealer.subscription_started_at,
+        subscriptionExpiresAt: dealer.subscription_expires_at,
         createdAt: dealer.created_at,
         updatedAt: dealer.updated_at,
       })),
@@ -41,7 +51,9 @@ const updateDealerStatus = async (req, res, next) => {
   }
 
   if (!allowedStatuses.has(normalizedStatus)) {
-    return res.status(400).json({ message: "Status must be approved, rejected, or suspended" });
+    return res
+      .status(400)
+      .json({ message: "Status must be approved, rejected, or suspended" });
   }
 
   try {
@@ -55,7 +67,8 @@ const updateDealerStatus = async (req, res, next) => {
     if (adminId) {
       const admin = await findDealerById(adminId);
       if (admin && admin.role === "admin") {
-        const notificationContent = buildDealerStatusNotificationContent(normalizedStatus);
+        const notificationContent =
+          buildDealerStatusNotificationContent(normalizedStatus);
 
         await createAdminNotification({
           recipientType: "individual",
@@ -80,7 +93,80 @@ const updateDealerStatus = async (req, res, next) => {
   }
 };
 
+const createDealerFromAdmin = async (req, res, next) => {
+  const {
+    shopName,
+    ownerName,
+    mobile,
+    password,
+    district,
+    state,
+    mandal,
+    village,
+    aadhaarOrGstNumber,
+  } = req.body || {};
+
+  const normalizedMobile = String(mobile || "").trim();
+  const normalizedIdentifier = String(aadhaarOrGstNumber || "")
+    .trim()
+    .toUpperCase();
+
+  if (
+    !String(shopName || "").trim() ||
+    !String(ownerName || "").trim() ||
+    !normalizedMobile ||
+    !String(district || "").trim() ||
+    !String(state || "").trim() ||
+    !String(mandal || "").trim() ||
+    !String(village || "").trim() ||
+    !normalizedIdentifier
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Required dealer fields are missing" });
+  }
+
+  if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+    return res
+      .status(400)
+      .json({ message: "Enter a valid 10-digit mobile number" });
+  }
+
+  if (
+    !/^\d{12}$/.test(normalizedIdentifier) &&
+    !/^\d{2}[A-Z0-9]{13}$/.test(normalizedIdentifier)
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Enter a valid Aadhaar or GST number" });
+  }
+
+  try {
+    const dealer = await createDealer({
+      role: "dealer",
+      name: String(ownerName).trim(),
+      mobile: normalizedMobile,
+      password: String(password || "").trim() || undefined,
+      shopName: String(shopName).trim(),
+      district: String(district).trim(),
+      state: String(state).trim(),
+      mandal: String(mandal).trim(),
+      village: String(village).trim(),
+      aadhaarOrGstNumber: normalizedIdentifier,
+      status: "pending",
+    });
+
+    return res.status(201).json({
+      message: "Dealer created successfully",
+      dealer,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getDealers,
+  createDealerFromAdmin,
   updateDealerStatus,
 };

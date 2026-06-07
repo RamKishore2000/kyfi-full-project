@@ -79,8 +79,6 @@ function FarmerRecordCard({
   record: MyFarmerStatusRecord;
   t: (key: string) => string;
 }) {
-  const displayStatusColor =
-    record.currentDealerVoteColor || record.statusColor;
   const farmerType =
     String(record.farmerType || "OLD").toUpperCase() === "NEW" ? "NEW" : "OLD";
 
@@ -97,17 +95,6 @@ function FarmerRecordCard({
                 {farmerType === "NEW"
                   ? t("myRecords.tabs.newFarmers")
                   : t("myRecords.tabs.oldFarmers")}
-              </Badge>
-              <Badge
-                variant={
-                  displayStatusColor === "GREEN"
-                    ? "success"
-                    : displayStatusColor === "YELLOW"
-                      ? "warning"
-                      : "destructive"
-                }
-              >
-                {getStatusLabel(displayStatusColor, t)}
               </Badge>
               {record.blacklisted ? (
                 <Badge variant="destructive">
@@ -240,8 +227,6 @@ function VoteRecordCard({
   record: MyVoteRecord;
   t: (key: string) => string;
 }) {
-  const displayVoteColor = record.voteColor || record.statusColor;
-
   return (
     <details className="group rounded-3xl border border-white/80 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
       <summary className="list-none cursor-pointer p-5">
@@ -251,17 +236,7 @@ function VoteRecordCard({
               <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
                 {record.farmerName}
               </h3>
-              <Badge
-                variant={
-                  displayVoteColor === "GREEN"
-                    ? "success"
-                    : displayVoteColor === "YELLOW"
-                      ? "warning"
-                      : "destructive"
-                }
-              >
-                {getStatusLabel(displayVoteColor, t)}
-              </Badge>
+              <Badge variant="success">{t("myRecords.voted")}</Badge>
             </div>
             <p className="font-manrope type-small text-slate-500">
               {record.district}, {record.mandal}, {record.village}
@@ -276,7 +251,8 @@ function VoteRecordCard({
               {t("myRecords.votedAt")}
             </p>
             <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
-              {formatVoteDate(record.votedAt) || t("myRecords.notProvided")}
+              {formatVoteDate(record.actedAt || record.votedAt) ||
+                t("myRecords.notProvided")}
             </p>
           </div>
         </div>
@@ -286,22 +262,28 @@ function VoteRecordCard({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-slate-50 p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
+              {t("myRecords.actionType")}
+            </p>
+            <p className="mt-2 font-manrope type-nav text-slate-900">
+              {t("myRecords.voted")}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.mobile")}
             </p>
             <p className="mt-2 font-manrope type-nav text-slate-900">
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          {record.voteColor ? (
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-                {t("myRecords.voteColor")}
-              </p>
-              <p className="mt-2 font-manrope type-nav text-slate-900">
-                {record.voteColor}
-              </p>
-            </div>
-          ) : null}
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
+              {t("myRecords.status")}
+            </p>
+            <p className="mt-2 font-manrope type-nav text-slate-900">
+              {getStatusLabel(record.statusColor, t)}
+            </p>
+          </div>
         </div>
       </div>
     </details>
@@ -314,10 +296,16 @@ export default function MyRecordsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [records, setRecords] = useState<MyRecordsResponse>({
-    counts: { farmerStatuses: 0, blacklistEntries: 0, votes: 0 },
+    counts: {
+      farmerStatuses: 0,
+      blacklistEntries: 0,
+      votes: 0,
+      countActions: 0,
+    },
     farmerStatuses: [],
     blacklistEntries: [],
     votes: [],
+    countActions: [],
   });
 
   const farmerStatuses = records.farmerStatuses;
@@ -492,19 +480,25 @@ export default function MyRecordsPage() {
                     {t("myRecords.noNewFarmers")}
                   </div>
                 )
-              ) : records.votes.length ? (
-                <div className="space-y-4">
-                  {records.votes.map((record) => (
-                    <motion.div
-                      key={record.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, amount: 0.2 }}
-                    >
-                      <VoteRecordCard record={record} t={t} />
-                    </motion.div>
-                  ))}
-                </div>
+              ) : tab === "votes" ? (
+                records.votes.length ? (
+                  <div className="space-y-4">
+                    {records.votes.map((record) => (
+                      <motion.div
+                        key={record.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                      >
+                        <VoteRecordCard record={record} t={t} />
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500">
+                    {t("myRecords.noVotes")}
+                  </div>
+                )
               ) : (
                 <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500">
                   {t("myRecords.noVotes")}

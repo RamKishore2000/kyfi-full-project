@@ -11,18 +11,12 @@ const sections = [
     items: [
       "privacy.collectDealer",
       "privacy.collectRecords",
-      "privacy.collectBlacklist",
       "privacy.collectSensitive",
     ],
   },
   {
     titleKey: "privacy.whatWeUse",
-    items: [
-      "privacy.useSearch",
-      "privacy.useBlacklist",
-      "privacy.useSignals",
-      "privacy.useAccess",
-    ],
+    items: ["privacy.useSearch", "privacy.useSignals", "privacy.useAccess"],
   },
   {
     titleKey: "privacy.howProtect",
@@ -71,7 +65,9 @@ export default function PrivacyPolicyPage() {
               className="rounded-3xl border border-white/80 bg-white/85 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
             >
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-manrope type-card text-slate-900">{t(section.titleKey)}</h2>
+                <h2 className="font-manrope type-card text-slate-900">
+                  {t(section.titleKey)}
+                </h2>
                 <Badge variant="secondary">KYFI</Badge>
               </div>
               <ul className="mt-4 space-y-3 font-manrope type-body text-slate-600">
@@ -87,7 +83,9 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50/70 p-6">
-          <p className="font-manrope type-nav text-emerald-900">{t("privacy.important")}</p>
+          <p className="font-manrope type-nav text-emerald-900">
+            {t("privacy.important")}
+          </p>
           <p className="mt-2 font-manrope type-body text-slate-700">
             {t("privacy.importantBody")}
           </p>

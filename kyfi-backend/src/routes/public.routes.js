@@ -1,5 +1,12 @@
 const express = require("express");
-const { getPublicHeroBanner } = require("../controllers/site-banner.controller");
+const {
+  getPublicHeroBanner,
+} = require("../controllers/site-banner.controller");
+const {
+  getPublicSubscription,
+  createPublicSubscriptionOrder,
+  verifyPublicSubscriptionPayment,
+} = require("../controllers/subscription.controller");
 const {
   getMandals,
   searchMandalsHandler,
@@ -14,6 +21,9 @@ const { requireAuth } = require("../middleware/auth.middleware");
 const router = express.Router();
 
 router.get("/site-banner", getPublicHeroBanner);
+router.get("/subscription", getPublicSubscription);
+router.post("/subscription/order", createPublicSubscriptionOrder);
+router.post("/subscription/verify", verifyPublicSubscriptionPayment);
 router.get("/locations/mandals", getMandals);
 router.get("/mandals/search", searchMandalsHandler);
 router.get("/villages/search", searchVillagesHandler);

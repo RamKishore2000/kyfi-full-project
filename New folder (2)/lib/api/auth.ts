@@ -9,7 +9,9 @@ export type RegisterDealerInput = {
   state: string;
   mandal: string;
   village: string;
-  aadhaarOrGstNumber: string;
+  aadhaarNumber?: string;
+  gstNumber?: string;
+  aadhaarOrGstNumber?: string;
 };
 
 export type LoginPasswordInput = {
@@ -32,9 +34,16 @@ export type DealerAuthResponse = {
   state?: string;
   mandal?: string;
   village?: string;
+  aadhaarNumber?: string | null;
+  gstNumber?: string | null;
   aadhaarOrGstNumber?: string;
   status?: "pending" | "approved" | "rejected" | "suspended";
   languagePreference?: "en" | "te";
+  subscriptionStatus?: "inactive" | "active";
+  subscriptionPlanName?: string | null;
+  subscriptionYearlyPrice?: number | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
 };
 
 type ApiErrorPayload = {
@@ -46,27 +55,39 @@ async function apiRequest<TResponse>(
   init: RequestInit,
 ): Promise<TResponse> {
   const response = await fetch(`${KYFI_API_BASE_URL}${path}`, init);
-  const data = (await response.json().catch(() => null)) as TResponse | ApiErrorPayload | null;
+  const data = (await response.json().catch(() => null)) as
+    | TResponse
+    | ApiErrorPayload
+    | null;
 
   if (!response.ok) {
-    throw new Error((data as ApiErrorPayload | null)?.message || "Request failed");
+    throw new Error(
+      (data as ApiErrorPayload | null)?.message || "Request failed",
+    );
   }
 
   return data as TResponse;
 }
 
 export async function registerDealer(input: RegisterDealerInput) {
-  return apiRequest<{ message: string; dealer: DealerAuthResponse }>("/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  return apiRequest<{ message: string; dealer: DealerAuthResponse }>(
+    "/register",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
     },
-    body: JSON.stringify(input),
-  });
+  );
 }
 
 export async function loginDealerPassword(input: LoginPasswordInput) {
-  return apiRequest<{ message: string; token: string; dealer: DealerAuthResponse }>("/login", {
+  return apiRequest<{
+    message: string;
+    token: string;
+    dealer: DealerAuthResponse;
+  }>("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -79,7 +100,11 @@ export async function loginDealerPassword(input: LoginPasswordInput) {
 }
 
 export async function loginDealerOtp(input: LoginOtpInput) {
-  return apiRequest<{ message: string; token: string; dealer: DealerAuthResponse }>("/login", {
+  return apiRequest<{
+    message: string;
+    token: string;
+    dealer: DealerAuthResponse;
+  }>("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

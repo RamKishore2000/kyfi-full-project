@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS dealers (
   state VARCHAR(100) NOT NULL,
   mandal VARCHAR(100) NOT NULL,
   village VARCHAR(100) NOT NULL,
+  aadhaar_number VARCHAR(12) DEFAULT NULL,
+  gst_number VARCHAR(15) DEFAULT NULL,
   aadhaar_or_gst_number VARCHAR(32) NOT NULL,
   status ENUM('pending', 'approved', 'rejected', 'suspended') NOT NULL DEFAULT 'pending',
   language_preference VARCHAR(10) NOT NULL DEFAULT 'en',
@@ -51,17 +53,18 @@ CREATE TABLE IF NOT EXISTS farmer_statuses (
   district_id BIGINT UNSIGNED DEFAULT NULL,
   mandal_id BIGINT UNSIGNED DEFAULT NULL,
   village_id BIGINT UNSIGNED DEFAULT NULL,
-  status_color ENUM('GREEN', 'YELLOW', 'RED') NOT NULL,
+  status_color ENUM('GREEN', 'YELLOW', 'RED') DEFAULT NULL,
   ration_card_number VARCHAR(50) DEFAULT NULL,
   address VARCHAR(255) DEFAULT NULL,
   amount_pending DECIMAL(12,2) DEFAULT NULL,
   remarks TEXT DEFAULT NULL,
+  proof_image_path VARCHAR(255) DEFAULT NULL,
   created_by_dealer_id BIGINT UNSIGNED NOT NULL,
   vote_count INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_farmer_status_aadhaar (aadhaar),
+  UNIQUE KEY uq_farmer_status_dealer_aadhaar (created_by_dealer_id, aadhaar),
   KEY idx_farmer_status_location (district, mandal, village),
   CONSTRAINT fk_farmer_status_created_by FOREIGN KEY (created_by_dealer_id) REFERENCES dealers(id)
 );
@@ -84,6 +87,7 @@ CREATE TABLE IF NOT EXISTS farmer_status_count_actions (
   status_id BIGINT UNSIGNED NOT NULL,
   dealer_id INT UNSIGNED NOT NULL,
   action_type ENUM('INCREMENT', 'DECREMENT') NOT NULL,
+  proof_image_path VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -165,6 +169,20 @@ CREATE TABLE IF NOT EXISTS site_hero_banner_settings (
 
 INSERT IGNORE INTO site_hero_banner_settings (id) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS subscription_settings (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  plan_name VARCHAR(150) NOT NULL DEFAULT 'One Year Plan',
+  yearly_price DECIMAL(10,2) NOT NULL DEFAULT 1999.00,
+  currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+  duration_label VARCHAR(50) NOT NULL DEFAULT '1 Year',
+  updated_by_admin_id BIGINT UNSIGNED DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+INSERT IGNORE INTO subscription_settings (id) VALUES (1);
+
 CREATE TABLE IF NOT EXISTS districts (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   district_code VARCHAR(32) NOT NULL,
@@ -214,10 +232,10 @@ CREATE TABLE IF NOT EXISTS villages (
   KEY idx_village_district_id (district_id)
 );
 
-INSERT INTO dealers (id, role, name, mobile, password_hash, shop_name, district, state, mandal, village, aadhaar_or_gst_number, status, otp_code)
+INSERT INTO dealers (id, role, name, mobile, password_hash, shop_name, district, state, mandal, village, aadhaar_number, gst_number, aadhaar_or_gst_number, status, otp_code)
 VALUES
-  (1, 'admin', 'KYFI Admin', '9000000000', NULL, 'KYFI Control', 'Guntur', 'Andhra Pradesh', 'Guntur East', 'Kondapalli', 'ADMIN001', 'approved', '123456'),
-  (2, 'dealer', 'Ramesh Kumar', '9876543210', NULL, 'Sri Lakshmi Pesticides', 'Guntur', 'Andhra Pradesh', 'Guntur East', 'Kondapalli', '123412341234', 'approved', '123456')
+  (1, 'admin', 'KYFI Admin', '9000000000', NULL, 'KYFI Control', 'Guntur', 'Andhra Pradesh', 'Guntur East', 'Kondapalli', NULL, NULL, 'ADMIN001', 'approved', '123456'),
+  (2, 'dealer', 'Ramesh Kumar', '9876543210', NULL, 'Sri Lakshmi Pesticides', 'Guntur', 'Andhra Pradesh', 'Guntur East', 'Kondapalli', '123412341234', NULL, '123412341234', 'approved', '123456')
 ON DUPLICATE KEY UPDATE id = id;
 
 INSERT INTO farmer_statuses (

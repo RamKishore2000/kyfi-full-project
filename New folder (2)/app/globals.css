@@ -31,17 +31,32 @@
 html {
   scroll-behavior: smooth;
   color-scheme: light;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(22, 101, 52, 0.12), transparent 24%),
-    radial-gradient(circle at top right, rgba(250, 204, 21, 0.1), transparent 20%),
-    radial-gradient(circle at bottom center, rgba(15, 23, 42, 0.05), transparent 30%),
+    radial-gradient(
+      circle at top left,
+      rgba(22, 101, 52, 0.12),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(250, 204, 21, 0.1),
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at bottom center,
+      rgba(15, 23, 42, 0.05),
+      transparent 30%
+    ),
     linear-gradient(180deg, #f8fafc 0%, #eef6f1 100%);
   color: hsl(var(--foreground));
   font-family: "Manrope", ui-sans-serif, system-ui;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 @layer utilities {
@@ -157,8 +172,11 @@ body {
 
   .kyfi-panel-dark {
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.96));
+    background: linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.88),
+      rgba(15, 23, 42, 0.96)
+    );
     box-shadow: 0 24px 80px rgba(15, 23, 42, 0.2);
   }
 
@@ -182,6 +200,86 @@ body {
 
   .kyfi-soft-border {
     border-color: rgba(148, 163, 184, 0.3);
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(22, 101, 52, 0.08),
+        transparent 20%
+      ),
+      radial-gradient(
+        circle at top right,
+        rgba(250, 204, 21, 0.06),
+        transparent 18%
+      ),
+      linear-gradient(180deg, #fafafa 0%, #f6faf7 100%);
+  }
+
+  .kyfi-shell::before {
+    opacity: 0.08;
+    background-size: 32px 32px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.14), transparent 82%);
+  }
+
+  .kyfi-shell > section {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .type-hero {
+    font-size: 28px;
+    line-height: 1.08;
+  }
+
+  .type-section {
+    font-size: 24px;
+    line-height: 1.12;
+  }
+
+  .type-card {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+
+  .type-body {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .type-small {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .type-nav {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .kyfi-section-kicker {
+    padding: 0.35rem 0.68rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+  }
+
+  .kyfi-hero-grid {
+    gap: 1rem;
+  }
+
+  .kyfi-panel,
+  .kyfi-card-soft,
+  .kyfi-shell .rounded-3xl,
+  .kyfi-shell .rounded-[2rem],
+  .kyfi-shell .rounded-[28px],
+  .kyfi-shell .rounded-[32px],
+  .kyfi-shell .rounded-[34px] {
+    border-radius: 1.25rem;
   }
 }
 

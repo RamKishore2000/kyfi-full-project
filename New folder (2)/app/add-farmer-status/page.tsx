@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { motion } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { ImagePlus, Plus, X } from "lucide-react";
 import { Header } from "@/components/kyfi/header";
 import { Footer } from "@/components/kyfi/footer";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
@@ -21,8 +21,12 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 import {
   addFarmerStatus,
   checkFarmerStatus,
+  incrementFarmerStatusCount,
+  type FarmerStatusDuplicatePolicy,
   type FarmerStatusColor,
+  type FarmerStatusRecord,
 } from "@/lib/api/farmer-status";
+import { imageFileToWebpDataUrl } from "@/lib/image-proof";
 import {
   searchMandals,
   fetchVillagesByMandal,
@@ -122,6 +126,15 @@ export default function AddFarmerStatusPage() {
     useState<MandalSearchResult | null>(null);
   const [pendingLocationName, setPendingLocationName] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
+  const [existingFarmerModalOpen, setExistingFarmerModalOpen] = useState(false);
+  const [existingFarmerRecord, setExistingFarmerRecord] =
+    useState<FarmerStatusRecord | null>(null);
+  const [existingFarmerDuplicatePolicy, setExistingFarmerDuplicatePolicy] =
+    useState<FarmerStatusDuplicatePolicy>(null);
+  const [existingFarmerVoting, setExistingFarmerVoting] = useState(false);
+  const [currentDealerId, setCurrentDealerId] = useState<number | null>(null);
+  const [oldFarmerProofImage, setOldFarmerProofImage] = useState("");
+  const [oldFarmerProofError, setOldFarmerProofError] = useState("");
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -134,11 +147,141 @@ export default function AddFarmerStatusPage() {
     }, 3000);
     return () => window.clearTimeout(timeout);
   }, [toast.open]);
+  useEffect(() => {
+    const readDealer = () => {
+      if (typeof window === "undefined") return;
+      try {
+        const stored = window.localStorage.getItem("kyfi_dealer");
+        const parsed = stored ? JSON.parse(stored) : null;
+        const dealerId = Number(parsed?.id || parsed?.dealerId || 0);
+        setCurrentDealerId(
+          Number.isFinite(dealerId) && dealerId > 0 ? dealerId : null,
+        );
+      } catch {
+        setCurrentDealerId(null);
+      }
+    };
+
+    readDealer();
+    window.addEventListener("kyfi-auth-changed", readDealer);
+    return () => window.removeEventListener("kyfi-auth-changed", readDealer);
+  }, []);
   const showToast = (
     message: string,
     tone: "success" | "error" = "success",
   ) => {
     setToast({ open: true, message, tone });
+  };
+  const handleOldFarmerProofChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      setOldFarmerProofError("");
+      const webpDataUrl = await imageFileToWebpDataUrl(file);
+      setOldFarmerProofImage(webpDataUrl);
+    } catch (proofError) {
+      const message =
+        proofError instanceof Error
+          ? proofError.message
+          : "Unable to prepare proof image.";
+      setOldFarmerProofImage("");
+      setOldFarmerProofError(message);
+    }
+  };
+  const getLoggedInDealerId = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.localStorage.getItem("kyfi_dealer");
+      const parsed = stored ? JSON.parse(stored) : null;
+      const dealerId = Number(parsed?.id || parsed?.dealerId || 0);
+      return Number.isFinite(dealerId) && dealerId > 0 ? dealerId : null;
+    } catch {
+      return null;
+    }
+  };
+  const activeDealerId = currentDealerId ?? getLoggedInDealerId();
+  const resetFarmerStatusForm = () => {
+    setForm({ ...initialFarmerStatusForm });
+    setSelectedStatus("GREEN");
+    setFarmerType("OLD");
+    setFieldErrors({
+      farmerName: "",
+      aadhaar: "",
+      mobileNumber: "",
+      mandal: "",
+      village: "",
+    });
+    setOldFarmerProofImage("");
+    setOldFarmerProofError("");
+    setHideMandalSuggestions(false);
+    setHideVillageSuggestions(false);
+    setMandalOptions([]);
+    setVillageOptions([]);
+    setMandalActiveIndex(-1);
+    setVillageActiveIndex(-1);
+    setMandalSearchLoading(false);
+    setVillageSearchLoading(false);
+    setDistrictQuery("");
+    setDistrictOptions([]);
+    setDistrictActiveIndex(-1);
+    setDistrictSearchLoading(false);
+    setSelectedDistrict(null);
+    setSelectedMandal(null);
+    setPendingLocationName("");
+  };
+  const closeExistingFarmerModal = () => {
+    setExistingFarmerModalOpen(false);
+    setExistingFarmerRecord(null);
+    setExistingFarmerDuplicatePolicy(null);
+    setExistingFarmerVoting(false);
+    setOldFarmerProofImage("");
+    setOldFarmerProofError("");
+  };
+  const handleExistingFarmerCreate = async () => {
+    if (!existingFarmerRecord) return;
+    setExistingFarmerVoting(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await addFarmerStatus({
+        farmerName: form.farmerName.trim(),
+        aadhaar: form.aadhaar.trim(),
+        mobileNumber: form.mobileNumber.trim(),
+        district: form.district,
+        mandal: form.mandal,
+        mandalId: form.mandalId,
+        village: form.village,
+        villageId: form.villageId,
+        address: form.address.trim(),
+        statusColor: selectedStatus,
+        farmerType: "NEW",
+      });
+      setExistingFarmerRecord(response.farmerStatus ?? existingFarmerRecord);
+      setExistingFarmerDuplicatePolicy(null);
+      showToast(
+        isTe
+          ? "à°ªà±à°°à°¤à°¿ à°°à±ˆà°¤à± à°°à°¿à°•à°¾à°°à±à°¡à± à°°à±‚à°ªà°¤à±‹ à°šà±‡à°°à±à°šà°¾à°°à±."
+          : "Farmer created successfully for this dealer.",
+      );
+      resetFarmerStatusForm();
+      setExistingFarmerModalOpen(false);
+      setExistingFarmerRecord(null);
+      setExistingFarmerDuplicatePolicy(null);
+    } catch (createError) {
+      const fallbackMessage =
+        createError instanceof Error
+          ? createError.message
+          : isTe
+            ? "à°ªà±à°°à°¤à°¿ à°°à±ˆà°¤à± à°°à±‚à°ªà°•à°‚à°¤à±‹ à°šà±‡à°°à±à°šà°¡à°‚ à°µà°¿à°«à°²à°®à±ˆà°‚à°¦à°¿."
+            : "Unable to create farmer record.";
+      setError(fallbackMessage);
+    } finally {
+      setExistingFarmerVoting(false);
+    }
   };
   const handleChange =
     (field: keyof FarmerStatusForm) =>
@@ -496,26 +639,39 @@ export default function AddFarmerStatusPage() {
     }
   };
   const lookupExisting = async () => {
-    const mobileNumber = String(form.mobileNumber || "").trim();
-    if (!mobileNumber) {
+    const aadhaarNumber = String(form.aadhaar || "")
+      .replace(/\s+/g, "")
+      .trim();
+    if (farmerType === "NEW" && !aadhaarNumber) {
       setError(
         isTe
-          ? "Enter mobile number to check an existing record."
-          : "Enter mobile number to check an existing record.",
+          ? "ఉన్న రైతు రికార్డు కోసం Aadhaar నమోదు చేయండి."
+          : "Enter Aadhaar number to check an existing record.",
       );
       return null;
     }
     setIsChecking(true);
     try {
-      const response = await checkFarmerStatus({ mobileNumber });
+      const response = await checkFarmerStatus(
+        farmerType === "NEW"
+          ? { aadhaar: aadhaarNumber, farmerType: "NEW" }
+          : {
+              mobileNumber: String(form.mobileNumber || "").trim(),
+              farmerType: "OLD",
+            },
+      );
       if (response.exists && response.farmerStatus) {
-        const alreadyExistsMessage = isTe
-          ? "ఈ రైతు ఇప్పటికే ఉన్నాడు."
-          : "This farmer already exists.";
-        showToast(alreadyExistsMessage);
-        setMessage(alreadyExistsMessage);
+        setExistingFarmerRecord(response.farmerStatus);
+        setExistingFarmerDuplicatePolicy(response.duplicatePolicy ?? null);
+        setOldFarmerProofImage("");
+        setOldFarmerProofError("");
+        setExistingFarmerModalOpen(true);
+        setMessage(
+          isTe ? "ఈ రైతు ఇప్పటికే ఉన్నాడు." : "This farmer already exists.",
+        );
         return response.farmerStatus;
       }
+      setExistingFarmerDuplicatePolicy(null);
       setMessage(
         isTe
           ? "ఉన్న రైతు రికార్డు కనబడలేదు."
@@ -564,11 +720,17 @@ export default function AddFarmerStatusPage() {
           ? "రైతు పేరు అవసరం."
           : "Farmer name is required.",
       aadhaar:
-        !aadhaar || /^\d{12}$/.test(aadhaar)
-          ? ""
-          : isTe
-            ? "సరైన 12 అంకెల Aadhaar సంఖ్యను నమోదు చేయండి."
-            : "Enter a valid 12-digit Aadhaar number.",
+        farmerType === "NEW"
+          ? aadhaar && /^\d{12}$/.test(aadhaar)
+            ? ""
+            : isTe
+              ? "సరైన 12 అంకెల Aadhaar సంఖ్యను నమోదు చేయండి."
+              : "Aadhaar number is required and must be 12 digits."
+          : !aadhaar || /^\d{12}$/.test(aadhaar)
+            ? ""
+            : isTe
+              ? "సరైన 12 అంకెల Aadhaar సంఖ్యను నమోదు చేయండి."
+              : "Enter a valid 12-digit Aadhaar number.",
       mobileNumber:
         !mobileNumber || /^[6-9]\d{9}$/.test(mobileNumber)
           ? ""
@@ -630,6 +792,11 @@ export default function AddFarmerStatusPage() {
       );
       return;
     }
+    if (farmerType === "OLD" && !oldFarmerProofImage) {
+      setOldFarmerProofError("Proof image is required for old farmer.");
+      setError("Proof image is required for old farmer.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const existing = await lookupExisting();
@@ -646,7 +813,10 @@ export default function AddFarmerStatusPage() {
         village,
         mandalId,
         villageId,
-        statusColor: selectedStatus,
+        ...(farmerType === "NEW" ? { statusColor: selectedStatus } : {}),
+        ...(farmerType === "OLD" && oldFarmerProofImage
+          ? { proofImageDataUrl: oldFarmerProofImage }
+          : {}),
         address: address || undefined,
       });
       const successMessage =
@@ -657,22 +827,7 @@ export default function AddFarmerStatusPage() {
           : isTe
             ? "పాత రైతు విజయవంతంగా జోడించబడింది"
             : "Old farmer added successfully";
-      setForm(initialFarmerStatusForm);
-      setSelectedStatus("GREEN");
-      setFarmerType("OLD");
-      setHideMandalSuggestions(false);
-      setHideVillageSuggestions(false);
-      setMandalOptions([]);
-      setVillageOptions([]);
-      setMandalActiveIndex(-1);
-      setVillageActiveIndex(-1);
-      setFieldErrors({
-        farmerName: "",
-        aadhaar: "",
-        mobileNumber: "",
-        mandal: "",
-        village: "",
-      });
+      resetFarmerStatusForm();
       showToast(successMessage);
       setMessage(successMessage);
     } catch (submitError) {
@@ -685,6 +840,39 @@ export default function AddFarmerStatusPage() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  const handleExistingFarmerVote = async () => {
+    if (!existingFarmerRecord) return;
+    if (!oldFarmerProofImage) {
+      setOldFarmerProofError("Select one proof image before voting.");
+      return;
+    }
+    setExistingFarmerVoting(true);
+    try {
+      const response = await incrementFarmerStatusCount(
+        existingFarmerRecord.id,
+        oldFarmerProofImage,
+      );
+      if (response.farmerStatus) {
+        setExistingFarmerRecord(response.farmerStatus);
+      }
+      resetFarmerStatusForm();
+      setExistingFarmerModalOpen(false);
+      setExistingFarmerRecord(null);
+      setExistingFarmerDuplicatePolicy(null);
+      showToast(
+        isTe
+          ? "మీ ఓటు విజయవంతంగా జోడించబడింది."
+          : "Your vote has been added successfully.",
+      );
+    } catch (voteError) {
+      showToast(
+        voteError instanceof Error ? voteError.message : "Vote failed",
+        "error",
+      );
+    } finally {
+      setExistingFarmerVoting(false);
     }
   };
   return (
@@ -704,17 +892,17 @@ export default function AddFarmerStatusPage() {
             {" "}
             {isTe
               ? "డీలర్‌లకు మాత్రమే రికార్డు నమోదు"
-              : "Dealer-only record entry"}{" "}
+              : "Dealer farmer record entry"}{" "}
           </p>{" "}
           <h1 className="mt-3 font-manrope type-section text-slate-900">
             {" "}
-            {isTe ? "రైతు status జోడించండి" : "Add Farmer Status"}{" "}
+            {isTe ? "రైతు status జోడించండి" : "Add Farmer Record"}{" "}
           </h1>{" "}
           <p className="mt-4 font-manrope type-body">
             {" "}
             {isTe
               ? "Aadhaar ను ప్రధాన గుర్తింపుగా ఉపయోగించి సాధారణ రైతు రేప్యుటేషన్ రికార్డును సృష్టించండి."
-              : "Create a general farmer reputation record using Aadhaar as the primary identifier."}{" "}
+              : "Use Old Farmer for shared farmer proof records. Use New Farmer for dealer-only reputation records."}{" "}
           </p>{" "}
         </motion.div>{" "}
         <motion.div
@@ -735,20 +923,23 @@ export default function AddFarmerStatusPage() {
                     {" "}
                     <p className="font-manrope type-nav text-slate-900">
                       {" "}
-                      {isTe ? "రైతు status ఫారం" : "Farmer status form"}{" "}
+                      {isTe ? "రైతు status ఫారం" : "Farmer record form"}{" "}
                     </p>{" "}
                     <p className="mt-1 font-manrope type-body">
                       {" "}
                       {isTe
                         ? "ఇక్కడ PAN అవసరం లేదు. Aadhaar, mobile, mandal, మరియు village వాడండి."
-                        : "PAN is not required here. Use Aadhaar, mobile, mandal, and village."}{" "}
+                        : "Old Farmer needs mobile, location, and proof image. New Farmer needs Aadhaar and status."}{" "}
                     </p>{" "}
                   </div>{" "}
                   <div className="grid gap-3 sm:grid-cols-2">
                     {" "}
                     <button
                       type="button"
-                      onClick={() => setFarmerType("OLD")}
+                      onClick={() => {
+                        setFarmerType("OLD");
+                        setSelectedStatus("GREEN");
+                      }}
                       className={[
                         "rounded-2xl border px-4 py-4 text-left transition",
                         farmerType === "OLD"
@@ -788,12 +979,14 @@ export default function AddFarmerStatusPage() {
                     </button>{" "}
                   </div>{" "}
                 </div>{" "}
-                <Alert className="rounded-[28px] border-emerald-200 bg-emerald-50/55 px-5 py-5 text-slate-500">
-                  {" "}
-                  {isTe
-                    ? "ఈ ఫారం GREEN, YELLOW, లేదా RED reputation records మాత్రమే సృష్టిస్తుంది."
-                    : "This form creates only GREEN, YELLOW, or RED reputation records."}{" "}
-                </Alert>{" "}
+                {farmerType === "NEW" ? (
+                  <Alert className="rounded-[28px] border-emerald-200 bg-emerald-50/55 px-5 py-5 text-slate-500">
+                    {" "}
+                    {isTe
+                      ? "ఈ ఫారం GREEN, YELLOW, లేదా RED reputation records మాత్రమే సృష్టిస్తుంది."
+                      : "New Farmer records need one status: GREEN, YELLOW, or RED."}{" "}
+                  </Alert>
+                ) : null}{" "}
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   {" "}
                   <div className="grid gap-x-4 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
@@ -834,9 +1027,13 @@ export default function AddFarmerStatusPage() {
                       <label className="font-manrope type-nav text-slate-800">
                         {" "}
                         {isTe ? "Aadhaar సంఖ్య" : "Aadhaar number"}{" "}
-                        <span className="ml-1 text-slate-400">
-                          (optional)
-                        </span>{" "}
+                        {farmerType === "NEW" ? (
+                          <span className="ml-1 text-rose-500">*</span>
+                        ) : (
+                          <span className="ml-1 text-slate-400">
+                            (optional)
+                          </span>
+                        )}{" "}
                       </label>{" "}
                       <Input
                         ref={aadhaarInputRef}
@@ -1130,70 +1327,126 @@ export default function AddFarmerStatusPage() {
                         onChange={handleChange("address")}
                       />{" "}
                     </div>{" "}
-                    <div className="md:col-span-2 lg:col-span-3">
-                      {" "}
-                      <div className="grid gap-3 sm:grid-cols-3">
+                    {farmerType === "OLD" ? (
+                      <div className="md:col-span-2 lg:col-span-3">
+                        <label className="block font-manrope type-nav text-slate-800">
+                          Proof image
+                        </label>
+                        <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-5 text-center transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50">
+                          {oldFarmerProofImage ? (
+                            <img
+                              src={oldFarmerProofImage}
+                              alt="Selected proof preview"
+                              className="max-h-44 w-full rounded-2xl object-contain"
+                            />
+                          ) : (
+                            <>
+                              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[rgb(4,120,87)] shadow-sm">
+                                <ImagePlus className="h-5 w-5" />
+                              </span>
+                              <span className="font-manrope text-sm font-semibold text-slate-800">
+                                Select one image proof
+                              </span>
+                              <span className="font-manrope text-xs text-slate-500">
+                                JPG, JPEG, or PNG will be converted to WebP.
+                              </span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            className="sr-only"
+                            onChange={handleOldFarmerProofChange}
+                          />
+                        </label>
+                        {oldFarmerProofImage ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOldFarmerProofImage("");
+                              setOldFarmerProofError("");
+                            }}
+                            className="mt-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+                          >
+                            Remove selected image
+                          </button>
+                        ) : null}
+                        {oldFarmerProofError ? (
+                          <p className="mt-2 font-manrope text-sm text-red-600">
+                            {oldFarmerProofError}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}{" "}
+                    {farmerType === "NEW" ? (
+                      <div className="md:col-span-2 lg:col-span-3">
                         {" "}
-                        {statusOptions.map((option) =>
-                          (() => {
-                            const isSelected = selectedStatus === option.value;
-                            const activeStyles =
-                              option.value === "GREEN"
-                                ? "border-emerald-300 bg-emerald-50/90 text-emerald-950 shadow-[0_12px_30px_rgba(16,185,129,0.12)]"
-                                : option.value === "YELLOW"
-                                  ? "border-amber-300 bg-amber-50/90 text-amber-950 shadow-[0_12px_30px_rgba(245,158,11,0.12)]"
-                                  : "border-red-300 bg-red-50/90 text-red-950 shadow-[0_12px_30px_rgba(239,68,68,0.12)]";
-                            const inactiveStyles =
-                              "border-border bg-slate-50 text-slate-700 hover:bg-slate-100";
-                            const selectedHelper =
-                              option.value === "GREEN"
-                                ? "!text-emerald-700"
-                                : option.value === "YELLOW"
-                                  ? "!text-amber-700"
-                                  : "!text-red-700";
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => setSelectedStatus(option.value)}
-                                className={[
-                                  "rounded-2xl border px-4 py-4 text-left transition duration-200",
-                                  isSelected ? activeStyles : inactiveStyles,
-                                ].join(" ")}
-                              >
-                                {" "}
-                                <p
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          {" "}
+                          {statusOptions.map((option) =>
+                            (() => {
+                              const isSelected =
+                                selectedStatus === option.value;
+                              const activeStyles =
+                                option.value === "GREEN"
+                                  ? "border-emerald-300 bg-emerald-50/90 text-emerald-950 shadow-[0_12px_30px_rgba(16,185,129,0.12)]"
+                                  : option.value === "YELLOW"
+                                    ? "border-amber-300 bg-amber-50/90 text-amber-950 shadow-[0_12px_30px_rgba(245,158,11,0.12)]"
+                                    : "border-red-300 bg-red-50/90 text-red-950 shadow-[0_12px_30px_rgba(239,68,68,0.12)]";
+                              const inactiveStyles =
+                                "border-border bg-slate-50 text-slate-700 hover:bg-slate-100";
+                              const selectedHelper =
+                                option.value === "GREEN"
+                                  ? "!text-emerald-700"
+                                  : option.value === "YELLOW"
+                                    ? "!text-amber-700"
+                                    : "!text-red-700";
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedStatus(option.value)
+                                  }
                                   className={[
-                                    "font-manrope type-card font-semibold",
-                                    isSelected
-                                      ? option.value === "GREEN"
-                                        ? "!text-emerald-700"
-                                        : option.value === "YELLOW"
-                                          ? "!text-amber-700"
-                                          : "!text-red-700"
-                                      : "!text-slate-900",
+                                    "rounded-2xl border px-4 py-4 text-left transition duration-200",
+                                    isSelected ? activeStyles : inactiveStyles,
                                   ].join(" ")}
                                 >
                                   {" "}
-                                  {option.label}{" "}
-                                </p>{" "}
-                                <p
-                                  className={[
-                                    "mt-1 font-manrope type-small",
-                                    isSelected
-                                      ? selectedHelper
-                                      : "text-slate-500",
-                                  ].join(" ")}
-                                >
-                                  {" "}
-                                  {option.helper}{" "}
-                                </p>{" "}
-                              </button>
-                            );
-                          })(),
-                        )}{" "}
-                      </div>{" "}
-                    </div>{" "}
+                                  <p
+                                    className={[
+                                      "font-manrope type-card font-semibold",
+                                      isSelected
+                                        ? option.value === "GREEN"
+                                          ? "!text-emerald-700"
+                                          : option.value === "YELLOW"
+                                            ? "!text-amber-700"
+                                            : "!text-red-700"
+                                        : "!text-slate-900",
+                                    ].join(" ")}
+                                  >
+                                    {" "}
+                                    {option.label}{" "}
+                                  </p>{" "}
+                                  <p
+                                    className={[
+                                      "mt-1 font-manrope type-small",
+                                      isSelected
+                                        ? selectedHelper
+                                        : "text-slate-500",
+                                    ].join(" ")}
+                                  >
+                                    {" "}
+                                    {option.helper}{" "}
+                                  </p>{" "}
+                                </button>
+                              );
+                            })(),
+                          )}{" "}
+                        </div>{" "}
+                      </div>
+                    ) : null}{" "}
                   </div>{" "}
                   <div className="mt-8 flex justify-end">
                     {" "}
@@ -1210,7 +1463,7 @@ export default function AddFarmerStatusPage() {
                           : "Saving..."
                         : isTe
                           ? "రైతు status జోడించండి"
-                          : "Add farmer status"}{" "}
+                          : "Add farmer record"}{" "}
                     </Button>{" "}
                   </div>{" "}
                   {error ? (
@@ -1240,7 +1493,7 @@ export default function AddFarmerStatusPage() {
                         {" "}
                         {isTe
                           ? "సులభమైన రికార్డు నమోదు నియమాలు"
-                          : "Simple record entry rules"}{" "}
+                          : "Old and New Farmer rules"}{" "}
                       </h2>{" "}
                     </div>{" "}
                   </div>{" "}
@@ -1248,7 +1501,7 @@ export default function AddFarmerStatusPage() {
                     {" "}
                     {isTe
                       ? "ఇక్కడ PAN అవసరం లేదు. Aadhaar, mobile, mandal, మరియు village వాడండి."
-                      : "PAN is not required here. Use Aadhaar, mobile, mandal, village, and optional address."}{" "}
+                      : "Use Old Farmer when the farmer should be part of the shared dealer records. Use New Farmer when you are creating your own dealer-only reputation record."}{" "}
                   </p>{" "}
                   <ul className="space-y-3 border-t border-slate-100 pt-4 font-manrope type-body text-slate-600">
                     {" "}
@@ -1259,7 +1512,7 @@ export default function AddFarmerStatusPage() {
                         {" "}
                         {isTe
                           ? "పాటర్న్‌ను నిర్ధారించడానికి ఇతర డీలర్లు ఒక్కసారి ఓటు వేయగలరు."
-                          : "Old Farmer records are visible to all dealers."}{" "}
+                          : "Old Farmer records are public and require one proof image before saving or voting."}{" "}
                       </span>{" "}
                     </li>{" "}
                     <li className="flex gap-2">
@@ -1269,7 +1522,7 @@ export default function AddFarmerStatusPage() {
                         {" "}
                         {isTe
                           ? "Admin తప్పు లేదా వివాదాస్పద రికార్డులను తొలగించగలరు."
-                          : "New Farmer records are visible only to the dealer who created them."}{" "}
+                          : "New Farmer records are private to your dealer account and Aadhaar is mandatory."}{" "}
                       </span>{" "}
                     </li>{" "}
                     <li className="flex gap-2">
@@ -1279,7 +1532,7 @@ export default function AddFarmerStatusPage() {
                         {" "}
                         {isTe
                           ? "GREEN, YELLOW, మరియు RED status ఒకే record flow‌లో చూపబడతాయి."
-                          : "Select only one status at a time: GREEN, YELLOW, or RED."}{" "}
+                          : "Status selection is used only for New Farmer records: GREEN, YELLOW, or RED."}{" "}
                       </span>{" "}
                     </li>{" "}
                     <li className="flex gap-2">
@@ -1289,7 +1542,7 @@ export default function AddFarmerStatusPage() {
                         {" "}
                         {isTe
                           ? "Duplicate check mobile number ఆధారంగా జరుగుతుంది, ఎందుకంటే Aadhaar optional."
-                          : "Duplicate check is based on mobile number ."}{" "}
+                          : "Old Farmer duplicate check uses mobile number. New Farmer duplicate check uses Aadhaar."}{" "}
                       </span>{" "}
                     </li>{" "}
                   </ul>{" "}
@@ -1299,6 +1552,268 @@ export default function AddFarmerStatusPage() {
           </Card>{" "}
         </motion.div>{" "}
       </section>{" "}
+      {existingFarmerModalOpen && existingFarmerRecord ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/45 px-4 py-4 backdrop-blur-[2px] sm:py-6"
+          onClick={closeExistingFarmerModal}
+        >
+          <div
+            className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:max-h-[calc(100vh-3rem)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
+              <div>
+                <p className="text-[0.7rem] font-black uppercase tracking-[0.22em] text-emerald-700">
+                  {isTe ? "???? ???? ???????" : "Existing farmer details"}
+                </p>
+                <h2 className="mt-1 font-manrope text-xl font-extrabold tracking-[-0.04em] text-slate-950">
+                  {existingFarmerRecord.farmerName}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closeExistingFarmerModal}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                aria-label="Close modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto px-6 py-6">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {isTe ? "???? ????" : "Farmer name"}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                    {existingFarmerRecord.farmerName}
+                  </p>
+                </div>
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {isTe ? "??????" : "Mobile"}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                    {existingFarmerRecord.mobileNumber || "-"}
+                  </p>
+                </div>
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {isTe ? "?????" : "Aadhaar"}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                    {existingFarmerRecord.aadhaarMasked || "-"}
+                  </p>
+                </div>
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {isTe ? "???????" : "Location"}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                    {existingFarmerRecord.village},{" "}
+                    {existingFarmerRecord.mandal}
+                  </p>
+                </div>
+                {String(existingFarmerRecord.farmerType || "").toUpperCase() !==
+                "OLD" ? (
+                  <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                      {isTe ? "??????" : "Status"}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {existingFarmerRecord.statusColor}
+                    </p>
+                  </div>
+                ) : null}
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {isTe ? "??????" : "District"}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                    {existingFarmerRecord.district}
+                  </p>
+                </div>
+              </div>
+
+              {String(existingFarmerRecord.farmerType || "").toUpperCase() ===
+              "NEW" ? (
+                existingFarmerDuplicatePolicy?.sameDealerExists ||
+                (activeDealerId &&
+                  Number(existingFarmerRecord.createdByDealerId || 0) ===
+                    Number(activeDealerId)) ? (
+                  <div className="rounded-[20px] border border-amber-200 bg-amber-50/80 px-4 py-4">
+                    <p className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-amber-700">
+                      {isTe
+                        ? "???? ???????? ? ?????? ???????????"
+                        : "You already created this farmer"}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-amber-950">
+                      {isTe
+                        ? "? Aadhaar ?? ?? ????? ?????? ???????? ???????? ????."
+                        : "This Aadhaar already exists in your dealer account."}
+                    </p>
+                  </div>
+                ) : existingFarmerDuplicatePolicy?.hasBlockingStatus ? (
+                  <div className="rounded-[20px] border border-red-200 bg-red-50/80 px-4 py-4">
+                    <p className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-red-700">
+                      {isTe
+                        ? "?????? ?????? ???????????"
+                        : "Create is not allowed"}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-red-950">
+                      {isTe
+                        ? "? Aadhaar ?? YELLOW ???? RED ?????? ???????? ?????."
+                        : "This Aadhaar already has a Yellow or Red status from another dealer."}
+                    </p>
+                  </div>
+                ) : existingFarmerRecord.statusColor === "GREEN" &&
+                  existingFarmerDuplicatePolicy?.canCreateNewForDealer !==
+                    false ? (
+                  <div className="space-y-4">
+                    <div className="rounded-[20px] border border-emerald-200 bg-emerald-50/60 px-4 py-4">
+                      <p className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-emerald-700">
+                        {isTe ? "?????? ??????" : "Choose status to create"}
+                      </p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        {statusOptions.map((option) => {
+                          const isSelected = selectedStatus === option.value;
+                          const selectedClass =
+                            option.value === "GREEN"
+                              ? "border-emerald-300 bg-emerald-600 text-white"
+                              : option.value === "YELLOW"
+                                ? "border-amber-300 bg-amber-400 text-white"
+                                : "border-red-300 bg-red-500 text-white";
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setSelectedStatus(option.value)}
+                              className={[
+                                "rounded-full border px-3 py-2 text-center text-xs font-black uppercase tracking-[0.14em] transition",
+                                isSelected
+                                  ? selectedClass
+                                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                              ].join(" ")}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={handleExistingFarmerCreate}
+                        disabled={existingFarmerVoting}
+                        className="min-w-[180px] rounded-full !bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105"
+                      >
+                        {existingFarmerVoting
+                          ? isTe
+                            ? "?????????????..."
+                            : "Creating..."
+                          : isTe
+                            ? "?????????"
+                            : "Create"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null
+              ) : (
+                <>
+                  {existingFarmerRecord.currentDealerCountAction ===
+                  "INCREMENT" ? (
+                    <div className="rounded-[20px] border border-emerald-200 bg-emerald-50/80 px-4 py-4">
+                      <p className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-emerald-700">
+                        {isTe
+                          ? "???? ???????? ??? ??????"
+                          : "You already voted"}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-emerald-950">
+                        {isTe
+                          ? "? ?????? ?? ??? ???????? ????? ????????."
+                          : "You have already voted for this farmer."}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block font-manrope text-sm font-black uppercase tracking-[0.18em] text-slate-500">
+                          Proof image
+                        </label>
+                        <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-5 text-center transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50">
+                          {oldFarmerProofImage ? (
+                            <img
+                              src={oldFarmerProofImage}
+                              alt="Selected proof preview"
+                              className="max-h-52 w-full rounded-2xl object-contain"
+                            />
+                          ) : (
+                            <>
+                              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[rgb(4,120,87)] shadow-sm">
+                                <ImagePlus className="h-5 w-5" />
+                              </span>
+                              <span className="font-manrope text-sm font-semibold text-slate-800">
+                                Select one image proof
+                              </span>
+                              <span className="font-manrope text-xs text-slate-500">
+                                JPG, JPEG, PNG, or WebP will be saved as WebP.
+                              </span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            className="sr-only"
+                            onChange={handleOldFarmerProofChange}
+                          />
+                        </label>
+                        {oldFarmerProofImage ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOldFarmerProofImage("");
+                              setOldFarmerProofError("");
+                            }}
+                            className="mt-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+                          >
+                            Remove selected image
+                          </button>
+                        ) : null}
+                        {oldFarmerProofError ? (
+                          <p className="mt-2 font-manrope text-sm text-red-600">
+                            {oldFarmerProofError}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          onClick={handleExistingFarmerVote}
+                          disabled={
+                            existingFarmerVoting || !oldFarmerProofImage
+                          }
+                          className="min-w-[180px] rounded-full !bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {existingFarmerVoting
+                            ? isTe
+                              ? "??? ?????????..."
+                              : "Voting..."
+                            : isTe
+                              ? "??? ??????"
+                              : "Vote"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {locationModal ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"

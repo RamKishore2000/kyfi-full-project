@@ -3,7 +3,19 @@ export type DealerStatus = "Pending" | "Approved" | "Rejected" | "Suspended";
 export type Priority = "Low" | "Medium" | "High" | "Critical";
 
 export type Farmer = {
+  statusId?: number;
   id: string;
+  farmerType?: "OLD" | "NEW";
+  dealerCount?: number;
+  dealerStatuses?: Array<{
+    statusId: number;
+    dealerId: number;
+    dealerName: string;
+    dealerMobile: string;
+    dealerShopName?: string;
+    status: FarmerStatus;
+    addedAt: string;
+  }>;
   name: string;
   district: string;
   mandal: string;
@@ -34,6 +46,11 @@ export type Dealer = {
   licenseId: string;
   aadhaarOrGst: string;
   status: DealerStatus;
+  subscriptionStatus?: "active" | "inactive";
+  subscriptionPlanName?: string | null;
+  subscriptionYearlyPrice?: number | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
   farmersLinked: number;
   joined: string;
 };

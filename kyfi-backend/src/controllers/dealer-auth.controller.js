@@ -24,13 +24,25 @@ const registerDealer = async (req, res, next) => {
     state,
     mandal,
     village,
+    aadhaarNumber,
+    gstNumber,
     aadhaarOrGstNumber,
   } = req.body || {};
   const dealerName = ownerName || name;
 
-  if (!dealerName || !mobile || !shopName || !district || !state || !mandal || !village || !aadhaarOrGstNumber) {
+  const normalizedAadhaar = String(aadhaarNumber || "").trim();
+  const normalizedGst = String(gstNumber || "").trim().toUpperCase();
+  const legacyIdentifier = String(aadhaarOrGstNumber || "").trim().toUpperCase();
+  const resolvedAadhaar =
+    normalizedAadhaar ||
+    (/^\d{12}$/.test(legacyIdentifier) ? legacyIdentifier : "");
+  const resolvedGst =
+    normalizedGst ||
+    (/^\d{2}[A-Z0-9]{13}$/.test(legacyIdentifier) ? legacyIdentifier : "");
+
+  if (!dealerName || !mobile || !shopName || !district || !state || !mandal || !village || (!resolvedAadhaar && !resolvedGst)) {
     return res.status(400).json({
-      message: "All dealer registration fields are required",
+      message: "Aadhaar number and GST number are required",
     });
   }
 
@@ -53,7 +65,9 @@ const registerDealer = async (req, res, next) => {
       state,
       mandal,
       village,
-      aadhaarOrGstNumber,
+      aadhaarNumber: resolvedAadhaar,
+      gstNumber: resolvedGst,
+      aadhaarOrGstNumber: legacyIdentifier || [resolvedAadhaar, resolvedGst].filter(Boolean).join(" / "),
       status: "pending",
     });
 
@@ -79,9 +93,20 @@ const buildDealerAuthResponse = (dealer, token, message = "Login successful") =>
     state: dealer.state,
     mandal: dealer.mandal,
     village: dealer.village,
+    aadhaarNumber: dealer.aadhaar_number || null,
+    gstNumber: dealer.gst_number || null,
     aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
     status: dealer.status,
     languagePreference: dealer.language_preference || "en",
+    subscriptionStatus: dealer.subscription_status || "inactive",
+    subscriptionPlanName: dealer.subscription_plan_name || null,
+    subscriptionYearlyPrice:
+      dealer.subscription_yearly_price !== null &&
+      dealer.subscription_yearly_price !== undefined
+        ? Number(dealer.subscription_yearly_price)
+        : null,
+    subscriptionStartedAt: dealer.subscription_started_at || null,
+    subscriptionExpiresAt: dealer.subscription_expires_at || null,
   },
 });
 
@@ -258,6 +283,15 @@ const verifyDealerOtpRequest = async (req, res, next) => {
         aadhaarOrGstNumber: otpResult.dealer.aadhaar_or_gst_number,
         status: otpResult.dealer.status,
         languagePreference: otpResult.dealer.language_preference || "en",
+        subscriptionStatus: otpResult.dealer.subscription_status || "inactive",
+        subscriptionPlanName: otpResult.dealer.subscription_plan_name || null,
+        subscriptionYearlyPrice:
+          otpResult.dealer.subscription_yearly_price !== null &&
+          otpResult.dealer.subscription_yearly_price !== undefined
+            ? Number(otpResult.dealer.subscription_yearly_price)
+            : null,
+        subscriptionStartedAt: otpResult.dealer.subscription_started_at || null,
+        subscriptionExpiresAt: otpResult.dealer.subscription_expires_at || null,
       },
     });
   } catch (error) {
@@ -295,6 +329,15 @@ const getCurrentDealer = async (req, res, next) => {
         aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
         status: dealer.status,
         languagePreference: dealer.language_preference || "en",
+        subscriptionStatus: dealer.subscription_status || "inactive",
+        subscriptionPlanName: dealer.subscription_plan_name || null,
+        subscriptionYearlyPrice:
+          dealer.subscription_yearly_price !== null &&
+          dealer.subscription_yearly_price !== undefined
+            ? Number(dealer.subscription_yearly_price)
+            : null,
+        subscriptionStartedAt: dealer.subscription_started_at || null,
+        subscriptionExpiresAt: dealer.subscription_expires_at || null,
       },
     });
   } catch (error) {
@@ -343,6 +386,15 @@ const updateCurrentDealerProfile = async (req, res, next) => {
         aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
         status: dealer.status,
         languagePreference: dealer.language_preference || "en",
+        subscriptionStatus: dealer.subscription_status || "inactive",
+        subscriptionPlanName: dealer.subscription_plan_name || null,
+        subscriptionYearlyPrice:
+          dealer.subscription_yearly_price !== null &&
+          dealer.subscription_yearly_price !== undefined
+            ? Number(dealer.subscription_yearly_price)
+            : null,
+        subscriptionStartedAt: dealer.subscription_started_at || null,
+        subscriptionExpiresAt: dealer.subscription_expires_at || null,
       },
     });
   } catch (error) {
@@ -434,6 +486,15 @@ const updateCurrentDealerSettings = async (req, res, next) => {
         aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
         status: dealer.status,
         languagePreference: dealer.language_preference || "en",
+        subscriptionStatus: dealer.subscription_status || "inactive",
+        subscriptionPlanName: dealer.subscription_plan_name || null,
+        subscriptionYearlyPrice:
+          dealer.subscription_yearly_price !== null &&
+          dealer.subscription_yearly_price !== undefined
+            ? Number(dealer.subscription_yearly_price)
+            : null,
+        subscriptionStartedAt: dealer.subscription_started_at || null,
+        subscriptionExpiresAt: dealer.subscription_expires_at || null,
       },
     });
   } catch (error) {

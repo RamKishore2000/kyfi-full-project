@@ -39,8 +39,11 @@ const serializeDealerVoteRecord = (record) => ({
   id: record.id,
   statusId: record.status_id,
   dealerId: record.dealer_id,
-  voteColor: record.vote_color,
-  votedAt: record.voted_at,
+  actionType: record.action_type || "INCREMENT",
+  actedAt: record.updated_at || record.created_at || null,
+  createdAt: record.created_at,
+  updatedAt: record.updated_at,
+  voteColor: record.vote_color || null,
   aadhaar: record.aadhaar,
   aadhaarMasked: maskAadhaar(record.aadhaar),
   farmerName: record.farmer_name,
@@ -48,6 +51,28 @@ const serializeDealerVoteRecord = (record) => ({
   district: record.district,
   mandal: record.mandal,
   village: record.village,
+  farmerType: record.farmer_type || "OLD",
+  statusColor: record.status_color,
+  farmerCreatedAt: record.farmer_created_at,
+  farmerUpdatedAt: record.farmer_updated_at,
+});
+
+const serializeDealerCountActionRecord = (record) => ({
+  id: record.id,
+  statusId: record.status_id,
+  dealerId: record.dealer_id,
+  actionType: record.action_type,
+  actedAt: record.updated_at || record.created_at || null,
+  createdAt: record.created_at,
+  updatedAt: record.updated_at,
+  aadhaar: record.aadhaar,
+  aadhaarMasked: maskAadhaar(record.aadhaar),
+  farmerName: record.farmer_name,
+  mobileNumber: record.mobile_number,
+  district: record.district,
+  mandal: record.mandal,
+  village: record.village,
+  farmerType: record.farmer_type || "OLD",
   statusColor: record.status_color,
   farmerCreatedAt: record.farmer_created_at,
   farmerUpdatedAt: record.farmer_updated_at,
@@ -72,6 +97,9 @@ const getCurrentDealerRecords = async (req, res, next) => {
         serializeBlacklistEntry(entry),
       ),
       votes: records.votes.map((vote) => serializeDealerVoteRecord(vote)),
+      countActions: records.countActions.map((action) =>
+        serializeDealerCountActionRecord(action),
+      ),
     });
   } catch (error) {
     return next(error);

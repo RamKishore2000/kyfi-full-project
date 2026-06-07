@@ -4,11 +4,23 @@ import type { Farmer } from "@/types";
 type FarmersResponse = {
   farmers: Farmer[];
   total: number;
+  farmerType?: "OLD" | "NEW";
 };
 
-async function authFetch(path: string) {
+export type FarmerVoteRecord = {
+  statusId: number;
+  dealerId: number;
+  dealerName: string;
+  dealerMobile: string;
+  voteStatus: string;
+  votedAt: string;
+};
+
+async function authFetch<TResponse>(path: string) {
   const token =
-    typeof window !== "undefined" ? window.localStorage.getItem("kyfi_admin_token") : null;
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("kyfi_admin_token")
+      : null;
 
   const response = await fetch(`${KYFI_API_BASE_URL}${path}`, {
     headers: {
@@ -23,9 +35,16 @@ async function authFetch(path: string) {
     throw new Error(data?.message || "Request failed");
   }
 
-  return data as FarmersResponse;
+  return data as TResponse;
 }
 
-export async function fetchFarmers() {
-  return authFetch("/admin/farmers");
+export async function fetchFarmers(farmerType: "OLD" | "NEW" = "OLD") {
+  return authFetch<FarmersResponse>(`/admin/farmers?farmerType=${farmerType}`);
+}
+
+export async function fetchFarmerVotes(statusId: number) {
+  return authFetch<{
+    votes: FarmerVoteRecord[];
+    total: number;
+  }>(`/admin/farmers/${statusId}/votes`);
 }

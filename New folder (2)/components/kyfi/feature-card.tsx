@@ -21,19 +21,19 @@ export function FeatureCard({
 }) {
   const content = (
     <Card className="group flex h-full overflow-hidden border-white/80 bg-white/85 shadow-[0_16px_50px_rgba(15,23,42,0.08)] transition-colors hover:border-emerald-200">
-      <CardContent className="flex h-full flex-1 flex-col justify-between gap-5 p-6">
+      <CardContent className="flex h-full flex-1 flex-col justify-between gap-4 p-4 sm:gap-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 transition group-hover:bg-emerald-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 transition group-hover:bg-emerald-100 sm:h-12 sm:w-12">
             {icon}
           </div>
           <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-emerald-700" />
         </div>
 
         <div className="space-y-2">
-          <h3 className="font-manrope text-[1.08rem] font-bold tracking-[-0.02em] text-slate-900 lg:text-[1.2rem]">
+          <h3 className="font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900 sm:text-[1.08rem] lg:text-[1.2rem]">
             {title}
           </h3>
-          <p className="font-manrope text-[0.95rem] leading-7 text-slate-600">
+          <p className="hidden font-manrope text-[0.88rem] leading-6 text-slate-600 sm:block sm:text-[0.95rem] sm:leading-7">
             {description}
           </p>
         </div>

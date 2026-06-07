@@ -7,10 +7,11 @@ const getAdminDashboard = async (req, res, next) => {
     return res.status(200).json({
       ...dashboard,
       summary: {
-        totalFarmers: dashboard.analytics[0].value,
-        registeredDealers: dashboard.analytics[1].value,
-        statusVotes: dashboard.analytics[2].value,
-        blacklistEntries: dashboard.analytics[3].value,
+        totalFarmers: dashboard.counts.totalFarmers,
+        oldFarmers: dashboard.counts.oldFarmers,
+        newFarmers: dashboard.counts.newFarmers,
+        registeredDealers: dashboard.analytics.find((item) => item.label === "Registered Dealers")?.value || 0,
+        oldFarmerVotes: dashboard.counts.oldFarmerVotes,
       },
     });
   } catch (error) {
@@ -19,3 +20,5 @@ const getAdminDashboard = async (req, res, next) => {
 };
 
 module.exports = { getAdminDashboard };
+
+

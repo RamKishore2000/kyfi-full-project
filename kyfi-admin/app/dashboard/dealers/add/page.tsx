@@ -1,14 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { DealerAddForm } from "@/components/dealers/dealer-add-form";
 import { PageHeader } from "@/components/navigation/page-header";
 import { useAdminLanguage } from "@/components/admin-language-provider";
 import { Button } from "@/components/ui/button";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 
 export default function AddDealerPage() {
   const { t } = useAdminLanguage();
+  const [canAddDealers, setCanAddDealers] = useState(false);
+
+  useEffect(() => {
+    setCanAddDealers(hasAdminPermission("dealers.add"));
+  }, []);
 
   return (
     <>
@@ -25,7 +32,13 @@ export default function AddDealerPage() {
         }
       />
       <div className="mt-6">
-        <DealerAddForm />
+        {canAddDealers ? (
+          <DealerAddForm />
+        ) : (
+          <div className="rounded-2xl border bg-card p-8 text-sm text-muted-foreground">
+            Permission denied. You do not have access to add dealers.
+          </div>
+        )}
       </div>
     </>
   );

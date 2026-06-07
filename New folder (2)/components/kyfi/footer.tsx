@@ -8,7 +8,7 @@ export function Footer() {
 
   return (
     <footer id="contact" className="border-t border-border bg-white/80">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-3 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-3 lg:px-8 max-sm:px-3 max-sm:py-10">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgb(4,120,87)] text-white shadow-[0_12px_24px_rgba(4,120,87,0.22)]">
@@ -107,7 +107,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border/80 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-4 py-4 font-manrope type-body text-slate-600 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-4 font-manrope type-body text-slate-600 sm:px-6 lg:px-8 max-sm:px-3 max-sm:py-3">
           {t("footer.copyright")}
         </div>
       </div>

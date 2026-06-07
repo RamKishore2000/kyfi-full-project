@@ -15,11 +15,12 @@ export type FarmerStatusRecord = {
   districtId?: number | null;
   mandalId?: number | null;
   villageId?: number | null;
-  statusColor: FarmerStatusColor;
+  statusColor: FarmerStatusColor | null;
   rationCardNumber: string | null;
   address: string | null;
   amountPending: number | null;
   remarks: string | null;
+  proofImageUrl?: string | null;
   createdByDealerId: number;
   voteCount: number;
   createdAt: string;
@@ -31,10 +32,31 @@ export type FarmerStatusRecord = {
   canIncrement?: boolean;
   canDecrement?: boolean;
   canManageStatus?: boolean;
+  canMoveToOld?: boolean;
   blacklisted?: boolean;
   blacklistReason?: string | null;
   blacklistEntryId?: number | null;
   voteBreakdown?: Record<FarmerStatusColor, number>;
+};
+
+export type FarmerStatusDuplicatePolicy = {
+  totalMatches: number;
+  sameDealerExists: boolean;
+  hasBlockingStatus: boolean;
+  canCreateNewForDealer: boolean;
+} | null;
+
+export type FarmerStatusVoteVoter = {
+  statusId: number;
+  dealerId: number;
+  dealerName: string;
+  dealerMobile: string;
+  voteColor: FarmerStatusColor | "PENDING";
+  district?: string | null;
+  mandal?: string | null;
+  village?: string | null;
+  proofImageUrl: string | null;
+  votedAt: string;
 };
 
 type ApiErrorPayload = {
@@ -46,7 +68,10 @@ function getToken() {
   return window.localStorage.getItem("kyfi_token") ?? "";
 }
 
-async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<TResponse> {
+async function apiRequest<TResponse>(
+  path: string,
+  init: RequestInit,
+): Promise<TResponse> {
   const response = await fetch(`${KYFI_API_BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -56,10 +81,15 @@ async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<T
     },
   });
 
-  const data = (await response.json().catch(() => null)) as TResponse | ApiErrorPayload | null;
+  const data = (await response.json().catch(() => null)) as
+    | TResponse
+    | ApiErrorPayload
+    | null;
 
   if (!response.ok) {
-    throw new Error((data as ApiErrorPayload | null)?.message || "Request failed");
+    throw new Error(
+      (data as ApiErrorPayload | null)?.message || "Request failed",
+    );
   }
 
   return data as TResponse;
@@ -68,8 +98,13 @@ async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<T
 export async function checkFarmerStatus(input: {
   aadhaar?: string;
   mobileNumber?: string;
+  farmerType?: "OLD" | "NEW";
 }) {
-  return apiRequest<{ exists: boolean; farmerStatus: FarmerStatusRecord | null }>("/farmer-statuses/check", {
+  return apiRequest<{
+    exists: boolean;
+    farmerStatus: FarmerStatusRecord | null;
+    duplicatePolicy?: FarmerStatusDuplicatePolicy;
+  }>("/farmer-statuses/check", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -86,45 +121,76 @@ export async function addFarmerStatus(input: {
   districtId?: number | null;
   mandalId?: number | null;
   villageId?: number | null;
-  statusColor: FarmerStatusColor;
+  statusColor?: FarmerStatusColor;
   rationCardNumber?: string;
   address?: string;
   amountPending?: number | null;
   remarks?: string;
+  proofImageDataUrl?: string;
 }) {
-  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord }>("/farmer-statuses", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord }>(
+    "/farmer-statuses",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 export async function voteFarmerStatus(
   statusId: number,
   voteColor: FarmerStatusColor,
 ) {
-  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
-    `/farmer-statuses/${statusId}/vote`,
-    {
-      method: "POST",
-      body: JSON.stringify({ voteColor }),
-    },
-  );
+  return apiRequest<{
+    message: string;
+    farmerStatus: FarmerStatusRecord | null;
+  }>(`/farmer-statuses/${statusId}/vote`, {
+    method: "POST",
+    body: JSON.stringify({ voteColor }),
+  });
 }
 
-export async function incrementFarmerStatusCount(statusId: number) {
-  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
-    `/farmer-statuses/${statusId}/increment`,
-    {
-      method: "POST",
-    },
-  );
+export async function incrementFarmerStatusCount(
+  statusId: number,
+  proofImageDataUrl?: string,
+) {
+  return apiRequest<{
+    message: string;
+    farmerStatus: FarmerStatusRecord | null;
+  }>(`/farmer-statuses/${statusId}/increment`, {
+    method: "POST",
+    body: JSON.stringify(proofImageDataUrl ? { proofImageDataUrl } : {}),
+  });
 }
 
 export async function decrementFarmerStatusCount(statusId: number) {
-  return apiRequest<{ message: string; farmerStatus: FarmerStatusRecord | null }>(
-    `/farmer-statuses/${statusId}/decrement`,
+  return apiRequest<{
+    message: string;
+    farmerStatus: FarmerStatusRecord | null;
+  }>(`/farmer-statuses/${statusId}/decrement`, {
+    method: "POST",
+  });
+}
+
+export async function moveFarmerStatusToOld(
+  statusId: number,
+  proofImageDataUrl?: string,
+) {
+  return apiRequest<{
+    message: string;
+    farmerStatus: FarmerStatusRecord | null;
+    removedStatusId?: number | null;
+  }>(`/farmer-statuses/${statusId}/move-to-old`, {
+    method: "POST",
+    body: JSON.stringify(proofImageDataUrl ? { proofImageDataUrl } : {}),
+  });
+}
+
+export async function fetchFarmerStatusVoters(statusId: number) {
+  return apiRequest<{ totalVotes: number; voters: FarmerStatusVoteVoter[] }>(
+    `/farmer-statuses/${statusId}/votes`,
     {
-      method: "POST",
+      method: "GET",
     },
   );
 }

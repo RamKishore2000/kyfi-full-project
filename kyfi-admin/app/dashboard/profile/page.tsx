@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleAlert, Loader2, MapPin, Phone, ShieldCheck, Store, UserRound } from "lucide-react";
+import {
+  CircleAlert,
+  Loader2,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Store,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useAdminLanguage } from "@/components/admin-language-provider";
 import { Button } from "@/components/ui/button";
@@ -14,14 +22,18 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/navigation/page-header";
 import { fetchAdminProfile, type AdminProfile } from "@/lib/api/profile";
+import { getStoredAdminAccess } from "@/lib/admin-permissions";
 
 export default function ProfilePage() {
   const { t } = useAdminLanguage();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
+    setIsSuperAdmin(getStoredAdminAccess()?.adminRole === "SUPER_ADMIN");
+
     let active = true;
 
     async function loadProfile() {
@@ -40,7 +52,11 @@ export default function ProfilePage() {
           return;
         }
 
-        setError(loadError instanceof Error ? loadError.message : t("profile.loadError"));
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : t("profile.loadError"),
+        );
       } finally {
         if (active) {
           setIsLoading(false);
@@ -56,7 +72,9 @@ export default function ProfilePage() {
   }, [t]);
 
   const profileName = profile?.name || t("profile.loading");
-  const profileSubtitle = profile ? profile.shopName || profile.mobile : t("profile.loading");
+  const profileSubtitle = profile
+    ? profile.shopName || profile.mobile
+    : t("profile.loading");
 
   return (
     <>
@@ -64,9 +82,11 @@ export default function ProfilePage() {
         title={t("profile.title")}
         description={t("profile.description")}
         actions={
-          <Button asChild disabled={isLoading || !profile}>
-            <Link href="/dashboard/profile/edit">{t("profile.edit")}</Link>
-          </Button>
+          isSuperAdmin ? (
+            <Button asChild disabled={isLoading || !profile}>
+              <Link href="/dashboard/profile/edit">{t("profile.edit")}</Link>
+            </Button>
+          ) : null
         }
       />
 
@@ -89,7 +109,11 @@ export default function ProfilePage() {
                     setProfile(response.dealer);
                   })
                   .catch((retryError) => {
-                    setError(retryError instanceof Error ? retryError.message : t("profile.loadError"));
+                    setError(
+                      retryError instanceof Error
+                        ? retryError.message
+                        : t("profile.loadError"),
+                    );
                   })
                   .finally(() => setIsLoading(false));
               }}
@@ -119,7 +143,9 @@ export default function ProfilePage() {
                     <UserRound className="h-10 w-10 text-primary" />
                   </div>
                   <div className="rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-                    {profile?.role === "admin" ? t("profile.role") : profile?.role || t("profile.role")}
+                    {profile?.role === "admin"
+                      ? t("profile.role")
+                      : profile?.role || t("profile.role")}
                   </div>
                 </div>
 
@@ -127,7 +153,9 @@ export default function ProfilePage() {
                   <h2 className="text-3xl font-semibold tracking-tight text-foreground">
                     {profileName}
                   </h2>
-                  <p className="text-sm text-muted-foreground">{profileSubtitle}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {profileSubtitle}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -136,16 +164,31 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>{t("profile.accountTitle")}</CardTitle>
-              <CardDescription>{t("profile.accountDescription")}</CardDescription>
+              <CardDescription>
+                {t("profile.accountDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
-                <Info icon={<Phone className="h-4 w-4" />} label={t("profile.mobile")} value={profile?.mobile || "-"} />
-                <Info icon={<ShieldCheck className="h-4 w-4" />} label={t("profile.role")} value={profile?.role || "-"} />
-                <Info
-                  icon={<MapPin className="h-4 w-4" />}
-                  label={t("profile.region")}
+              <Info
+                icon={<Phone className="h-4 w-4" />}
+                label={t("profile.mobile")}
+                value={profile?.mobile || "-"}
+              />
+              <Info
+                icon={<ShieldCheck className="h-4 w-4" />}
+                label={t("profile.role")}
+                value={profile?.role || "-"}
+              />
+              <Info
+                icon={<MapPin className="h-4 w-4" />}
+                label={t("profile.region")}
                 value={
-                  [profile?.state, profile?.district, profile?.mandal, profile?.village]
+                  [
+                    profile?.state,
+                    profile?.district,
+                    profile?.mandal,
+                    profile?.village,
+                  ]
                     .filter(Boolean)
                     .join(", ") || "-"
                 }
@@ -175,7 +218,9 @@ function Info({
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 break-words text-sm font-medium text-foreground">{value}</p>
+      <p className="mt-2 break-words text-sm font-medium text-foreground">
+        {value}
+      </p>
     </div>
   );
 }

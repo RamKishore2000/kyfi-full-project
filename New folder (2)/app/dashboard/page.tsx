@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
         <section
           id="features"
-          className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+          className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-18"
         >
           <div className="max-w-2xl">
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
@@ -56,20 +56,22 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-6 grid grid-cols-2 gap-3 md:mt-8 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
             {features.map((feature, index) => (
               <FeatureCard key={feature.title} {...feature} index={index} />
             ))}
           </div>
         </section>
 
-        <DashboardPreview />
+        <div className="hidden md:block">
+          <DashboardPreview />
+        </div>
 
         <HowItWorks />
 
         <section
           id="status"
-          className="mx-auto max-w-7xl px-4 pt-4 pb-12 sm:px-6 sm:py-20 lg:px-8"
+          className="mx-auto max-w-7xl px-4 pt-4 pb-8 sm:px-6 sm:pt-10 sm:pb-14 lg:px-8 lg:pt-12 lg:pb-16"
         >
           <div className="max-w-3xl">
             <p className="kyfi-section-kicker">{t("search.status")}</p>
@@ -81,7 +83,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <div className="mt-10 grid grid-cols-3 gap-1.5 md:gap-5">
             <StatusCard
               status="GREEN"
               title={t("search.legendGreen")}
@@ -103,7 +105,9 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <CTASection />
+        <div className="hidden md:block">
+          <CTASection />
+        </div>
 
         <Footer />
       </main>

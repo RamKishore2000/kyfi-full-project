@@ -8,7 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Eye,
@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
+import { SubscriptionCheckout } from "@/components/kyfi/subscription-checkout";
 import { registerDealer } from "@/lib/api/auth";
 import {
   createMandal,
@@ -45,7 +46,8 @@ type RegisterForm = {
   state: string;
   mandal: string;
   village: string;
-  aadhaarOrGstNumber: string;
+  aadhaarNumber: string;
+  gstNumber: string;
 };
 
 type LocationModal = null | "mandal" | "village";
@@ -59,7 +61,8 @@ const initialForm: RegisterForm = {
   state: "",
   mandal: "",
   village: "",
-  aadhaarOrGstNumber: "",
+  aadhaarNumber: "",
+  gstNumber: "",
 };
 
 const registerGreenButtonClass =
@@ -75,6 +78,7 @@ function formatVillageSuggestion(village: VillageSearchResult) {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const english = getKyfiDictionary("en");
   const t = (key: string) => english[key] ?? key;
 
@@ -85,7 +89,8 @@ export default function RegisterPage() {
   const ownerNameInputRef = useRef<HTMLInputElement | null>(null);
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
-  const identifierInputRef = useRef<HTMLInputElement | null>(null);
+  const aadhaarInputRef = useRef<HTMLInputElement | null>(null);
+  const gstInputRef = useRef<HTMLInputElement | null>(null);
 
   const districtDropdownRef = useRef<HTMLDivElement | null>(null);
   const mandalDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -96,7 +101,15 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [redirectAfterToast, setRedirectAfterToast] = useState(false);
+  const [flowStep, setFlowStep] = useState<"register" | "subscription">(
+    searchParams.get("step") === "subscription" ? "subscription" : "register",
+  );
+  const [registeredDealer, setRegisteredDealer] = useState<{
+    id?: number;
+    name?: string;
+    mobile?: string;
+  } | null>(null);
+  const [progressFill, setProgressFill] = useState(false);
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -115,7 +128,8 @@ export default function RegisterPage() {
     ownerName: "",
     mobile: "",
     password: "",
-    aadhaarOrGstNumber: "",
+    aadhaarNumber: "",
+    gstNumber: "",
   });
 
   const [selectedDistrict, setSelectedDistrict] =
@@ -166,12 +180,25 @@ export default function RegisterPage() {
 
   const closeToast = () => {
     setToast((current) => ({ ...current, open: false }));
-
-    if (redirectAfterToast) {
-      setRedirectAfterToast(false);
-      router.push("/subscription");
-    }
   };
+
+  useEffect(() => {
+    setFlowStep(searchParams.get("step") === "subscription" ? "subscription" : "register");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (flowStep !== "subscription") {
+      setProgressFill(false);
+      return;
+    }
+
+    setProgressFill(false);
+    const frame = window.requestAnimationFrame(() => {
+      setProgressFill(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [flowStep]);
 
   useEffect(() => {
     if (!toast.open) {
@@ -183,7 +210,7 @@ export default function RegisterPage() {
     }, 3000);
 
     return () => window.clearTimeout(timeout);
-  }, [toast.open, redirectAfterToast]);
+  }, [toast.open]);
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -637,8 +664,9 @@ export default function RegisterPage() {
       ownerName: "",
       mobile: "",
       password: "",
-      aadhaarOrGstNumber: "",
-    });
+    aadhaarNumber: "",
+    gstNumber: "",
+  });
 
     const nextErrors = {
       district: form.district.trim() ? "" : "District is required.",
@@ -649,11 +677,12 @@ export default function RegisterPage() {
       mobile: mobilePattern.test(form.mobile.trim())
         ? ""
         : "Enter a valid 10-digit mobile number.",
-      aadhaarOrGstNumber:
-        aadhaarPattern.test(form.aadhaarOrGstNumber.trim().toUpperCase()) ||
-        gstPattern.test(form.aadhaarOrGstNumber.trim().toUpperCase())
-          ? ""
-          : "Enter a valid Aadhaar number or GST number.",
+      aadhaarNumber: aadhaarPattern.test(form.aadhaarNumber.trim())
+        ? ""
+        : "Enter a valid 12-digit Aadhaar number.",
+      gstNumber: gstPattern.test(form.gstNumber.trim().toUpperCase())
+        ? ""
+        : "Enter a valid GST number.",
       password: "",
     };
 
@@ -668,8 +697,8 @@ export default function RegisterPage() {
       if (firstInvalidField === "shopName") shopNameInputRef.current?.focus();
       if (firstInvalidField === "ownerName") ownerNameInputRef.current?.focus();
       if (firstInvalidField === "mobile") mobileInputRef.current?.focus();
-      if (firstInvalidField === "aadhaarOrGstNumber")
-        identifierInputRef.current?.focus();
+      if (firstInvalidField === "aadhaarNumber") aadhaarInputRef.current?.focus();
+      if (firstInvalidField === "gstNumber") gstInputRef.current?.focus();
       return;
     }
 
@@ -687,7 +716,7 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      await registerDealer({
+      const response = await registerDealer({
         shopName: form.shopName.trim(),
         ownerName: form.ownerName.trim(),
         mobile: form.mobile.trim(),
@@ -696,10 +725,23 @@ export default function RegisterPage() {
         state: form.state.trim(),
         mandal: form.mandal.trim(),
         village: form.village.trim(),
-        aadhaarOrGstNumber: form.aadhaarOrGstNumber.trim().toUpperCase(),
+        aadhaarNumber: form.aadhaarNumber.trim(),
+        gstNumber: form.gstNumber.trim().toUpperCase(),
       });
 
-      setRedirectAfterToast(true);
+      if (typeof window !== "undefined" && response.dealer) {
+        window.localStorage.setItem(
+          "kyfi_pending_dealer",
+          JSON.stringify(response.dealer),
+        );
+        setRegisteredDealer({
+          id: response.dealer.id,
+          name: response.dealer.name,
+          mobile: response.dealer.mobile,
+        });
+      }
+
+      setFlowStep("subscription");
       showToast(translateRuntimeMessage("Registration successful"));
     } catch (submitError) {
       setError(
@@ -718,7 +760,7 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-[#F8F7F4] px-2 py-2 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
       <section className="grid min-h-[calc(100vh-1rem)] overflow-hidden rounded-[28px] bg-[#F8F7F4] shadow-[0_0_0_1px_rgba(17,24,39,0.04)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px]">
-        <div className="order-2 hidden min-h-[280px] lg:order-1 lg:sticky lg:top-0 lg:block lg:h-screen">
+        <div className="order-2 hidden min-h-[280px] lg:order-1 lg:block lg:min-h-[calc(100vh-3rem)]">
           <div className="relative h-full w-full overflow-hidden">
             <img
               src="/loginbanner.png"
@@ -728,457 +770,537 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="order-1 flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] px-4 py-2 lg:order-2 lg:px-6">
+        <div className="order-1 flex min-h-[calc(100vh-1rem)] items-start justify-center overflow-hidden bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] px-4 py-2 lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:px-6">
           <div className="no-scrollbar w-full max-w-[34rem] lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2">
-            <div className="space-y-5 px-1 py-1 sm:px-2 sm:py-2">
-              <div className="flex items-start justify-between gap-4">
+            <div className="space-y-3 px-1 py-1 sm:px-2 sm:py-2">
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[rgb(4,120,87)] text-white">
-                    <Leaf className="h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[rgb(4,120,87)] text-white">
+                    <Leaf className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-manrope text-[1.6rem] font-black leading-none tracking-[-0.05em] text-[rgb(4,120,87)]">
+                    <p className="font-manrope text-[1.45rem] font-black leading-none tracking-[-0.05em] text-[rgb(4,120,87)]">
                       KYFI
                     </p>
-                    <p className="hidden font-manrope text-[0.64rem] font-semibold uppercase tracking-[0.24em] text-slate-500 lg:block">
+                    <p className="hidden font-manrope text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-slate-500 lg:block">
                       KNOW YOUR FARMER INFORMATION
                     </p>
                   </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 rounded-full border border-[#D9D5C8] bg-[#FAF8F2] px-4 py-2 text-slate-700">
-                  <Smartphone className="h-4 w-4 text-[rgb(4,120,87)]" />
-                  <span className="font-manrope text-[0.82rem] font-medium">
+                <div className="flex shrink-0 items-center gap-2 rounded-full border border-[#D9D5C8] bg-[#FAF8F2] px-3 py-1.5 text-slate-700">
+                  <Smartphone className="h-3.5 w-3.5 text-[rgb(4,120,87)]" />
+                  <span className="font-manrope text-[0.75rem] font-medium">
                     {t("login.mobilePhone")}
                   </span>
                 </div>
               </div>
 
-              <p className="font-manrope text-[0.96rem] font-medium tracking-[0.02em] text-slate-700">
+              <p className="font-manrope text-[0.9rem] font-medium tracking-[0.02em] text-slate-700 lg:text-[0.88rem]">
                 {t("register.dealerAccess")}
               </p>
 
-              <div className="grid grid-cols-2 rounded-full bg-[#EEF0EA] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
-                <Link
-                  href="/login"
-                  className="rounded-full px-4 py-3 text-center text-sm font-semibold text-slate-600 transition hover:text-[rgb(4,120,87)]"
-                >
-                  {t("register.login")}
-                </Link>
-                <button type="button" className={registerGreenButtonClass}>
-                  {t("register.register")}
-                </button>
+              <div className="mx-auto w-full max-w-[24rem] px-4">
+                <div className="relative h-11">
+                  <div className="absolute left-12 right-12 top-1/2 z-0 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={[
+                        "h-full rounded-full bg-[rgb(4,120,87)] transition-[width] duration-[900ms] ease-out",
+                        progressFill ? "w-full" : "w-0",
+                      ].join(" ")}
+                    />
+                  </div>
+                  <div
+                    className={[
+                      "absolute left-0 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border text-[0.95rem] font-semibold shadow-sm transition-colors duration-500",
+                      flowStep === "register"
+                        ? "border-[rgb(4,120,87)] bg-[rgb(4,120,87)] text-white"
+                        : "border-[rgb(4,120,87)] bg-[rgb(4,120,87)] text-white",
+                    ].join(" ")}
+                  >
+                    1
+                  </div>
+                  <div
+                    className={[
+                      "absolute right-0 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border text-[0.95rem] font-semibold shadow-sm transition-colors duration-500",
+                      "border-slate-300 bg-white text-slate-900",
+                    ].join(" ")}
+                  >
+                    2
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-[0.62rem] font-black uppercase tracking-[0.22em] text-slate-500">
+                  <span>Register</span>
+                  <span>Subscription</span>
+                </div>
               </div>
 
-              <form className="space-y-3" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <label className="font-manrope type-nav text-slate-800">
-                    {t("register.state")}{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={form.state}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        state: event.target.value,
-                      }))
-                    }
-                    required
-                    aria-invalid={Boolean(fieldErrors.district)}
-                    className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 font-manrope type-nav text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              {flowStep === "register" ? (
+                <div className="grid grid-cols-2 rounded-full bg-[#EEF0EA] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)] lg:py-0.5">
+                  <Link
+                    href="/login"
+                    className="rounded-full px-4 py-3 text-center text-sm font-semibold text-slate-600 transition hover:text-[rgb(4,120,87)] lg:py-2.5"
                   >
-                    <option value="" disabled>
-                      {t("register.stateSelect")}
-                    </option>
-                    <option value="Andhra Pradesh">Andhra Pradesh</option>
-                    <option value="Telangana">Telangana</option>
-                  </select>
+                    {t("register.login")}
+                  </Link>
+                  <button type="button" className={registerGreenButtonClass}>
+                    {t("register.register")}
+                  </button>
                 </div>
+              ) : null}
 
-                <div className="space-y-2">
-                  <label className="font-manrope type-nav text-slate-800">
-                    {t("register.district")}{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative" ref={districtDropdownRef}>
-                    <Input
-                      ref={districtInputRef}
-                      placeholder={t("register.districtPlaceholder")}
-                      value={form.district}
-                      onChange={handleChange("district")}
-                      onFocus={() => setShowDistrictSuggestions(true)}
+              {flowStep === "register" ? (
+                <form
+                  className="space-y-3 lg:grid lg:grid-cols-1 lg:gap-y-3 lg:space-y-0"
+                  onSubmit={handleSubmit}
+                >
+                  <div className="space-y-2">
+                    <label className="font-manrope type-nav text-slate-800">
+                      {t("register.state")}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={form.state}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          state: event.target.value,
+                        }))
+                      }
                       required
                       aria-invalid={Boolean(fieldErrors.district)}
-                      className={
-                        fieldErrors.district
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    {form.district.trim().length >= 2 &&
-                    showDistrictSuggestions ? (
-                      <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-                        {districtLoading ? (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            Searching districts...
-                          </div>
-                        ) : districtOptions.length ? (
-                          districtOptions.map((district) => (
-                            <button
-                              key={district.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedDistrict(district);
-                                setForm((current) => ({
-                                  ...current,
-                                  district: district.name,
-                                  state: district.stateName || current.state,
-                                  mandal: "",
-                                  village: "",
-                                }));
-                                setSelectedMandal(null);
-                                setSelectedVillage(null);
-                                setMandalOptions([]);
-                                setVillageOptions([]);
-                                setShowDistrictSuggestions(false);
-                                setShowMandalSuggestions(false);
-                                setShowVillageSuggestions(false);
-                              }}
-                              className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
-                            >
-                              <span className="font-manrope text-sm font-semibold text-slate-900">
-                                {district.name}
-                              </span>
-                              <span className="text-[0.68rem] font-medium text-slate-500">
-                                {district.stateName || "-"}
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            No matching district found.
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                  {fieldErrors.district ? (
-                    <p className="font-manrope text-sm text-red-600">
-                      {fieldErrors.district}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <label className="font-manrope type-nav text-slate-800">
-                      {t("register.mandal")}{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 rounded-full border-emerald-200 bg-emerald-50 px-4 text-[0.72rem] font-black uppercase tracking-[0.22em] text-emerald-900 hover:bg-emerald-100"
-                      onClick={openMandalModal}
+                      className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 font-manrope type-nav text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                     >
-                      <Plus className="mr-1 h-4 w-4" />
-                      Add
-                    </Button>
-                  </div>
-                  <div className="relative" ref={mandalDropdownRef}>
-                    <Input
-                      ref={mandalInputRef}
-                      placeholder={
-                        mandalDisabled
-                          ? "Select district first"
-                          : "Type 3 or more letters"
-                      }
-                      value={form.mandal}
-                      onChange={handleChange("mandal")}
-                      onFocus={() => setShowMandalSuggestions(true)}
-                      disabled={mandalDisabled}
-                      required
-                      aria-invalid={Boolean(fieldErrors.mandal)}
-                      className={
-                        fieldErrors.mandal
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    {form.district.trim() &&
-                    form.mandal.trim().length >= 3 &&
-                    showMandalSuggestions ? (
-                      <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-                        {mandalLoading ? (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            Searching mandals...
-                          </div>
-                        ) : mandalOptions.length ? (
-                          mandalOptions.map((mandal) => (
-                            <button
-                              key={mandal.id}
-                              type="button"
-                              onClick={() => chooseMandal(mandal)}
-                              className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
-                            >
-                              <span className="font-manrope text-sm font-semibold text-slate-900">
-                                {formatMandalSuggestion(mandal)}
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            No matching mandal found.
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                  {fieldErrors.mandal ? (
-                    <p className="font-manrope text-sm text-red-600">
-                      {fieldErrors.mandal}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <label className="font-manrope type-nav text-slate-800">
-                      {t("register.village")}{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 rounded-full border-emerald-200 bg-emerald-50 px-4 text-[0.72rem] font-black uppercase tracking-[0.22em] text-emerald-900 hover:bg-emerald-100"
-                      onClick={openVillageModal}
-                    >
-                      <Plus className="mr-1 h-4 w-4" />
-                      Add
-                    </Button>
-                  </div>
-                  <div className="relative" ref={villageDropdownRef}>
-                    <Input
-                      ref={villageInputRef}
-                      placeholder={
-                        villageDisabled
-                          ? "Select a mandal first"
-                          : "Type or choose a village"
-                      }
-                      value={form.village}
-                      onChange={handleChange("village")}
-                      onFocus={() => setShowVillageSuggestions(true)}
-                      disabled={villageDisabled}
-                      required
-                      aria-invalid={Boolean(fieldErrors.village)}
-                      className={
-                        fieldErrors.village
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    {selectedMandal &&
-                    form.village.trim().length >= 2 &&
-                    showVillageSuggestions ? (
-                      <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-                        {villageLoading ? (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            Searching villages...
-                          </div>
-                        ) : villageOptions.length ? (
-                          villageOptions.map((village) => (
-                            <button
-                              key={village.id}
-                              type="button"
-                              onClick={() => chooseVillage(village)}
-                              className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
-                            >
-                              <span className="font-manrope text-sm font-semibold text-slate-900">
-                                {formatVillageSuggestion(village)}
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
-                            No matching village found.
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                  {fieldErrors.village ? (
-                    <p className="font-manrope text-sm text-red-600">
-                      {fieldErrors.village}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="grid gap-3">
-                  <div className="space-y-2">
-                    <label className="font-manrope type-nav text-slate-800">
-                      {t("register.shopName")}{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      ref={shopNameInputRef}
-                      placeholder={t("register.shopPlaceholder")}
-                      value={form.shopName}
-                      onChange={handleChange("shopName")}
-                      required
-                      aria-invalid={Boolean(fieldErrors.shopName)}
-                      className={
-                        fieldErrors.shopName
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    {fieldErrors.shopName ? (
-                      <p className="font-manrope text-sm text-red-600">
-                        {fieldErrors.shopName}
-                      </p>
-                    ) : null}
+                      <option value="" disabled>
+                        {t("register.stateSelect")}
+                      </option>
+                      <option value="Andhra Pradesh">Andhra Pradesh</option>
+                      <option value="Telangana">Telangana</option>
+                    </select>
                   </div>
 
                   <div className="space-y-2">
                     <label className="font-manrope type-nav text-slate-800">
-                      {t("register.ownerName")}{" "}
+                      {t("register.district")}{" "}
                       <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      ref={ownerNameInputRef}
-                      placeholder={t("register.ownerPlaceholder")}
-                      value={form.ownerName}
-                      onChange={handleChange("ownerName")}
-                      required
-                      aria-invalid={Boolean(fieldErrors.ownerName)}
-                      className={
-                        fieldErrors.ownerName
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    {fieldErrors.ownerName ? (
-                      <p className="font-manrope text-sm text-red-600">
-                        {fieldErrors.ownerName}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="font-manrope type-nav text-slate-800">
-                      {t("register.mobile")}{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      ref={mobileInputRef}
-                      placeholder={t("register.mobilePlaceholder")}
-                      inputMode="tel"
-                      maxLength={10}
-                      value={form.mobile}
-                      onChange={handleChange("mobile")}
-                      required
-                      aria-invalid={Boolean(fieldErrors.mobile)}
-                      className={
-                        fieldErrors.mobile
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    {fieldErrors.mobile ? (
-                      <p className="font-manrope text-sm text-red-600">
-                        {fieldErrors.mobile}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="font-manrope type-nav text-slate-800">
-                      {t("register.passwordOptional")}
-                    </label>
-                    <div className="relative">
+                    <div className="relative" ref={districtDropdownRef}>
                       <Input
-                        ref={passwordInputRef}
-                        type={showPassword ? "text" : "password"}
-                        placeholder={t("register.passwordPlaceholder")}
-                        value={form.password}
-                        onChange={handleChange("password")}
-                        aria-invalid={Boolean(fieldErrors.password)}
-                        className={[
-                          fieldErrors.password
+                        ref={districtInputRef}
+                        placeholder={t("register.districtPlaceholder")}
+                        value={form.district}
+                        onChange={handleChange("district")}
+                        onFocus={() => setShowDistrictSuggestions(true)}
+                        required
+                        aria-invalid={Boolean(fieldErrors.district)}
+                        className={
+                          fieldErrors.district
                             ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                            : "",
-                          "pr-11",
-                        ].join(" ")}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
+                            : ""
                         }
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                      />
+                      {form.district.trim().length >= 2 &&
+                      showDistrictSuggestions ? (
+                        <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                          {districtLoading ? (
+                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                              Searching districts...
+                            </div>
+                          ) : districtOptions.length ? (
+                            districtOptions.map((district) => (
+                              <button
+                                key={district.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDistrict(district);
+                                  setForm((current) => ({
+                                    ...current,
+                                    district: district.name,
+                                    state: district.stateName || current.state,
+                                    mandal: "",
+                                    village: "",
+                                  }));
+                                  setSelectedMandal(null);
+                                  setSelectedVillage(null);
+                                  setMandalOptions([]);
+                                  setVillageOptions([]);
+                                  setShowDistrictSuggestions(false);
+                                  setShowMandalSuggestions(false);
+                                  setShowVillageSuggestions(false);
+                                }}
+                                className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                              >
+                                <span className="font-manrope text-sm font-semibold text-slate-900">
+                                  {district.name}
+                                </span>
+                                <span className="text-[0.68rem] font-medium text-slate-500">
+                                  {district.stateName || "-"}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                              No matching district found.
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
-                    {fieldErrors.password ? (
+                    {fieldErrors.district ? (
                       <p className="font-manrope text-sm text-red-600">
-                        {fieldErrors.password}
+                        {fieldErrors.district}
                       </p>
                     ) : null}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="font-manrope type-nav text-slate-800">
-                      {t("register.identifier")}{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      ref={identifierInputRef}
-                      placeholder={t("register.identifierPlaceholder")}
-                      maxLength={15}
-                      value={form.aadhaarOrGstNumber}
-                      onChange={handleChange("aadhaarOrGstNumber")}
-                      required
-                      aria-invalid={Boolean(fieldErrors.aadhaarOrGstNumber)}
-                      className={
-                        fieldErrors.aadhaarOrGstNumber
-                          ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
-                          : ""
-                      }
-                    />
-                    <p className="font-manrope type-small text-slate-500">
-                      {t("register.aadhaarHelp")}
-                    </p>
-                    {fieldErrors.aadhaarOrGstNumber ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="font-manrope type-nav text-slate-800">
+                        {t("register.mandal")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 rounded-full border-emerald-200 bg-emerald-50 px-4 text-[0.72rem] font-black uppercase tracking-[0.22em] text-emerald-900 hover:bg-emerald-100"
+                        onClick={openMandalModal}
+                      >
+                        <Plus className="mr-1 h-4 w-4" />
+                        Add
+                      </Button>
+                    </div>
+                    <div className="relative" ref={mandalDropdownRef}>
+                      <Input
+                        ref={mandalInputRef}
+                        placeholder={
+                          mandalDisabled
+                            ? "Select district first"
+                            : "Type 3 or more letters"
+                        }
+                        value={form.mandal}
+                        onChange={handleChange("mandal")}
+                        onFocus={() => setShowMandalSuggestions(true)}
+                        disabled={mandalDisabled}
+                        required
+                        aria-invalid={Boolean(fieldErrors.mandal)}
+                        className={
+                          fieldErrors.mandal
+                            ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                            : ""
+                        }
+                      />
+                      {form.district.trim() &&
+                      form.mandal.trim().length >= 3 &&
+                      showMandalSuggestions ? (
+                        <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                          {mandalLoading ? (
+                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                              Searching mandals...
+                            </div>
+                          ) : mandalOptions.length ? (
+                            mandalOptions.map((mandal) => (
+                              <button
+                                key={mandal.id}
+                                type="button"
+                                onClick={() => chooseMandal(mandal)}
+                                className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                              >
+                                <span className="font-manrope text-sm font-semibold text-slate-900">
+                                  {formatMandalSuggestion(mandal)}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                              No matching mandal found.
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                    {fieldErrors.mandal ? (
                       <p className="font-manrope text-sm text-red-600">
-                        {fieldErrors.aadhaarOrGstNumber}
+                        {fieldErrors.mandal}
                       </p>
                     ) : null}
                   </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="font-manrope type-nav text-slate-800">
+                        {t("register.village")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 rounded-full border-emerald-200 bg-emerald-50 px-4 text-[0.72rem] font-black uppercase tracking-[0.22em] text-emerald-900 hover:bg-emerald-100"
+                        onClick={openVillageModal}
+                      >
+                        <Plus className="mr-1 h-4 w-4" />
+                        Add
+                      </Button>
+                    </div>
+                    <div className="relative" ref={villageDropdownRef}>
+                      <Input
+                        ref={villageInputRef}
+                        placeholder={
+                          villageDisabled
+                            ? "Select a mandal first"
+                            : "Type or choose a village"
+                        }
+                        value={form.village}
+                        onChange={handleChange("village")}
+                        onFocus={() => setShowVillageSuggestions(true)}
+                        disabled={villageDisabled}
+                        required
+                        aria-invalid={Boolean(fieldErrors.village)}
+                        className={
+                          fieldErrors.village
+                            ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                            : ""
+                        }
+                      />
+                      {selectedMandal &&
+                      form.village.trim().length >= 2 &&
+                      showVillageSuggestions ? (
+                        <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                          {villageLoading ? (
+                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                              Searching villages...
+                            </div>
+                          ) : villageOptions.length ? (
+                            villageOptions.map((village) => (
+                              <button
+                                key={village.id}
+                                type="button"
+                                onClick={() => chooseVillage(village)}
+                                className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                              >
+                                <span className="font-manrope text-sm font-semibold text-slate-900">
+                                  {formatVillageSuggestion(village)}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                              No matching village found.
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                    {fieldErrors.village ? (
+                      <p className="font-manrope text-sm text-red-600">
+                        {fieldErrors.village}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="grid gap-3 lg:grid-cols-1 lg:gap-3">
+                    <div className="space-y-2">
+                      <label className="font-manrope type-nav text-slate-800">
+                        {t("register.shopName")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        ref={shopNameInputRef}
+                        placeholder={t("register.shopPlaceholder")}
+                        value={form.shopName}
+                        onChange={handleChange("shopName")}
+                        required
+                        aria-invalid={Boolean(fieldErrors.shopName)}
+                        className={
+                          fieldErrors.shopName
+                            ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                            : ""
+                        }
+                      />
+                      {fieldErrors.shopName ? (
+                        <p className="font-manrope text-sm text-red-600">
+                          {fieldErrors.shopName}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="font-manrope type-nav text-slate-800">
+                        {t("register.ownerName")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        ref={ownerNameInputRef}
+                        placeholder={t("register.ownerPlaceholder")}
+                        value={form.ownerName}
+                        onChange={handleChange("ownerName")}
+                        required
+                        aria-invalid={Boolean(fieldErrors.ownerName)}
+                        className={
+                          fieldErrors.ownerName
+                            ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                            : ""
+                        }
+                      />
+                      {fieldErrors.ownerName ? (
+                        <p className="font-manrope text-sm text-red-600">
+                          {fieldErrors.ownerName}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="font-manrope type-nav text-slate-800">
+                        {t("register.mobile")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        ref={mobileInputRef}
+                        placeholder={t("register.mobilePlaceholder")}
+                        inputMode="tel"
+                        maxLength={10}
+                        value={form.mobile}
+                        onChange={handleChange("mobile")}
+                        required
+                        aria-invalid={Boolean(fieldErrors.mobile)}
+                        className={
+                          fieldErrors.mobile
+                            ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                            : ""
+                        }
+                      />
+                      {fieldErrors.mobile ? (
+                        <p className="font-manrope text-sm text-red-600">
+                          {fieldErrors.mobile}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="font-manrope type-nav text-slate-800">
+                        {t("register.passwordOptional")}
+                      </label>
+                      <div className="relative">
+                        <Input
+                          ref={passwordInputRef}
+                          type={showPassword ? "text" : "password"}
+                          placeholder={t("register.passwordPlaceholder")}
+                          value={form.password}
+                          onChange={handleChange("password")}
+                          aria-invalid={Boolean(fieldErrors.password)}
+                          className={[
+                            fieldErrors.password
+                              ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                              : "",
+                            "pr-11",
+                          ].join(" ")}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((current) => !current)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      {fieldErrors.password ? (
+                        <p className="font-manrope text-sm text-red-600">
+                          {fieldErrors.password}
+                        </p>
+                      ) : null}
+                    </div>
+
+                      <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
+                        <div className="space-y-2">
+                          <label className="font-manrope type-nav text-slate-800">
+                            Aadhaar Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            ref={aadhaarInputRef}
+                            placeholder="Enter Aadhaar number"
+                            maxLength={12}
+                            inputMode="numeric"
+                            value={form.aadhaarNumber}
+                            onChange={handleChange("aadhaarNumber")}
+                            required
+                            aria-invalid={Boolean(fieldErrors.aadhaarNumber)}
+                            className={
+                              fieldErrors.aadhaarNumber
+                                ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                                : ""
+                            }
+                          />
+                          <p className="font-manrope type-small text-slate-500">
+                            Only 12 digits allowed.
+                          </p>
+                          {fieldErrors.aadhaarNumber ? (
+                            <p className="font-manrope text-sm text-red-600">
+                              {fieldErrors.aadhaarNumber}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="font-manrope type-nav text-slate-800">
+                            GST Number <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            ref={gstInputRef}
+                            placeholder="Enter GST number"
+                            maxLength={15}
+                            value={form.gstNumber}
+                            onChange={handleChange("gstNumber")}
+                            required
+                            aria-invalid={Boolean(fieldErrors.gstNumber)}
+                            className={
+                              fieldErrors.gstNumber
+                                ? "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-100"
+                                : ""
+                            }
+                          />
+                          <p className="font-manrope type-small text-slate-500">
+                            Example: 22AAAAA0000A1Z5
+                          </p>
+                          {fieldErrors.gstNumber ? (
+                            <p className="font-manrope text-sm text-red-600">
+                              {fieldErrors.gstNumber}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+
+                  {error ? (
+                    <p className="font-manrope type-small text-red-600">{error}</p>
+                  ) : null}
+
+                  <Button
+                    size="lg"
+                    className="w-full !bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105"
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting
+                      ? t("register.loading")
+                      : t("register.submit")}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </form>
+              ) : (
+                <div className="mt-6">
+                  <SubscriptionCheckout
+                    variant="embedded"
+                    dealer={registeredDealer}
+                    onSuccess={() => router.push("/login")}
+                  />
                 </div>
-
-                {error ? (
-                  <p className="font-manrope type-small text-red-600">
-                    {error}
-                  </p>
-                ) : null}
-
-                <Button
-                  size="lg"
-                  className="w-full !bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105"
-                  type="submit"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? t("register.loading") : t("register.submit")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </form>
+              )}
             </div>
           </div>
         </div>

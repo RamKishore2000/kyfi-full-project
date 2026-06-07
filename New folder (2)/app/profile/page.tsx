@@ -10,7 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { fetchCurrentDealer, updateCurrentDealerProfile } from "@/lib/api/profile";
-import { fetchMandals, type MandalRecord } from "@/lib/api/locations";
+import {
+  createMandal,
+  createVillage,
+  fetchMandals,
+  fetchVillagesByMandal,
+  searchDistricts,
+  searchVillages,
+  type DistrictSearchResult,
+  type MandalRecord,
+  type VillageSearchResult,
+} from "@/lib/api/locations";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 import { translateRuntimeMessage } from "@/lib/kyfi-runtime-message";
 
@@ -87,9 +97,24 @@ export default function ProfilePage() {
   const stateInputRef = useRef<HTMLInputElement | null>(null);
   const districtInputRef = useRef<HTMLInputElement | null>(null);
   const villageInputRef = useRef<HTMLInputElement | null>(null);
+  const districtDropdownRef = useRef<HTMLDivElement | null>(null);
+  const villageDropdownRef = useRef<HTMLDivElement | null>(null);
   const stateAutocompleteRef = useRef<any>(null);
   const districtAutocompleteRef = useRef<any>(null);
   const villageAutocompleteRef = useRef<any>(null);
+  const [mandalModalOpen, setMandalModalOpen] = useState(false);
+  const [villageModalOpen, setVillageModalOpen] = useState(false);
+  const [districtQuery, setDistrictQuery] = useState("");
+  const [districtOptions, setDistrictOptions] = useState<DistrictSearchResult[]>([]);
+  const [selectedDistrict, setSelectedDistrict] = useState<DistrictSearchResult | null>(null);
+  const [districtLoading, setDistrictLoading] = useState(false);
+  const [showDistrictSuggestions, setShowDistrictSuggestions] = useState(false);
+  const [districtSearchLoading, setDistrictSearchLoading] = useState(false);
+  const [mandalModalName, setMandalModalName] = useState("");
+  const [mandalModalSaving, setMandalModalSaving] = useState(false);
+  const [villageModalName, setVillageModalName] = useState("");
+  const [villageModalSaving, setVillageModalSaving] = useState(false);
+  const [modalError, setModalError] = useState("");
   const [form, setForm] = useState({
     name: "",
     shopName: "",
@@ -102,6 +127,13 @@ export default function ProfilePage() {
   const [mandalOptions, setMandalOptions] = useState<MandalRecord[]>([]);
   const [hideMandalSuggestions, setHideMandalSuggestions] = useState(false);
   const [mandalSearchLoading, setMandalSearchLoading] = useState(false);
+  const [selectedMandal, setSelectedMandal] = useState<MandalRecord | null>(null);
+  const [selectedVillage, setSelectedVillage] =
+    useState<VillageSearchResult | null>(null);
+  const [showMandalSuggestions, setShowMandalSuggestions] = useState(false);
+  const [villageOptions, setVillageOptions] = useState<VillageSearchResult[]>([]);
+  const [villageLoading, setVillageLoading] = useState(false);
+  const [showVillageSuggestions, setShowVillageSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -137,6 +169,12 @@ export default function ProfilePage() {
           mandal: dealer.mandal ?? "",
           village: dealer.village ?? "",
         });
+        setSelectedDistrict(null);
+        setSelectedMandal(null);
+        setSelectedVillage(null);
+        setShowDistrictSuggestions(false);
+        setShowMandalSuggestions(false);
+        setShowVillageSuggestions(false);
         setHideMandalSuggestions(false);
         setMandalOptions([]);
       } catch (loadError) {
@@ -150,111 +188,47 @@ export default function ProfilePage() {
   }, [t]);
 
   useEffect(() => {
-    const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
-    if (!googleApiKey) {
+    const query = form.district.trim();
+
+    if (!showDistrictSuggestions || query.length < 2) {
+      setDistrictOptions([]);
+      setDistrictLoading(false);
       return;
     }
 
     let isCancelled = false;
-
-    loadGooglePlaces(googleApiKey)
-      .then(() => {
-        if (isCancelled || !window.google?.maps?.places) {
-          return;
-        }
-
-        const createAutocomplete = (
-          input: HTMLInputElement,
-          onPlaceSelected: (place: GooglePlace) => void,
-        ) => {
-          const autocomplete = new window.google.maps.places.Autocomplete(input, {
-            fields: ["formatted_address", "address_components", "name"],
-            types: ["geocode"],
-            componentRestrictions: { country: "in" },
-          });
-
-          autocomplete.addListener("place_changed", () => {
-            const place = autocomplete.getPlace() as GooglePlace | undefined;
-            if (!place) return;
-            onPlaceSelected(place);
-          });
-
-          return autocomplete;
-        };
-
-        if (stateInputRef.current) {
-          stateAutocompleteRef.current = createAutocomplete(stateInputRef.current, (place) => {
-            const value =
-              getComponent(place.address_components, ["administrative_area_level_1"]) ||
-              place.name ||
-              buildAutocompleteLabel(place);
-
-            setForm((current) => ({
-              ...current,
-              state: value,
-              mandal: "",
-            }));
-          });
-        }
-
-        if (districtInputRef.current) {
-          districtAutocompleteRef.current = createAutocomplete(districtInputRef.current, (place) => {
-            const value =
-              getComponent(place.address_components, [
-                "administrative_area_level_2",
-                "administrative_area_level_3",
-              ]) || place.name || buildAutocompleteLabel(place);
-
-            setForm((current) => ({
-              ...current,
-              district: value,
-              mandal: "",
-            }));
-          });
-        }
-
-        if (villageInputRef.current) {
-          villageAutocompleteRef.current = createAutocomplete(villageInputRef.current, (place) => {
-            const value =
-              getComponent(place.address_components, [
-                "locality",
-                "sublocality_level_1",
-                "sublocality",
-                "neighborhood",
-                "administrative_area_level_3",
-              ]) || place.name || buildAutocompleteLabel(place);
-
-            setForm((current) => ({
-              ...current,
-              village: value,
-            }));
-          });
-        }
-      })
-      .catch(() => {
-        // Keep manual entry available if Places fails to load.
-      });
+    setDistrictLoading(true);
+    const debounce = window.setTimeout(() => {
+      searchDistricts(query)
+        .then((items) => {
+          if (isCancelled) return;
+          setDistrictOptions(items);
+          setDistrictLoading(false);
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setDistrictOptions([]);
+            setDistrictLoading(false);
+          }
+        });
+    }, 200);
 
     return () => {
       isCancelled = true;
-      if (stateAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(stateAutocompleteRef.current);
-      }
-      if (districtAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(districtAutocompleteRef.current);
-      }
-      if (villageAutocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(villageAutocompleteRef.current);
-      }
+      window.clearTimeout(debounce);
     };
-  }, []);
+  }, [form.district, showDistrictSuggestions]);
 
   useEffect(() => {
-    const stateName = form.state.trim();
-    const districtName = form.district.trim();
+    const districtName = selectedDistrict?.name || form.district.trim();
     const mandalQuery = form.mandal.trim();
 
-    if (hideMandalSuggestions || !stateName || !districtName || mandalQuery.length < 2) {
+    if (
+      hideMandalSuggestions ||
+      !districtName ||
+      mandalQuery.length < 3 ||
+      !showMandalSuggestions
+    ) {
       setMandalOptions([]);
       setMandalSearchLoading(false);
       return;
@@ -265,9 +239,8 @@ export default function ProfilePage() {
 
     const debounce = window.setTimeout(() => {
       fetchMandals({
-        state: stateName,
         district: districtName,
-        query: mandalQuery || undefined,
+        query: mandalQuery,
       })
         .then((response) => {
           if (!isCancelled) {
@@ -287,42 +260,282 @@ export default function ProfilePage() {
       isCancelled = true;
       window.clearTimeout(debounce);
     };
-  }, [form.state, form.district, form.mandal, hideMandalSuggestions]);
+  }, [form.district, form.mandal, hideMandalSuggestions, selectedDistrict, showMandalSuggestions]);
 
   useEffect(() => {
-    if (!form.mandal.trim() || !mandalOptions.length) {
+    const mandalId = Number(selectedMandal?.id || 0);
+    const villageQuery = form.village.trim();
+
+    if (!mandalId || !showVillageSuggestions) {
+      setVillageOptions([]);
+      setVillageLoading(false);
       return;
     }
 
-    const match = mandalOptions.find(
-      (entry) => entry.mandalName.trim().toLowerCase() === form.mandal.trim().toLowerCase(),
-    );
+    let isCancelled = false;
+    setVillageLoading(true);
+    const debounce = window.setTimeout(() => {
+      const request = villageQuery
+        ? searchVillages({ mandalId, query: villageQuery })
+        : fetchVillagesByMandal(mandalId);
 
-    if (!match) {
+      request
+        .then((items) => {
+          if (isCancelled) return;
+          setVillageOptions(items);
+          setVillageLoading(false);
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setVillageOptions([]);
+            setVillageLoading(false);
+          }
+        });
+    }, villageQuery ? 220 : 0);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(debounce);
+    };
+  }, [form.village, selectedMandal, showVillageSuggestions]);
+
+  useEffect(() => {
+    if (!mandalModalOpen) {
+      setDistrictOptions([]);
+      setDistrictSearchLoading(false);
       return;
     }
-  }, [form.mandal, mandalOptions]);
+
+    const query = districtQuery.trim();
+    if (query.length < 2) {
+      setDistrictOptions([]);
+      setDistrictSearchLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setDistrictSearchLoading(true);
+
+    const debounce = window.setTimeout(() => {
+      searchDistricts(query)
+        .then((results) => {
+          if (!isCancelled) {
+            setDistrictOptions(results);
+            setDistrictSearchLoading(false);
+          }
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setDistrictOptions([]);
+            setDistrictSearchLoading(false);
+          }
+        });
+    }, 200);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(debounce);
+    };
+  }, [districtQuery, mandalModalOpen]);
 
   const handleChange = (field: keyof typeof form) => (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
 
     setForm((current) => {
       if (field === "state") {
-        return { ...current, state: value, mandal: "" };
+        return { ...current, state: value, district: "", mandal: "", village: "" };
       }
 
       if (field === "district") {
-        return { ...current, district: value, mandal: "" };
+        return { ...current, district: value, mandal: "", village: "" };
+      }
+
+      if (field === "mandal") {
+        return { ...current, mandal: value, village: "" };
       }
 
       return { ...current, [field]: value };
     });
 
-    if (field === "mandal") {
+    if (field === "district") {
+      setSelectedDistrict(null);
+      setSelectedMandal(null);
+      setSelectedVillage(null);
+      setShowDistrictSuggestions(true);
+      setShowMandalSuggestions(false);
+      setShowVillageSuggestions(false);
+      setDistrictOptions([]);
+      setMandalOptions([]);
+      setVillageOptions([]);
       setHideMandalSuggestions(false);
     }
 
+    if (field === "mandal") {
+      setSelectedMandal(null);
+      setSelectedVillage(null);
+      setHideMandalSuggestions(false);
+      setShowMandalSuggestions(true);
+      setShowVillageSuggestions(false);
+      setVillageOptions([]);
+    }
+
+    if (field === "village") {
+      setSelectedVillage(null);
+      setShowVillageSuggestions(true);
+    }
+
     setError("");
+  };
+
+  const openMandalModal = () => {
+    setModalError("");
+    setDistrictQuery(form.district.trim());
+    setSelectedDistrict(
+      districtOptions.find((district) => district.name.trim().toLowerCase() === form.district.trim().toLowerCase()) ?? null,
+    );
+    setMandalModalName("");
+    setMandalModalOpen(true);
+  };
+
+  const openVillageModal = () => {
+    if (!selectedMandal && !form.mandal.trim()) {
+      setModalError(t("profile.noMandal"));
+      showToast(t("profile.noMandal"), "error");
+      return;
+    }
+
+    setModalError("");
+    setVillageModalName("");
+    setVillageModalOpen(true);
+  };
+
+  const closeMandalModal = () => {
+    setMandalModalOpen(false);
+    setDistrictOptions([]);
+    setDistrictSearchLoading(false);
+    setDistrictQuery("");
+    setSelectedDistrict(null);
+    setMandalModalName("");
+    setModalError("");
+  };
+
+  const closeVillageModal = () => {
+    setVillageModalOpen(false);
+    setVillageModalName("");
+    setModalError("");
+  };
+
+  const handleCreateMandal = async () => {
+    const trimmedName = mandalModalName.trim();
+    const district = selectedDistrict ?? districtOptions[0] ?? null;
+
+    if (!district) {
+      setModalError("Select a district first.");
+      return;
+    }
+
+    if (!trimmedName) {
+      setModalError("Enter mandal name.");
+      return;
+    }
+
+    setMandalModalSaving(true);
+    setModalError("");
+
+    try {
+      const response = await createMandal({
+        districtId: district.id,
+        mandalName: trimmedName,
+      });
+
+      const mandal = response.mandal;
+      setForm((current) => ({
+        ...current,
+        district: mandal?.districtName ?? district.name,
+        state: mandal?.stateName ?? current.state,
+        mandal: mandal?.name ?? trimmedName,
+        village: "",
+      }));
+      setHideMandalSuggestions(true);
+      setMandalOptions([]);
+      closeMandalModal();
+      showToast(
+        response.message ? translateRuntimeMessage(response.message) : "Mandal added successfully.",
+      );
+    } catch (createError) {
+      const nextError =
+        createError instanceof Error
+          ? translateRuntimeMessage(createError.message)
+          : "Unable to add mandal.";
+      setModalError(nextError);
+      showToast(nextError, "error");
+    } finally {
+      setMandalModalSaving(false);
+    }
+  };
+
+  const handleCreateVillage = async () => {
+    const trimmedName = villageModalName.trim();
+    const currentMandalName = form.mandal.trim();
+
+    if (!currentMandalName) {
+      setModalError("Select a mandal first.");
+      return;
+    }
+
+    if (!trimmedName) {
+      setModalError("Enter village name.");
+      return;
+    }
+
+    setVillageModalSaving(true);
+    setModalError("");
+
+    try {
+      let mandalMatch = mandalOptions.find(
+        (entry) => entry.mandalName.trim().toLowerCase() === currentMandalName.toLowerCase(),
+      );
+
+      if (!mandalMatch) {
+        const response = await fetchMandals({
+          state: form.state.trim(),
+          district: form.district.trim(),
+          query: currentMandalName,
+        });
+
+        mandalMatch = response.mandals.find(
+          (entry) => entry.mandalName.trim().toLowerCase() === currentMandalName.toLowerCase(),
+        );
+      }
+
+      if (!mandalMatch) {
+        throw new Error("Select a valid mandal first.");
+      }
+
+      const response = await createVillage({
+        mandalId: mandalMatch.id,
+        villageName: trimmedName,
+      });
+
+      const village = response.village;
+      setForm((current) => ({
+        ...current,
+        village: village?.name ?? trimmedName,
+      }));
+      closeVillageModal();
+      showToast(
+        response.message ? translateRuntimeMessage(response.message) : "Village added successfully.",
+      );
+    } catch (createError) {
+      const nextError =
+        createError instanceof Error
+          ? translateRuntimeMessage(createError.message)
+          : "Unable to add village.";
+      setModalError(nextError);
+      showToast(nextError, "error");
+    } finally {
+      setVillageModalSaving(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -441,24 +654,86 @@ export default function ProfilePage() {
 
                 <div className="space-y-2">
                   <label className="font-manrope type-nav text-slate-800">{t("profile.district")}</label>
-                  <Input
-                    ref={districtInputRef}
-                    value={form.district}
-                    onChange={handleChange("district")}
-                  />
+                  <div ref={districtDropdownRef} className="space-y-2">
+                    <Input
+                      ref={districtInputRef}
+                      value={form.district}
+                      onChange={handleChange("district")}
+                      onFocus={() => setShowDistrictSuggestions(true)}
+                    />
+                    {showDistrictSuggestions && form.district.trim().length >= 2 ? (
+                      <div className="max-h-56 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                        {districtLoading ? (
+                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                            {t("profile.loading")}
+                          </div>
+                        ) : districtOptions.length ? (
+                          districtOptions.map((district) => (
+                            <button
+                              key={district.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedDistrict(district);
+                                setForm((current) => ({
+                                  ...current,
+                                  district: district.name,
+                                  mandal: "",
+                                  village: "",
+                                }));
+                                setShowDistrictSuggestions(false);
+                                setDistrictOptions([]);
+                                setSelectedMandal(null);
+                                setSelectedVillage(null);
+                                setMandalOptions([]);
+                                setVillageOptions([]);
+                              }}
+                              className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                            >
+                              <span className="font-manrope text-sm font-semibold text-slate-900">
+                                {district.name}
+                              </span>
+                              {district.stateName ? (
+                                <span className="font-manrope text-xs uppercase tracking-[0.18em] text-slate-500">
+                                  {district.stateName}
+                                </span>
+                              ) : null}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                            No district found
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="font-manrope type-nav text-slate-800">{t("profile.mandal")}</label>
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="font-manrope type-nav text-slate-800">
+                      {t("profile.mandal")}
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 rounded-full border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                      onClick={openMandalModal}
+                    >
+                      + Add
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     <Input
                       value={form.mandal}
                       onChange={handleChange("mandal")}
                       disabled={!form.state.trim() || !form.district.trim()}
+                      onFocus={() => setShowMandalSuggestions(true)}
                     />
                     {form.state.trim() &&
                     form.district.trim() &&
-                    form.mandal.trim().length >= 2 &&
+                    form.mandal.trim().length >= 3 &&
+                    showMandalSuggestions &&
                     !hideMandalSuggestions ? (
                       <div className="max-h-56 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                         {mandalSearchLoading ? (
@@ -467,20 +742,24 @@ export default function ProfilePage() {
                           </div>
                         ) : mandalOptions.length ? (
                           mandalOptions.map((mandal) => (
-                            <button
-                              key={mandal.id}
-                              type="button"
-                              onClick={() => {
-                                setForm((current) => ({
-                                  ...current,
-                                  mandal: mandal.mandalName,
-                                }));
-                                setHideMandalSuggestions(true);
-                                setMandalOptions([]);
-                              }}
-                              className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
-                            >
-                              <span className="font-manrope text-sm font-semibold text-slate-900">
+                              <button
+                                key={mandal.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedMandal(mandal);
+                                  setForm((current) => ({
+                                    ...current,
+                                    mandal: mandal.mandalName,
+                                    village: "",
+                                  }));
+                                  setHideMandalSuggestions(true);
+                                  setShowVillageSuggestions(false);
+                                  setMandalOptions([]);
+                                  setVillageOptions([]);
+                                }}
+                                className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                              >
+                                <span className="font-manrope text-sm font-semibold text-slate-900">
                                 {formatMandalSuggestion(mandal)}
                               </span>
                             </button>
@@ -496,12 +775,67 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="font-manrope type-nav text-slate-800">{t("profile.village")}</label>
-                  <Input
-                    ref={villageInputRef}
-                    value={form.village}
-                    onChange={handleChange("village")}
-                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="font-manrope type-nav text-slate-800">
+                      {t("profile.village")}
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 rounded-full border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                      onClick={openVillageModal}
+                    >
+                      + Add
+                    </Button>
+                  </div>
+                  <div ref={villageDropdownRef} className="space-y-2">
+                    <Input
+                      ref={villageInputRef}
+                      value={form.village}
+                      onChange={handleChange("village")}
+                      disabled={!selectedMandal && !form.mandal.trim()}
+                      onFocus={() => setShowVillageSuggestions(true)}
+                    />
+                    {showVillageSuggestions && (selectedMandal || form.mandal.trim()) ? (
+                      <div className="max-h-56 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                        {villageLoading ? (
+                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                            {t("profile.loading")}
+                          </div>
+                        ) : villageOptions.length ? (
+                          villageOptions.map((village) => (
+                            <button
+                              key={village.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedVillage(village);
+                                setForm((current) => ({
+                                  ...current,
+                                  village: village.name,
+                                }));
+                                setShowVillageSuggestions(false);
+                                setVillageOptions([]);
+                              }}
+                              className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                            >
+                              <span className="font-manrope text-sm font-semibold text-slate-900">
+                                {village.name} village
+                              </span>
+                              {village.mandalName ? (
+                                <span className="font-manrope text-xs uppercase tracking-[0.18em] text-slate-500">
+                                  {village.mandalName} mandal
+                                </span>
+                              ) : null}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                            {t("profile.noMandal")}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -518,6 +852,165 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </section>
+
+        {mandalModalOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <div className="w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-manrope type-small uppercase tracking-[0.22em] text-emerald-700">
+                    Add Mandal
+                  </p>
+                  <h3 className="mt-2 font-manrope type-card text-slate-900">
+                    Create a mandal under an existing district
+                  </h3>
+                </div>
+                <Button type="button" variant="ghost" className="h-10 w-10 rounded-full" onClick={closeMandalModal}>
+                  ×
+                </Button>
+              </div>
+
+              <div className="mt-6 space-y-5">
+                <div className="space-y-2">
+                  <label className="font-manrope type-nav text-slate-800">District</label>
+                  <Input
+                    value={districtQuery}
+                    onChange={(event) => {
+                      setDistrictQuery(event.target.value);
+                      setSelectedDistrict(null);
+                    }}
+                    placeholder="Type district name"
+                  />
+                  {districtQuery.trim().length >= 2 ? (
+                    <div className="max-h-56 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                      {districtSearchLoading ? (
+                        <div className="px-4 py-3 font-manrope text-sm text-slate-500">Searching...</div>
+                      ) : districtOptions.length ? (
+                        districtOptions.map((district) => (
+                          <button
+                            key={district.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDistrict(district);
+                              setDistrictQuery(district.name);
+                              setDistrictOptions([]);
+                            }}
+                            className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
+                          >
+                            <span className="font-manrope text-sm font-semibold text-slate-900">
+                              {district.name}
+                            </span>
+                            {district.stateName ? (
+                              <span className="font-manrope text-xs uppercase tracking-[0.18em] text-slate-500">
+                                {district.stateName}
+                              </span>
+                            ) : null}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 font-manrope text-sm text-slate-500">
+                          No district found
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-manrope type-nav text-slate-800">Mandal name</label>
+                  <Input
+                    value={mandalModalName}
+                    onChange={(event) => setMandalModalName(event.target.value)}
+                    placeholder="Enter mandal name"
+                  />
+                </div>
+
+                {modalError ? (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 font-manrope text-sm text-red-700">
+                    {modalError}
+                  </div>
+                ) : null}
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <Button type="button" variant="outline" onClick={closeMandalModal}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    className="!bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105"
+                    onClick={handleCreateMandal}
+                    disabled={mandalModalSaving}
+                  >
+                    {mandalModalSaving ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {villageModalOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <div className="w-full max-w-xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-manrope type-small uppercase tracking-[0.22em] text-emerald-700">
+                    Add Village
+                  </p>
+                  <h3 className="mt-2 font-manrope type-card text-slate-900">
+                    Create a village under the selected mandal
+                  </h3>
+                </div>
+                <Button type="button" variant="ghost" className="h-10 w-10 rounded-full" onClick={closeVillageModal}>
+                  ×
+                </Button>
+              </div>
+
+              <div className="mt-6 space-y-5">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="font-manrope text-xs uppercase tracking-[0.22em] text-slate-500">
+                    Selected mandal
+                  </p>
+                  <p className="mt-2 font-manrope text-base font-semibold text-slate-900">
+                    {form.mandal || "No mandal selected"}
+                  </p>
+                  <p className="mt-1 font-manrope text-sm text-slate-500">
+                    {form.district || form.state || "Select a mandal first"}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-manrope type-nav text-slate-800">Village name</label>
+                  <Input
+                    value={villageModalName}
+                    onChange={(event) => setVillageModalName(event.target.value)}
+                    placeholder="Enter village name"
+                  />
+                </div>
+
+                {modalError ? (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 font-manrope text-sm text-red-700">
+                    {modalError}
+                  </div>
+                ) : null}
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <Button type="button" variant="outline" onClick={closeVillageModal}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    className="!bg-[rgb(4,120,87)] !text-white hover:!bg-[rgb(4,120,87)] hover:brightness-105"
+                    onClick={handleCreateVillage}
+                    disabled={villageModalSaving}
+                  >
+                    {villageModalSaving ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <KyfiToast
           open={toast.open}

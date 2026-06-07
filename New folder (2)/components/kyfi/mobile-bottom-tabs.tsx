@@ -1,6 +1,6 @@
 "use client";
 
-import { CirclePlus, Home, Search } from "lucide-react";
+import { BarChart3, CirclePlus, Home, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const tabs = [
     icon: CirclePlus,
   },
   { href: "/search-farmer-status", labelKey: "header.search", icon: Search },
+  { href: "/my-records", labelKey: "myRecords.kicker", icon: BarChart3 },
   // { href: "/add-to-blacklist", labelKey: "header.blacklist", icon: ShieldAlert },
   // { href: "/blacklist-browser", labelKey: "header.browser", icon: ShieldCheck },
 ];
@@ -37,8 +38,8 @@ export function MobileBottomTabs() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/70 bg-white/92 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-1">
+      <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-2 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_rgba(15,23,42,0.12)] backdrop-blur-2xl md:hidden">
+        <div className="mx-auto grid max-w-7xl grid-cols-4 gap-1">
           {tabs.map((tab) => {
             const active = pathname === tab.href;
             const Icon = tab.icon;
@@ -49,7 +50,7 @@ export function MobileBottomTabs() {
                 type="button"
                 onClick={() => router.push(tab.href as any)}
                 className={cn(
-                  "flex min-h-[4.35rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-center transition",
+                  "flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-[1.15rem] px-1.5 py-2 text-center transition",
                   active
                     ? "text-emerald-800"
                     : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-800",
@@ -58,7 +59,7 @@ export function MobileBottomTabs() {
               >
                 <span
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-2xl transition",
+                    "flex h-8 w-8 items-center justify-center rounded-[1rem] transition",
                     active
                       ? "bg-emerald-50 text-emerald-800"
                       : "bg-transparent text-current",
@@ -66,7 +67,7 @@ export function MobileBottomTabs() {
                 >
                   <Icon className="h-4.5 w-4.5" />
                 </span>
-                <span className="w-full text-[0.66rem] font-semibold leading-tight tracking-[-0.01em]">
+                <span className="w-full text-[0.64rem] font-semibold leading-tight tracking-[-0.01em]">
                   {t(tab.labelKey)}
                 </span>
                 {active ? (
@@ -84,7 +85,7 @@ export function MobileBottomTabs() {
         </div>
       </nav>
 
-      <div className="h-24 md:hidden" aria-hidden="true" />
+      <div className="h-[6.25rem] md:hidden" aria-hidden="true" />
     </>
   );
 }

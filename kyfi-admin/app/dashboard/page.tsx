@@ -15,7 +15,6 @@ import { ActivityAreaChart } from "@/components/charts/activity-area-chart";
 import { StatusPieChart } from "@/components/charts/status-pie-chart";
 import { MetricCard } from "@/components/cards/metric-card";
 import { PageHeader } from "@/components/navigation/page-header";
-import { FarmerTable } from "@/components/tables/farmer-table";
 import {
   fetchAdminDashboard,
   type DashboardSummaryResponse,
@@ -39,8 +38,11 @@ export default function DashboardPage() {
   };
   const metricTitleMap: Record<string, string> = {
     "Total Farmers": "dashboard.metric.totalFarmers",
+    "Old Farmers": "dashboard.metric.oldFarmers",
+    "New Farmers": "dashboard.metric.newFarmers",
     "Registered Dealers": "dashboard.metric.registeredDealers",
     "Status Votes": "dashboard.metric.statusVotes",
+    "Old Farmer Votes": "dashboard.metric.oldFarmerVotes",
   };
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export default function DashboardPage() {
         </Card>
       ) : null}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(data?.analytics ?? [])
           .filter((item) => item.label !== "Blacklist Entries")
           .map((item) => (
@@ -114,15 +116,6 @@ export default function DashboardPage() {
             <StatusPieChart data={data?.statusDistribution ?? []} />
           </CardContent>
         </Card>
-      </div>
-
-      <div className="mt-6">
-        <div>
-          <h2 className="mb-3 text-lg font-medium">
-            {t("dashboard.recentTitle")}
-          </h2>
-          <FarmerTable farmerRecords={data?.recentFarmers ?? []} />
-        </div>
       </div>
     </div>
   );

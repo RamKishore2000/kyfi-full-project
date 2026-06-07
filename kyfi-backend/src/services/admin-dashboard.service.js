@@ -33,59 +33,105 @@ const toMonthMap = (rows, valueKey) =>
 
 const getDashboardSummary = async () => {
   const [
-    totalFarmersRows,
+    oldFarmersRows,
+    newFarmersRows,
     dealerRows,
-    votesRows,
-    blacklistRows,
+    oldVotesRows,
     statusRows,
     pendingDealerRows,
-    currentMonthVoteRows,
+    currentMonthOldVoteRows,
     monthlyFarmerRows,
-    monthlyBlacklistRows,
     recentFarmerRows,
-    greenBlacklistedRows,
   ] = await Promise.all([
     db.execute(
       `SELECT COUNT(*) AS total
        FROM (
-         SELECT aadhaar FROM farmer_statuses
-         UNION
-         SELECT aadhaar FROM blacklist_entries
-       ) AS unique_aadhaars
-       WHERE aadhaar IS NOT NULL AND aadhaar <> ''`,
+         SELECT fs.mobile_number
+         FROM farmer_statuses fs
+         WHERE UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'OLD'
+           AND fs.mobile_number IS NOT NULL
+           AND fs.mobile_number <> ''
+         GROUP BY fs.mobile_number
+       ) AS unique_old_farmers`,
+    ),
+    db.execute(
+      `SELECT COUNT(*) AS total
+       FROM (
+         SELECT fs.aadhaar
+         FROM farmer_statuses fs
+         WHERE UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'NEW'
+           AND fs.aadhaar IS NOT NULL
+           AND fs.aadhaar <> ''
+         GROUP BY fs.aadhaar
+       ) AS unique_new_farmers`,
     ),
     db.execute("SELECT COUNT(*) AS total FROM dealers WHERE role = 'dealer'"),
-    db.execute("SELECT COUNT(*) AS total FROM farmer_status_votes"),
-    db.execute("SELECT COUNT(*) AS total FROM blacklist_entries"),
-    db.execute("SELECT status_color AS status, COUNT(*) AS total FROM farmer_statuses GROUP BY status_color"),
+    db.execute(
+      `SELECT COUNT(*) AS total
+       FROM farmer_status_count_actions fsca
+       INNER JOIN farmer_statuses fs ON fs.id = fsca.status_id
+       WHERE fsca.action_type = 'INCREMENT'
+         AND UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'OLD'`,
+    ),
+    db.execute(
+      `SELECT status, COUNT(*) AS total
+       FROM (
+         SELECT ranked.status_color AS status
+         FROM (
+           SELECT
+             fs.mobile_number,
+             fs.status_color,
+             ROW_NUMBER() OVER (
+               PARTITION BY fs.aadhaar
+               ORDER BY fs.updated_at DESC, fs.created_at DESC, fs.id DESC
+             ) AS rn
+           FROM farmer_statuses fs
+           WHERE UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'NEW'
+             AND fs.aadhaar IS NOT NULL
+             AND fs.aadhaar <> ''
+         ) AS ranked
+         WHERE ranked.rn = 1
+           AND ranked.status_color IS NOT NULL
+       ) AS deduped_statuses
+       GROUP BY status`,
+    ),
     db.execute("SELECT COUNT(*) AS total FROM dealers WHERE role = 'dealer' AND status = 'pending'"),
     db.execute(
       `SELECT COUNT(*) AS total
-       FROM farmer_status_votes
-       WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`,
+       FROM farmer_status_count_actions fsca
+       INNER JOIN farmer_statuses fs ON fs.id = fsca.status_id
+       WHERE fsca.action_type = 'INCREMENT'
+         AND UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'OLD'
+         AND fsca.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`,
     ),
     db.execute(
-      `SELECT ym, COUNT(*) AS total
+      `SELECT ym, farmer_type, COUNT(*) AS total
        FROM (
-         SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, aadhaar
-         FROM farmer_statuses
-         WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01')
-           AND aadhaar IS NOT NULL
-           AND aadhaar <> ''
-         UNION
-         SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, aadhaar
-         FROM blacklist_entries
-         WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01')
-           AND aadhaar IS NOT NULL
-           AND aadhaar <> ''
+         SELECT
+           DATE_FORMAT(fs.created_at, '%Y-%m') AS ym,
+           'OLD' AS farmer_type,
+           fs.mobile_number AS duplicate_key
+         FROM farmer_statuses fs
+         WHERE fs.created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01')
+           AND UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'OLD'
+           AND fs.mobile_number IS NOT NULL
+           AND fs.mobile_number <> ''
+         GROUP BY ym, fs.mobile_number
+
+         UNION ALL
+
+         SELECT
+           DATE_FORMAT(fs.created_at, '%Y-%m') AS ym,
+           'NEW' AS farmer_type,
+           fs.aadhaar AS duplicate_key
+         FROM farmer_statuses fs
+         WHERE fs.created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01')
+           AND UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'NEW'
+           AND fs.aadhaar IS NOT NULL
+           AND fs.aadhaar <> ''
+         GROUP BY ym, fs.aadhaar
        ) AS unique_monthly_farmers
-       GROUP BY ym`,
-    ),
-    db.execute(
-      `SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS total
-       FROM blacklist_entries
-       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01')
-       GROUP BY ym`,
+       GROUP BY ym, farmer_type`,
     ),
     db.execute(
       `SELECT
@@ -101,104 +147,47 @@ const getDashboardSummary = async () => {
          ranked.address,
          ranked.amount_pending,
          ranked.remarks,
+         ranked.farmer_type,
          ranked.created_by_dealer_id,
          ranked.vote_count,
          ranked.created_at,
          ranked.updated_at,
-         ranked.blacklist_reason
+         NULL AS blacklist_reason
        FROM (
          SELECT
-           combined.*,
+           fs.*,
            ROW_NUMBER() OVER (
-             PARTITION BY combined.aadhaar
-             ORDER BY combined.updated_at DESC, combined.created_at DESC, combined.source_rank DESC
+             PARTITION BY
+               CASE
+                 WHEN UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'NEW' THEN fs.aadhaar
+                 ELSE fs.mobile_number
+               END
+             ORDER BY fs.updated_at DESC, fs.created_at DESC, fs.id DESC
            ) AS rn
-         FROM (
-           SELECT
-             fs.id,
-             fs.aadhaar,
-             fs.farmer_name,
-             fs.mobile_number,
-             fs.district,
-             fs.mandal,
-             fs.village,
-             fs.status_color,
-             fs.ration_card_number,
-             fs.address,
-             fs.amount_pending,
-             fs.remarks,
-             fs.created_by_dealer_id,
-             fs.vote_count,
-             fs.created_at,
-             fs.updated_at,
-             b.reason AS blacklist_reason,
-             0 AS source_rank
-           FROM farmer_statuses fs
-           LEFT JOIN blacklist_entries b ON b.aadhaar = fs.aadhaar
-
-           UNION ALL
-
-           SELECT
-             b.id,
-             b.aadhaar,
-             b.farmer_name,
-             NULL AS mobile_number,
-             b.district,
-             b.mandal,
-             b.village,
-             'BLACKLISTED' AS status_color,
-             NULL AS ration_card_number,
-             b.address,
-             NULL AS amount_pending,
-             b.reason AS remarks,
-             b.created_by_dealer_id,
-             0 AS vote_count,
-             b.created_at,
-             b.updated_at,
-             b.reason AS blacklist_reason,
-             1 AS source_rank
-           FROM blacklist_entries b
-           LEFT JOIN farmer_statuses fs ON fs.aadhaar = b.aadhaar
-           WHERE fs.id IS NULL
-         ) AS combined
+         FROM farmer_statuses fs
+         WHERE (
+           UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'OLD'
+           AND fs.mobile_number IS NOT NULL
+           AND fs.mobile_number <> ''
+         ) OR (
+           UPPER(COALESCE(fs.farmer_type, 'OLD')) = 'NEW'
+           AND fs.aadhaar IS NOT NULL
+           AND fs.aadhaar <> ''
+         )
        ) AS ranked
        WHERE ranked.rn = 1
        ORDER BY ranked.updated_at DESC
        LIMIT 10`,
     ),
-    db.execute(
-      `SELECT
-        fs.id,
-        fs.aadhaar,
-        fs.farmer_name,
-        fs.mobile_number,
-        fs.district,
-        fs.mandal,
-        fs.village,
-        fs.status_color,
-        fs.ration_card_number,
-        fs.address,
-        fs.amount_pending,
-        fs.remarks,
-        fs.created_by_dealer_id,
-        fs.vote_count,
-        fs.created_at,
-        fs.updated_at,
-        b.reason AS blacklist_reason
-       FROM farmer_statuses fs
-       INNER JOIN blacklist_entries b ON b.aadhaar = fs.aadhaar
-       WHERE fs.status_color = 'GREEN'
-       ORDER BY fs.created_at DESC
-       LIMIT 1`,
-    ),
   ]);
 
-  const totalFarmers = Number(totalFarmersRows[0][0]?.total || 0);
+  const oldFarmers = Number(oldFarmersRows[0][0]?.total || 0);
+  const newFarmers = Number(newFarmersRows[0][0]?.total || 0);
+  const totalFarmers = oldFarmers + newFarmers;
   const registeredDealers = Number(dealerRows[0][0]?.total || 0);
-  const statusVotes = Number(votesRows[0][0]?.total || 0);
-  const blacklistEntries = Number(blacklistRows[0][0]?.total || 0);
+  const oldFarmerVotes = Number(oldVotesRows[0][0]?.total || 0);
   const pendingDealers = Number(pendingDealerRows[0][0]?.total || 0);
-  const currentMonthVotes = Number(currentMonthVoteRows[0][0]?.total || 0);
+  const currentMonthOldVotes = Number(currentMonthOldVoteRows[0][0]?.total || 0);
 
   const statusByKey = statusRows[0].reduce(
     (accumulator, row) => {
@@ -209,19 +198,32 @@ const getDashboardSummary = async () => {
   );
 
   const months = getRecentMonths(7);
-  const farmersMonthMap = toMonthMap(monthlyFarmerRows[0], "total");
-  const blacklistMonthMap = toMonthMap(monthlyBlacklistRows[0], "total");
+  const oldFarmersMonthMap = monthlyFarmerRows[0].reduce((accumulator, row) => {
+    if (String(row.farmer_type).toUpperCase() === "OLD") {
+      accumulator[row.ym] = Number(row.total || 0);
+    }
+    return accumulator;
+  }, {});
+  const newFarmersMonthMap = monthlyFarmerRows[0].reduce((accumulator, row) => {
+    if (String(row.farmer_type).toUpperCase() === "NEW") {
+      accumulator[row.ym] = Number(row.total || 0);
+    }
+    return accumulator;
+  }, {});
 
   const monthlyActivity = months.map((month) => ({
     month: month.month,
-    farmers: farmersMonthMap[month.key] || 0,
-    reports: blacklistMonthMap[month.key] || 0,
+    oldFarmers: oldFarmersMonthMap[month.key] || 0,
+    newFarmers: newFarmersMonthMap[month.key] || 0,
+    farmers: (oldFarmersMonthMap[month.key] || 0) + (newFarmersMonthMap[month.key] || 0),
+    reports: newFarmersMonthMap[month.key] || 0,
     approvals: month.key === `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
       ? registeredDealers - pendingDealers
       : 0,
   }));
 
   const farmerRows = recentFarmerRows[0].map((row) => ({
+    statusId: Number(row.id),
     id: `KYF-${String(row.id).padStart(4, "0")}`,
     name: row.farmer_name,
     district: row.district,
@@ -233,7 +235,8 @@ const getDashboardSummary = async () => {
     panMasked: undefined,
     rationCard: row.ration_card_number || undefined,
     address: row.address || undefined,
-    status: row.status_color,
+    status: row.status_color || "GREEN",
+    farmerType: String(row.farmer_type || "OLD").toUpperCase(),
     blacklisted: Boolean(row.blacklist_reason),
     blacklistReason: row.blacklist_reason || undefined,
     remarks: row.remarks || "",
@@ -255,48 +258,18 @@ const getDashboardSummary = async () => {
     ],
   }));
 
-  const greenBlacklistedRow = greenBlacklistedRows[0][0]
-    ? {
-        id: `KYF-${String(greenBlacklistedRows[0][0].id).padStart(4, "0")}`,
-        name: greenBlacklistedRows[0][0].farmer_name,
-        district: greenBlacklistedRows[0][0].district,
-        mandal: greenBlacklistedRows[0][0].mandal,
-        village: greenBlacklistedRows[0][0].village,
-        crop: "General status",
-        phone: greenBlacklistedRows[0][0].mobile_number || "—",
-        aadhaarMasked: maskAadhaar(greenBlacklistedRows[0][0].aadhaar),
-        panMasked: undefined,
-        rationCard: greenBlacklistedRows[0][0].ration_card_number || undefined,
-        address: greenBlacklistedRows[0][0].address || undefined,
-        status: greenBlacklistedRows[0][0].status_color,
-        blacklisted: true,
-        blacklistReason: greenBlacklistedRows[0][0].blacklist_reason || undefined,
-        remarks: greenBlacklistedRows[0][0].remarks || "",
-        voteCount: Number(greenBlacklistedRows[0][0].vote_count || 0),
-        reports: 1,
-        dateAdded: new Intl.DateTimeFormat("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }).format(new Date(greenBlacklistedRows[0][0].created_at)),
-        lastVerified: new Intl.DateTimeFormat("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }).format(new Date(greenBlacklistedRows[0][0].updated_at)),
-        history: [
-          `Status added as ${greenBlacklistedRows[0][0].status_color}`,
-          "Blacklist warning attached",
-        ],
-      }
-    : null;
-
   const analytics = [
     {
-      label: "Total Farmers",
-      value: totalFarmers,
-      change: `${totalFarmers ? Math.round((statusByKey.GREEN / totalFarmers) * 100) : 0}% GREEN`,
+      label: "Old Farmers",
+      value: oldFarmers,
+      change: `${oldFarmerVotes} old votes`,
       tone: "success",
+    },
+    {
+      label: "New Farmers",
+      value: newFarmers,
+      change: `${totalFarmers} total farmers`,
+      tone: "primary",
     },
     {
       label: "Registered Dealers",
@@ -305,16 +278,10 @@ const getDashboardSummary = async () => {
       tone: "primary",
     },
     {
-      label: "Status Votes",
-      value: statusVotes,
-      change: `${currentMonthVotes} this month`,
+      label: "Old Farmer Votes",
+      value: oldFarmerVotes,
+      change: `${currentMonthOldVotes} this month`,
       tone: "warning",
-    },
-    {
-      label: "Blacklist Entries",
-      value: blacklistEntries,
-      change: `${greenBlacklistedRow ? 1 : 0} green + blacklist`,
-      tone: "danger",
     },
   ];
 
@@ -329,8 +296,15 @@ const getDashboardSummary = async () => {
     monthlyActivity,
     statusDistribution,
     recentFarmers: farmerRows,
-    greenBlacklisted: greenBlacklistedRow,
+    counts: {
+      oldFarmers,
+      newFarmers,
+      oldFarmerVotes,
+      totalFarmers,
+    },
   };
 };
 
 module.exports = { getDashboardSummary };
+
+

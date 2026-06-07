@@ -1,6 +1,42 @@
+const fs = require("fs/promises");
+const path = require("path");
+const { randomUUID } = require("crypto");
 const db = require("../config/db");
 
 const normalizeDigits = (value) => String(value || "").replace(/\D/g, "");
+const PROOF_UPLOAD_DIR = path.join(process.cwd(), "uploads", "farmer-proofs");
+
+const saveProofImage = async (dataUrl) => {
+  if (!dataUrl) return null;
+  const match = String(dataUrl).match(/^data:image\/webp;base64,([a-zA-Z0-9+/=]+)$/);
+  if (!match) {
+    const error = new Error("Proof image must be a WebP image");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const buffer = Buffer.from(match[1], "base64");
+  if (!buffer.length || buffer.length > 5 * 1024 * 1024) {
+    const error = new Error("Proof image is invalid or too large");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  await fs.mkdir(PROOF_UPLOAD_DIR, { recursive: true });
+  const fileName = `${Date.now()}-${randomUUID()}.webp`;
+  await fs.writeFile(path.join(PROOF_UPLOAD_DIR, fileName), buffer);
+  return `/uploads/farmer-proofs/${fileName}`;
+};
+
+const deleteProofImage = async (proofImagePath) => {
+  if (!proofImagePath || typeof proofImagePath !== "string") return;
+  if (!proofImagePath.startsWith("/uploads/farmer-proofs/")) return;
+
+  const fileName = path.basename(proofImagePath);
+  await fs.unlink(path.join(PROOF_UPLOAD_DIR, fileName)).catch((error) => {
+    if (error?.code !== "ENOENT") throw error;
+  });
+};
 
 const columnExists = async (tableName, columnName) => {
   const [rows] = await db.execute(
@@ -10,6 +46,19 @@ const columnExists = async (tableName, columnName) => {
        AND TABLE_NAME = ?
        AND COLUMN_NAME = ?`,
     [tableName, columnName],
+  );
+
+  return Number(rows[0]?.count || 0) > 0;
+};
+
+const indexExists = async (tableName, indexName) => {
+  const [rows] = await db.execute(
+    `SELECT COUNT(*) AS count
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = ?
+       AND INDEX_NAME = ?`,
+    [tableName, indexName],
   );
 
   return Number(rows[0]?.count || 0) > 0;
@@ -55,6 +104,22 @@ const ensureFarmerStatusSchema = async () => {
   await db.execute("UPDATE farmer_statuses SET aadhaar = NULL WHERE aadhaar = ''");
   await db.execute("UPDATE farmer_statuses SET farmer_type = 'OLD' WHERE farmer_type IS NULL OR farmer_type = ''");
 
+  if (!(await columnIsNullable("farmer_statuses", "status_color"))) {
+    await db.execute("ALTER TABLE farmer_statuses MODIFY status_color ENUM('GREEN', 'YELLOW', 'RED') DEFAULT NULL");
+  }
+
+  const hasDealerScopedAadhaarIndex = await indexExists("farmer_statuses", "uq_farmer_status_dealer_aadhaar");
+  if (!hasDealerScopedAadhaarIndex) {
+    const hasLegacyAadhaarIndex = await indexExists("farmer_statuses", "uq_farmer_status_aadhaar");
+    if (hasLegacyAadhaarIndex) {
+      await db.execute("ALTER TABLE farmer_statuses DROP INDEX uq_farmer_status_aadhaar");
+    }
+
+    await db.execute(
+      "ALTER TABLE farmer_statuses ADD UNIQUE KEY uq_farmer_status_dealer_aadhaar (created_by_dealer_id, aadhaar)",
+    );
+  }
+
   const hasDistrictId = await columnExists("farmer_statuses", "district_id");
   if (!hasDistrictId) {
     await db.execute("ALTER TABLE farmer_statuses ADD COLUMN district_id BIGINT UNSIGNED DEFAULT NULL AFTER village");
@@ -68,6 +133,11 @@ const ensureFarmerStatusSchema = async () => {
   const hasVillageId = await columnExists("farmer_statuses", "village_id");
   if (!hasVillageId) {
     await db.execute("ALTER TABLE farmer_statuses ADD COLUMN village_id BIGINT UNSIGNED DEFAULT NULL AFTER mandal_id");
+  }
+
+  const hasProofImagePath = await columnExists("farmer_statuses", "proof_image_path");
+  if (!hasProofImagePath) {
+    await db.execute("ALTER TABLE farmer_statuses ADD COLUMN proof_image_path VARCHAR(255) DEFAULT NULL AFTER remarks");
   }
 };
 
@@ -126,6 +196,13 @@ const ensureFarmerStatusCountActionsSchema = async () => {
      SELECT fsv.status_id, fsv.dealer_id, 'INCREMENT'
      FROM farmer_status_votes fsv`,
   );
+
+  const hasProofImagePath = await columnExists("farmer_status_count_actions", "proof_image_path");
+  if (!hasProofImagePath) {
+    await db.execute(
+      "ALTER TABLE farmer_status_count_actions ADD COLUMN proof_image_path VARCHAR(255) DEFAULT NULL AFTER action_type",
+    );
+  }
 };
 
 const buildEmptyVoteBreakdown = () => ({
@@ -183,6 +260,142 @@ const findFarmerStatusByAadhaarOrMobile = async ({ aadhaar, mobileNumber }) => {
   );
 
   return rows[0] || null;
+};
+
+const findFarmerStatusByAadhaarOrMobileAndDealer = async ({ aadhaar, mobileNumber, dealerId }) => {
+  await ensureFarmerStatusSchemaOnce();
+  const conditions = [];
+  const params = [];
+  const dealerIdNumber = Number(dealerId || 0) || 0;
+
+  if (aadhaar) {
+    conditions.push("aadhaar = ?");
+    params.push(normalizeDigits(aadhaar));
+  }
+
+  if (mobileNumber) {
+    conditions.push("mobile_number = ?");
+    params.push(normalizeDigits(mobileNumber));
+  }
+
+  if (!conditions.length || !dealerIdNumber) {
+    return null;
+  }
+
+  const [rows] = await db.execute(
+    `SELECT
+      id,
+      aadhaar,
+      farmer_name,
+      mobile_number,
+      farmer_type,
+      district,
+      mandal,
+      village,
+      district_id,
+      mandal_id,
+      village_id,
+      status_color,
+      ration_card_number,
+      address,
+      amount_pending,
+      remarks,
+      proof_image_path,
+      created_by_dealer_id,
+      vote_count,
+      created_at,
+      updated_at
+     FROM farmer_statuses
+     WHERE created_by_dealer_id = ?
+       AND (${conditions.join(" OR ")})
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [dealerIdNumber, ...params],
+  );
+
+  return rows[0] || null;
+};
+
+const findOldFarmerStatusByMobile = async ({ mobileNumber }) => {
+  await ensureFarmerStatusSchemaOnce();
+  const normalizedMobile = normalizeDigits(mobileNumber);
+
+  if (!normalizedMobile) {
+    return null;
+  }
+
+  const [rows] = await db.execute(
+    `SELECT
+      id,
+      aadhaar,
+      farmer_name,
+      mobile_number,
+      farmer_type,
+      district,
+      mandal,
+      village,
+      district_id,
+      mandal_id,
+      village_id,
+      status_color,
+      ration_card_number,
+      address,
+      amount_pending,
+      remarks,
+      proof_image_path,
+      created_by_dealer_id,
+      vote_count,
+      created_at,
+      updated_at
+     FROM farmer_statuses
+     WHERE UPPER(COALESCE(farmer_type, '')) = 'OLD'
+       AND (
+         mobile_number = ?
+         OR REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, ' ', ''), '-', ''), '(', ''), ')', '') = ?
+       )
+     ORDER BY updated_at DESC, created_at DESC
+     LIMIT 1`,
+    [normalizedMobile, normalizedMobile],
+  );
+
+  return rows[0] || null;
+};
+
+const getAadhaarNewFarmerDuplicatePolicy = async ({ aadhaar, dealerId }) => {
+  await ensureFarmerStatusSchemaOnce();
+  const normalizedAadhaar = normalizeDigits(aadhaar);
+  const dealerIdNumber = Number(dealerId || 0) || 0;
+
+  if (!normalizedAadhaar) {
+    return {
+      totalMatches: 0,
+      sameDealerExists: false,
+      hasBlockingStatus: false,
+      canCreateNewForDealer: true,
+    };
+  }
+
+  const [rows] = await db.execute(
+    `SELECT
+       COUNT(*) AS total_matches,
+       SUM(CASE WHEN created_by_dealer_id = ? THEN 1 ELSE 0 END) AS same_dealer_matches,
+       SUM(CASE WHEN status_color IN ('YELLOW', 'RED') THEN 1 ELSE 0 END) AS blocking_matches
+     FROM farmer_statuses
+     WHERE aadhaar = ?`,
+    [dealerIdNumber, normalizedAadhaar],
+  );
+
+  const summary = rows[0] || {};
+  const totalMatches = Number(summary.total_matches || 0);
+  const sameDealerExists = Number(summary.same_dealer_matches || 0) > 0;
+  const hasBlockingStatus = Number(summary.blocking_matches || 0) > 0;
+
+  return {
+    totalMatches,
+    sameDealerExists,
+    hasBlockingStatus,
+    canCreateNewForDealer: !sameDealerExists && !hasBlockingStatus,
+  };
 };
 
 const searchFarmerStatuses = async ({ dealerId, term, mandal, village, farmerName }) => {
@@ -243,6 +456,7 @@ const searchFarmerStatuses = async ({ dealerId, term, mandal, village, farmerNam
       fs.address,
       fs.amount_pending,
       fs.remarks,
+      fs.proof_image_path,
       fs.created_by_dealer_id,
       fs.vote_count,
       fs.created_at,
@@ -285,6 +499,7 @@ const findFarmerStatusById = async (statusId) => {
       address,
       amount_pending,
       remarks,
+      proof_image_path,
       created_by_dealer_id,
       vote_count,
       created_at,
@@ -352,6 +567,51 @@ const getFarmerStatusVoteBreakdown = async (statusId) => {
   };
 };
 
+const getFarmerStatusVoters = async (statusId) => {
+  await ensureFarmerStatusSchemaOnce();
+  const farmerStatusId = Number(statusId || 0);
+  if (!farmerStatusId) {
+    return [];
+  }
+
+  const [rows] = await db.execute(
+    `SELECT
+       fsca.status_id,
+       fsca.dealer_id,
+       d.name AS dealer_name,
+       d.mobile AS dealer_mobile,
+       COALESCE(fsv.vote_color, 'PENDING') AS vote_color,
+       fsca.proof_image_path,
+       fs.district,
+       fs.mandal,
+       fs.village,
+       fsca.created_at AS voted_at
+     FROM farmer_status_count_actions fsca
+     INNER JOIN farmer_statuses fs ON fs.id = fsca.status_id
+     INNER JOIN dealers d ON d.id = fsca.dealer_id
+     LEFT JOIN farmer_status_votes fsv
+       ON fsv.status_id = fsca.status_id
+      AND fsv.dealer_id = fsca.dealer_id
+     WHERE fsca.status_id = ?
+       AND fsca.action_type = 'INCREMENT'
+     ORDER BY fsca.updated_at DESC, fsca.created_at DESC`,
+    [farmerStatusId],
+  );
+
+  return rows.map((row) => ({
+    statusId: Number(row.status_id),
+    dealerId: Number(row.dealer_id),
+    dealerName: row.dealer_name,
+    dealerMobile: row.dealer_mobile,
+    voteColor: row.vote_color || "PENDING",
+    district: row.district || null,
+    mandal: row.mandal || null,
+    village: row.village || null,
+    proofImageUrl: row.proof_image_path || null,
+    votedAt: row.voted_at,
+  }));
+};
+
 const createFarmerStatus = async ({
   aadhaar,
   farmerType,
@@ -368,6 +628,7 @@ const createFarmerStatus = async ({
   address,
   amountPending,
   remarks,
+  proofImageDataUrl,
   createdByDealerId,
 }) => {
   await ensureFarmerStatusSchemaOnce();
@@ -375,14 +636,16 @@ const createFarmerStatus = async ({
   const normalizedMobile = normalizeDigits(mobileNumber);
   const normalizedFarmerType = String(farmerType || "OLD").trim().toUpperCase() === "NEW" ? "NEW" : "OLD";
   const connection = await db.getConnection();
+  let proofImagePath = null;
 
   try {
+    proofImagePath = normalizedFarmerType === "OLD" ? await saveProofImage(proofImageDataUrl) : null;
     await connection.beginTransaction();
 
     const [result] = await connection.execute(
       `INSERT INTO farmer_statuses
-        (aadhaar, farmer_type, farmer_name, mobile_number, district, mandal, village, district_id, mandal_id, village_id, status_color, ration_card_number, address, amount_pending, remarks, created_by_dealer_id, vote_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        (aadhaar, farmer_type, farmer_name, mobile_number, district, mandal, village, district_id, mandal_id, village_id, status_color, ration_card_number, address, amount_pending, remarks, proof_image_path, created_by_dealer_id, vote_count)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [
         normalizedAadhaar || null,
         normalizedFarmerType,
@@ -399,6 +662,7 @@ const createFarmerStatus = async ({
         address || null,
         amountPending ?? null,
         remarks || null,
+        proofImagePath,
         createdByDealerId,
       ],
     );
@@ -409,8 +673,8 @@ const createFarmerStatus = async ({
     );
 
     await connection.execute(
-      "INSERT INTO farmer_status_count_actions (status_id, dealer_id, action_type) VALUES (?, ?, 'INCREMENT')",
-      [result.insertId, createdByDealerId],
+      "INSERT INTO farmer_status_count_actions (status_id, dealer_id, action_type, proof_image_path) VALUES (?, ?, 'INCREMENT', ?)",
+      [result.insertId, createdByDealerId, proofImagePath],
     );
 
     await connection.commit();
@@ -432,11 +696,13 @@ const createFarmerStatus = async ({
       address: address || null,
       amountPending: amountPending ?? null,
       remarks: remarks || null,
+      proofImagePath,
       createdByDealerId,
       voteCount: 1,
     };
   } catch (error) {
     await connection.rollback();
+    await deleteProofImage(proofImagePath);
     throw error;
   } finally {
     connection.release();
@@ -518,7 +784,7 @@ const voteFarmerStatus = async ({ statusId, dealerId, voteColor, createdByDealer
   }
 };
 
-const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
+const changeFarmerStatusCount = async ({ statusId, dealerId, actionType, proofImageDataUrl }) => {
   await ensureFarmerStatusSchemaOnce();
 
   const normalizedActionType = String(actionType || "").trim().toUpperCase();
@@ -527,6 +793,8 @@ const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
   }
 
   const connection = await db.getConnection();
+  let savedProofImagePath = null;
+  let proofImagePathToDelete = null;
 
   try {
     await connection.beginTransaction();
@@ -551,28 +819,42 @@ const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
         return { action: "forbidden" };
       }
 
+      const isOldFarmer = String(farmerStatus.farmer_type || "").toUpperCase() === "OLD";
+      if (isOldFarmer && normalizedActionType === "INCREMENT" && !proofImageDataUrl) {
+        const error = new Error("Proof image is required to vote for an old farmer");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      if (isOldFarmer && normalizedActionType === "INCREMENT") {
+        savedProofImagePath = await saveProofImage(proofImageDataUrl);
+      }
+
     const [existingRows] = await connection.execute(
-      "SELECT id, action_type FROM farmer_status_count_actions WHERE status_id = ? AND dealer_id = ? LIMIT 1 FOR UPDATE",
+      "SELECT id, action_type, proof_image_path FROM farmer_status_count_actions WHERE status_id = ? AND dealer_id = ? LIMIT 1 FOR UPDATE",
       [statusId, dealerId],
     );
 
     const existingAction = existingRows[0]?.action_type || null;
+    const existingProofImagePath = existingRows[0]?.proof_image_path || null;
 
     if (normalizedActionType === "INCREMENT") {
       if (existingAction === "INCREMENT") {
         await connection.commit();
+        await deleteProofImage(savedProofImagePath);
         return { action: "locked" };
       }
 
       if (existingAction === "DECREMENT") {
         await connection.execute(
-          "UPDATE farmer_status_count_actions SET action_type = 'INCREMENT', updated_at = CURRENT_TIMESTAMP WHERE status_id = ? AND dealer_id = ?",
-          [statusId, dealerId],
+          "UPDATE farmer_status_count_actions SET action_type = 'INCREMENT', proof_image_path = ?, updated_at = CURRENT_TIMESTAMP WHERE status_id = ? AND dealer_id = ?",
+          [savedProofImagePath, statusId, dealerId],
         );
+        proofImagePathToDelete = existingProofImagePath;
       } else {
         await connection.execute(
-          "INSERT INTO farmer_status_count_actions (status_id, dealer_id, action_type) VALUES (?, ?, 'INCREMENT')",
-          [statusId, dealerId],
+          "INSERT INTO farmer_status_count_actions (status_id, dealer_id, action_type, proof_image_path) VALUES (?, ?, 'INCREMENT', ?)",
+          [statusId, dealerId, savedProofImagePath],
         );
       }
 
@@ -582,6 +864,7 @@ const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
       );
 
       await connection.commit();
+      await deleteProofImage(proofImagePathToDelete);
       return { action: existingAction === "DECREMENT" ? "restored" : "incremented" };
     }
 
@@ -591,7 +874,7 @@ const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
     }
 
     await connection.execute(
-      "UPDATE farmer_status_count_actions SET action_type = 'DECREMENT', updated_at = CURRENT_TIMESTAMP WHERE status_id = ? AND dealer_id = ?",
+      "UPDATE farmer_status_count_actions SET action_type = 'DECREMENT', proof_image_path = NULL, updated_at = CURRENT_TIMESTAMP WHERE status_id = ? AND dealer_id = ?",
       [statusId, dealerId],
     );
 
@@ -601,9 +884,121 @@ const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
     );
 
     await connection.commit();
+    await deleteProofImage(existingProofImagePath);
     return { action: "decremented" };
   } catch (error) {
     await connection.rollback();
+    await deleteProofImage(savedProofImagePath);
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+const moveFarmerStatusToOld = async ({ statusId, dealerId, proofImageDataUrl }) => {
+  await ensureFarmerStatusSchemaOnce();
+
+  const connection = await db.getConnection();
+  let savedProofImagePath = null;
+
+  try {
+    await connection.beginTransaction();
+
+    const [statusRows] = await connection.execute(
+      "SELECT id, created_by_dealer_id, farmer_type, mobile_number FROM farmer_statuses WHERE id = ? LIMIT 1 FOR UPDATE",
+      [statusId],
+    );
+
+    const farmerStatus = statusRows[0];
+
+    if (!farmerStatus) {
+      await connection.rollback();
+      return { action: "missing" };
+    }
+
+    if (String(farmerStatus.farmer_type || "").toUpperCase() !== "NEW") {
+      await connection.commit();
+      return { action: "locked" };
+    }
+
+    if (Number(farmerStatus.created_by_dealer_id) !== Number(dealerId)) {
+      await connection.rollback();
+      return { action: "forbidden" };
+    }
+
+    if (!proofImageDataUrl) {
+      const error = new Error("Proof image is required to move this farmer to old");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const normalizedMobile = normalizeDigits(farmerStatus.mobile_number);
+    const [oldRows] = await connection.execute(
+      `SELECT id
+       FROM farmer_statuses
+       WHERE UPPER(COALESCE(farmer_type, '')) = 'OLD'
+         AND (
+           mobile_number = ?
+           OR REPLACE(REPLACE(REPLACE(REPLACE(mobile_number, ' ', ''), '-', ''), '(', ''), ')', '') = ?
+         )
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 1
+       FOR UPDATE`,
+      [normalizedMobile, normalizedMobile],
+    );
+
+    const existingOldStatusId = Number(oldRows[0]?.id || 0);
+
+    if (existingOldStatusId) {
+      savedProofImagePath = await saveProofImage(proofImageDataUrl);
+
+      const [existingActionRows] = await connection.execute(
+        "SELECT id, action_type, proof_image_path FROM farmer_status_count_actions WHERE status_id = ? AND dealer_id = ? LIMIT 1 FOR UPDATE",
+        [existingOldStatusId, dealerId],
+      );
+      const existingAction = existingActionRows[0]?.action_type || null;
+
+      if (existingAction === "INCREMENT") {
+        await deleteProofImage(savedProofImagePath);
+        savedProofImagePath = null;
+      } else if (existingAction === "DECREMENT") {
+        await connection.execute(
+          "UPDATE farmer_status_count_actions SET action_type = 'INCREMENT', proof_image_path = ?, updated_at = CURRENT_TIMESTAMP WHERE status_id = ? AND dealer_id = ?",
+          [savedProofImagePath, existingOldStatusId, dealerId],
+        );
+        await connection.execute(
+          "UPDATE farmer_statuses SET vote_count = vote_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+          [existingOldStatusId],
+        );
+      } else {
+        await connection.execute(
+          "INSERT INTO farmer_status_count_actions (status_id, dealer_id, action_type, proof_image_path) VALUES (?, ?, 'INCREMENT', ?)",
+          [existingOldStatusId, dealerId, savedProofImagePath],
+        );
+        await connection.execute(
+          "UPDATE farmer_statuses SET vote_count = vote_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+          [existingOldStatusId],
+        );
+      }
+
+      await connection.execute(
+        "DELETE FROM farmer_statuses WHERE id = ? AND created_by_dealer_id = ? AND UPPER(COALESCE(farmer_type, '')) = 'NEW'",
+        [statusId, dealerId],
+      );
+
+      await connection.commit();
+      return { action: "voted_existing_and_removed_new", targetStatusId: existingOldStatusId, removedStatusId: statusId };
+    }
+
+    await connection.execute(
+      "UPDATE farmer_statuses SET farmer_type = 'OLD', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [statusId],
+    );
+    await connection.commit();
+    return { action: "moved", targetStatusId: statusId };
+  } catch (error) {
+    await connection.rollback();
+    await deleteProofImage(savedProofImagePath);
     throw error;
   } finally {
     connection.release();
@@ -612,13 +1007,18 @@ const changeFarmerStatusCount = async ({ statusId, dealerId, actionType }) => {
 
 module.exports = {
   findFarmerStatusByAadhaarOrMobile,
+  findFarmerStatusByAadhaarOrMobileAndDealer,
+  findOldFarmerStatusByMobile,
+  getAadhaarNewFarmerDuplicatePolicy,
   searchFarmerStatuses,
   findFarmerStatusById,
   hasDealerVotedForFarmerStatus,
   getDealerFarmerStatusVoteColor,
   getFarmerStatusVoteBreakdown,
+  getFarmerStatusVoters,
   getDealerFarmerStatusCountAction,
   createFarmerStatus,
   voteFarmerStatus,
   changeFarmerStatusCount,
+  moveFarmerStatusToOld,
 };

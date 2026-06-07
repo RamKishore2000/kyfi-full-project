@@ -1,6 +1,10 @@
 import { KYFI_API_BASE_URL } from "@/lib/config";
 
-export type AdminDealerStatus = "pending" | "approved" | "rejected" | "suspended";
+export type AdminDealerStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "suspended";
 
 export type AdminDealerRecord = {
   id: number;
@@ -14,6 +18,11 @@ export type AdminDealerRecord = {
   village: string;
   aadhaarOrGstNumber: string;
   status: AdminDealerStatus;
+  subscriptionStatus?: "active" | "inactive";
+  subscriptionPlanName?: string | null;
+  subscriptionYearlyPrice?: number | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -37,7 +46,9 @@ export type RegisterDealerInput = {
 
 async function authFetch(path: string, init: RequestInit = {}) {
   const token =
-    typeof window !== "undefined" ? window.localStorage.getItem("kyfi_admin_token") : null;
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("kyfi_admin_token")
+      : null;
 
   const response = await fetch(`${KYFI_API_BASE_URL}${path}`, {
     ...init,
@@ -72,21 +83,10 @@ export async function updateDealerStatus(
 }
 
 export async function registerDealer(input: RegisterDealerInput) {
-  const response = await fetch(`${KYFI_API_BASE_URL}/register`, {
+  return authFetch("/admin/dealers", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(input),
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(data?.message || "Request failed");
-  }
-
-  return data as {
+  }) as Promise<{
     message: string;
     dealer: {
       id?: number;
@@ -101,5 +101,5 @@ export async function registerDealer(input: RegisterDealerInput) {
       aadhaarOrGstNumber?: string;
       status?: string;
     };
-  };
+  }>;
 }
