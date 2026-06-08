@@ -6,3 +6,5 @@
 **/.env
 **/.env.local
 **/.env.*.local
+kyfi-backend/.tmp-lgd-import/
+kyfi-backend/uploads/farmer-proofs/

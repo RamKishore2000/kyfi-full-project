@@ -10,12 +10,14 @@ export function FeatureCard({
   icon,
   title,
   description,
+  descriptionContent,
   index,
   href,
 }: {
   icon: ReactNode;
   title: string;
   description: string;
+  descriptionContent?: ReactNode;
   index: number;
   href?: string;
 }) {
@@ -33,9 +35,13 @@ export function FeatureCard({
           <h3 className="font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900 sm:text-[1.08rem] lg:text-[1.2rem]">
             {title}
           </h3>
-          <p className="hidden font-manrope text-[0.88rem] leading-6 text-slate-600 sm:block sm:text-[0.95rem] sm:leading-7">
-            {description}
-          </p>
+          {descriptionContent ? (
+            <div className="hidden sm:block">{descriptionContent}</div>
+          ) : (
+            <p className="hidden font-manrope text-[0.88rem] leading-6 text-slate-600 sm:block sm:text-[0.95rem] sm:leading-7">
+              {description}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -63,6 +63,27 @@ function buildAssetUrl(path: string | null | undefined) {
   if (/^https?:\/\//i.test(path)) return path;
   return `${KYFI_API_BASE_URL.replace(/\/api$/, "")}${path}`;
 }
+function VoteProofImage({ src }: { src: string | null | undefined }) {
+  const [failed, setFailed] = useState(false);
+  const imageSrc = buildAssetUrl(src);
+
+  if (!imageSrc || failed) {
+    return (
+      <div className="flex h-32 items-center justify-center rounded-xl bg-white text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+        No proof image
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imageSrc}
+      alt="Vote proof"
+      className="h-32 w-full rounded-xl object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 function getStatusBadge({
   farmer,
   t,
@@ -148,6 +169,7 @@ function formatVotedDate(value: string, language: "en" | "te") {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Kolkata",
   }).format(date);
 }
 
@@ -194,8 +216,8 @@ function FarmerStatusCard({
   const hideCountControls =
     farmer.farmerType !== "NEW" && farmer.statusColor === "GREEN";
   const rowGridClass = hideCountControls
-    ? "grid gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto_auto] xl:items-center max-sm:gap-2"
-    : "grid gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_minmax(220px,1.08fr)_auto] xl:items-center max-sm:gap-2";
+    ? "grid grid-cols-[1fr_1fr_auto] gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto_auto] xl:items-center"
+    : "grid grid-cols-[1fr_1fr_auto] gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_minmax(220px,1.08fr)_auto] xl:items-center";
   const statusBadge = getStatusBadge({ farmer, t });
   const shouldShowStatusBadge =
     farmer.farmerType !== "OLD" ||
@@ -249,22 +271,22 @@ function FarmerStatusCard({
               icon={MapPin}
               label={t("search.location")}
               value={`${farmer.village}, ${farmer.mandal}`}
-              className="h-full max-sm:rounded-[16px] max-sm:px-3 max-sm:py-3"
+              className="h-full max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
             />
             <InfoCard
               icon={Phone}
               label={t("myRecords.mobile")}
               value={farmer.mobileNumber || "-"}
-              className="h-full max-sm:rounded-[16px] max-sm:px-3 max-sm:py-3"
+              className="h-full max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
             />
             <InfoCard
               icon={Fingerprint}
               label={t("search.maskedAadhaar")}
               value={maskAadhaar(farmer.aadhaar)}
-              className="h-full max-sm:rounded-[16px] max-sm:px-3 max-sm:py-3"
+              className="h-full max-sm:col-span-2 max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
             />
 
-            <div className="flex items-center self-center max-sm:mt-0.5">
+            <div className="flex items-center self-center max-sm:col-span-2 max-sm:mt-0.5">
               {farmer.farmerType === "NEW" ? (
                 <div className="grid min-h-[56px] w-full grid-cols-3 content-center gap-0.5 rounded-[22px] border border-slate-200 bg-slate-50 p-1 shadow-none max-sm:min-h-[50px] max-sm:rounded-[18px] max-sm:p-[3px]">
                   {(["GREEN", "YELLOW", "RED"] as FarmerStatusColor[]).map(
@@ -342,7 +364,7 @@ function FarmerStatusCard({
               )}
             </div>
 
-            <div className="flex items-center justify-end self-center max-sm:justify-end">
+            <div className="flex items-center justify-end self-center max-sm:row-span-2 max-sm:h-full max-sm:justify-end">
               <button
                 type="button"
                 onClick={() => setExpanded((current) => !current)}
@@ -1054,7 +1076,7 @@ export function SearchFarmerPreview() {
         </div>{" "}
         <div className="space-y-6">
           {" "}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
             {" "}
             <LegendItem
               tone="success"
@@ -1525,7 +1547,7 @@ export function SearchFarmerPreview() {
           onClick={closeProofVoteModal}
         >
           <div
-            className="w-full max-w-xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
@@ -1549,7 +1571,7 @@ export function SearchFarmerPreview() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-4 px-6 py-6">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
               {proofVoteMode !== "moveToOld" ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
@@ -1604,7 +1626,7 @@ export function SearchFarmerPreview() {
                       <img
                         src={proofVoteImage}
                         alt="Selected vote proof preview"
-                        className="max-h-56 w-full rounded-2xl object-contain"
+                        className="max-h-40 w-full rounded-2xl object-contain sm:max-h-56"
                       />
                     ) : (
                       <>
@@ -1702,18 +1724,40 @@ export function SearchFarmerPreview() {
                   {votesDialogError}
                 </div>
               ) : votesDialogVotes.length ? (
-                votesDialogVotes.map((voter) => (
+                votesDialogVotes
+                  .flatMap((voter) =>
+                    Array.from(
+                      {
+                        length: Math.max(1, Number(voter.voteCount || 1)),
+                      },
+                      (_, voteIndex) => ({ voter, voteIndex }),
+                    ),
+                  )
+                  .map(({ voter, voteIndex }) => (
                   <div
-                    key={`${voter.statusId}-${voter.dealerId}`}
+                    key={
+                      voter.voteEntryId
+                        ? `${voter.voterType || "DEALER"}-${voter.voteEntryId}`
+                        : `${voter.voterType || "DEALER"}-${voter.statusId}-${voter.dealerId}-${voter.votedAt}-${voteIndex}`
+                    }
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)]"
                   >
                     <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
                       <div className="min-w-0">
-                        <p className="font-manrope text-base font-bold text-slate-950">
-                          {voter.dealerName}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Dealer ID: {voter.dealerId} - {voter.dealerMobile}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-manrope text-base font-bold text-slate-950">
+                            {voter.dealerName || "Super Admin"}
+                          </p>
+                          <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-emerald-700">
+                            Dealer
+                          </span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-600">
+                            Voted
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-500">
+                          ID: {voter.dealerId}
+                          {voter.dealerMobile ? ` - ${voter.dealerMobile}` : ""}
                         </p>
                         <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
                           <p>
@@ -1740,17 +1784,7 @@ export function SearchFarmerPreview() {
                         </p>
                       </div>
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                        {voter.proofImageUrl ? (
-                          <img
-                            src={buildAssetUrl(voter.proofImageUrl)}
-                            alt="Vote proof"
-                            className="h-32 w-full rounded-xl object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-32 items-center justify-center rounded-xl bg-white text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                            No proof
-                          </div>
-                        )}
+                        <VoteProofImage src={voter.proofImageUrl} />
                       </div>
                     </div>
                   </div>
@@ -1802,18 +1836,18 @@ function InfoCard({
     >
       {" "}
       {Icon ? (
-        <div className="mt-0.5 flex h-[32px] w-[32px] items-center justify-center rounded-full bg-slate-100 text-slate-600">
+        <div className="mt-0.5 flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 max-sm:h-7 max-sm:w-7">
           {" "}
-          <Icon className="h-3.5 w-3.5" />{" "}
+          <Icon className="h-3.5 w-3.5 max-sm:h-3 max-sm:w-3" />{" "}
         </div>
       ) : null}{" "}
       <div className="min-w-0">
         {" "}
-        <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-slate-500">
+        <p className="text-[0.64rem] font-black uppercase tracking-[0.2em] text-slate-500 max-sm:text-[0.52rem] max-sm:tracking-[0.14em]">
           {" "}
           {label}{" "}
         </p>{" "}
-        <p className="mt-1 truncate text-[0.9rem] font-semibold text-slate-950">
+        <p className="mt-1 truncate text-[0.9rem] font-semibold text-slate-950 max-sm:text-[0.72rem]">
           {" "}
           {value}{" "}
         </p>{" "}
@@ -1841,11 +1875,12 @@ function LegendItem({
           ? "border-red-100 bg-red-50/80"
           : "border-slate-200 bg-slate-50/90";
   return (
-    <div className={`rounded-2xl border p-4 ${toneClass}`}>
+    <div className={`rounded-2xl border p-2 sm:p-4 ${toneClass}`}>
       {" "}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:flex-wrap sm:text-left">
         {" "}
         <Badge
+          className="max-sm:px-2 max-sm:py-0.5 max-sm:text-[0.58rem]"
           variant={
             tone === "success"
               ? "success"
@@ -1859,11 +1894,13 @@ function LegendItem({
           {" "}
           {label}{" "}
         </Badge>{" "}
-        <p className="font-manrope text-sm font-bold text-slate-900">
+        <p className="font-manrope text-[0.7rem] font-bold leading-tight text-slate-900 sm:text-sm">
           {text}
         </p>{" "}
       </div>{" "}
-      <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>{" "}
+      <p className="mt-1 hidden text-sm leading-6 text-slate-600 sm:block">
+        {helper}
+      </p>{" "}
     </div>
   );
 }

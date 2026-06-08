@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -41,12 +40,6 @@ export function DashboardPreview() {
                   {t("preview.title")}
                 </h3>
               </div>
-              <Badge
-                variant="outline"
-                className="border-white/20 bg-white/10 text-white"
-              >
-                {t("preview.teluguReady")}
-              </Badge>
             </div>
 
             <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-5 backdrop-blur">
@@ -59,7 +52,9 @@ export function DashboardPreview() {
                     {t("preview.location")}
                   </p>
                 </div>
-                <Badge variant="success">GREEN</Badge>
+                <div className="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">
+                  {t("preview.oldFarmer")}
+                </div>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -81,18 +76,18 @@ export function DashboardPreview() {
                 </div>
                 <div className="rounded-2xl bg-white/5 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
-                    {t("preview.dateAdded")}
+                    {t("preview.votedBy")}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    26 May 2026
+                    3 dealers
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white/5 p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">
-                    {t("preview.remarks")}
+                    {t("preview.proof")}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    {t("preview.remarksValue")}
+                    {t("preview.proofValue")}
                   </p>
                 </div>
               </div>

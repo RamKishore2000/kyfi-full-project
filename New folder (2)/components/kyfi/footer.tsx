@@ -7,7 +7,7 @@ export function Footer() {
   const { t } = useKyfiLanguage();
 
   return (
-    <footer id="contact" className="border-t border-border bg-white/80">
+    <footer id="contact" className="hidden border-t border-border bg-white/80 sm:block">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-3 lg:px-8 max-sm:px-3 max-sm:py-10">
         <div className="space-y-4">
           <div className="flex items-center gap-3">

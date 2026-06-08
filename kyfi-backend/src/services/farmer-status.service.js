@@ -72,6 +72,7 @@ const ensureFarmerStatusSchemaOnce = async () => {
       await ensureFarmerStatusSchema();
       await ensureFarmerStatusVotesSchema();
       await ensureFarmerStatusCountActionsSchema();
+      await ensureAdminFarmerVoteProofsSchema();
     })().catch((error) => {
       farmerStatusSchemaInitPromise = null;
       throw error;
@@ -79,6 +80,23 @@ const ensureFarmerStatusSchemaOnce = async () => {
   }
 
   return farmerStatusSchemaInitPromise;
+};
+
+const ensureAdminFarmerVoteProofsSchema = async () => {
+  await db.execute(
+    `CREATE TABLE IF NOT EXISTS admin_farmer_vote_proofs (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      status_id BIGINT UNSIGNED NOT NULL,
+      admin_id INT UNSIGNED NOT NULL,
+      proof_image_path VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_admin_vote_proof_status (status_id),
+      KEY idx_admin_vote_proof_admin (admin_id),
+      CONSTRAINT fk_admin_vote_proof_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
+      CONSTRAINT fk_admin_vote_proof_admin FOREIGN KEY (admin_id) REFERENCES dealers(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+  );
 };
 
 const ensureFarmerStatusSchema = async () => {
@@ -577,15 +595,18 @@ const getFarmerStatusVoters = async (statusId) => {
   const [rows] = await db.execute(
     `SELECT
        fsca.status_id,
+       fsca.id AS vote_entry_id,
        fsca.dealer_id,
+       'DEALER' AS voter_type,
        d.name AS dealer_name,
        d.mobile AS dealer_mobile,
        COALESCE(fsv.vote_color, 'PENDING') AS vote_color,
+       1 AS vote_count,
        fsca.proof_image_path,
        fs.district,
        fs.mandal,
        fs.village,
-       fsca.created_at AS voted_at
+       fsca.updated_at AS voted_at
      FROM farmer_status_count_actions fsca
      INNER JOIN farmer_statuses fs ON fs.id = fsca.status_id
      INNER JOIN dealers d ON d.id = fsca.dealer_id
@@ -594,16 +615,42 @@ const getFarmerStatusVoters = async (statusId) => {
       AND fsv.dealer_id = fsca.dealer_id
      WHERE fsca.status_id = ?
        AND fsca.action_type = 'INCREMENT'
-     ORDER BY fsca.updated_at DESC, fsca.created_at DESC`,
-    [farmerStatusId],
+     UNION ALL
+     SELECT
+       afv.status_id,
+       afvp.id AS vote_entry_id,
+       afv.admin_id AS dealer_id,
+       'SUPER_ADMIN' AS voter_type,
+       COALESCE(d.name, 'Super Admin') AS dealer_name,
+       COALESCE(d.mobile, '') AS dealer_mobile,
+       'PENDING' AS vote_color,
+       1 AS vote_count,
+       afvp.proof_image_path,
+       fs.district,
+       fs.mandal,
+       fs.village,
+       afvp.created_at AS voted_at
+     FROM admin_farmer_votes afv
+     INNER JOIN farmer_statuses fs ON fs.id = afv.status_id
+     LEFT JOIN dealers d ON d.id = afv.admin_id
+     INNER JOIN admin_farmer_vote_proofs afvp
+       ON afvp.status_id = afv.status_id
+      AND afvp.admin_id = afv.admin_id
+     WHERE afv.status_id = ?
+       AND afv.vote_count > 0
+     ORDER BY voted_at DESC`,
+    [farmerStatusId, farmerStatusId],
   );
 
   return rows.map((row) => ({
     statusId: Number(row.status_id),
+    voteEntryId: Number(row.vote_entry_id || 0),
     dealerId: Number(row.dealer_id),
+    voterType: row.voter_type || "DEALER",
     dealerName: row.dealer_name,
     dealerMobile: row.dealer_mobile,
     voteColor: row.vote_color || "PENDING",
+    voteCount: Number(row.vote_count || 1),
     district: row.district || null,
     mandal: row.mandal || null,
     village: row.village || null,

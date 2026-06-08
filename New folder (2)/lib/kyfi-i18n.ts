@@ -19,10 +19,22 @@ const english: Dictionary = {
     "Quick access to farmer search, status entry, and your saved records.",
   "dashboard.feature1.title": "Farmer Status Search",
   "dashboard.feature1.description":
-    "Search using mandal, village, or farmer name to quickly check repayment reputation.",
-  "dashboard.feature2.title": "Add Farmer Status",
+    "Search old farmers to view risk details and add your vote. Search new farmers you added to update status: GREEN for paid, YELLOW for partial payment, and RED for unpaid. You can also move risky YELLOW or RED new farmers to Old Farmers. If all records are GREEN, another dealer can add the farmer to their own new farmer records easily.",
+  "dashboard.feature1.oldHeading": "Old Farmers",
+  "dashboard.feature1.oldDescription":
+    "Old Farmers appear in search with risk details, vote count, and dealer votes. You can vote here when you know the farmer is risky.",
+  "dashboard.feature1.newHeading": "New Farmers",
+  "dashboard.feature1.newDescription":
+    "Your added New Farmers also appear here. Update status as GREEN for paid, YELLOW for partial payment, or RED for unpaid. Risky YELLOW or RED records can be moved to Old Farmers.",
+  "dashboard.feature2.title": "Add Farmer Record",
   "dashboard.feature2.description":
-    "Create a simple GREEN, YELLOW, or RED reputation record for a farmer using mobile number as the primary identifier.",
+    "Add New Farmers to maintain your dealer records. Add Old Farmers when a farmer repeatedly takes credit or products but does not pay properly, helping other dealers identify risky farmers before giving credit.",
+  "dashboard.feature2.newHeading": "New Farmers",
+  "dashboard.feature2.newDescription":
+    "Add farmers you personally deal with and maintain them as your own dealer records. GREEN means paid, so another dealer can add the farmer easily. YELLOW means partial payment and RED means unpaid, so another dealer cannot add that farmer as a new record.",
+  "dashboard.feature2.oldHeading": "Old Farmers",
+  "dashboard.feature2.oldDescription":
+    "Record farmers who repeatedly take credit or products but do not pay properly, so other dealers can identify risky farmers.",
   "dashboard.feature3.title": "Status Review",
   "dashboard.feature3.description":
     "Review GREEN, YELLOW, and RED status before making a credit decision.",
@@ -35,6 +47,25 @@ const english: Dictionary = {
   "dashboard.feature6.title": "My Records",
   "dashboard.feature6.description":
     "View the farmer records and vote updates you have personally added.",
+  "dashboard.feature6.newHeading": "New Farmers",
+  "dashboard.feature6.newDescription":
+    "Check how many New Farmers you created and view those farmer details.",
+  "dashboard.feature6.oldHeading": "Old Farmers",
+  "dashboard.feature6.oldDescription":
+    "Check how many Old Farmers you created and view those farmer details.",
+  "dashboard.feature6.votesHeading": "My Votes to Old Farmers",
+  "dashboard.feature6.votesDescription":
+    "See how many farmers you voted for, the vote count, and each voted farmer detail.",
+  "dashboard.newFarmerStatusKicker": "New Farmer Status",
+  "dashboard.newFarmerStatusTitle": "Status signals are only for New Farmers",
+  "dashboard.newFarmerStatusDescription":
+    "Use GREEN, YELLOW, or RED only when maintaining New Farmer records in your dealer account.",
+  "dashboard.statusGreenText":
+    "Paid properly. Other dealers can add this farmer to their own New Farmer records.",
+  "dashboard.statusYellowText":
+    "Partial payment. This warns other dealers and blocks easy new record creation.",
+  "dashboard.statusRedText":
+    "Not paid. This marks the farmer as high risk for New Farmer record checks.",
   "myRecords.kicker": "My Records",
   "myRecords.title": "Records you have personally added",
   "myRecords.description":
@@ -57,13 +88,13 @@ const english: Dictionary = {
   "myRecords.tabs.oldFarmers": "Old Farmers",
   "myRecords.tabs.newFarmers": "New Farmers",
   "myRecords.tabs.blacklist": "Blacklist entries",
-  "myRecords.tabs.votes": "My votes",
+  "myRecords.tabs.votes": "My Votes to Old Farmers",
   "myRecords.tabs.countActions": "Count actions",
   "myRecords.summary.farmerStatuses": "Farmer statuses",
   "myRecords.summary.oldFarmers": "Old farmers",
   "myRecords.summary.newFarmers": "New farmers",
   "myRecords.summary.blacklistEntries": "Blacklist entries",
-  "myRecords.summary.votes": "My votes",
+  "myRecords.summary.votes": "My Votes to Old Farmers",
   "myRecords.summary.countActions": "Count actions",
   "myRecords.statusGreen": "GREEN",
   "myRecords.statusYellow": "YELLOW",
@@ -92,7 +123,7 @@ const english: Dictionary = {
   "footer.contact": "Contact",
   "footer.home": "Home",
   "footer.search": "Search",
-  "footer.addStatus": "Add Status",
+  "footer.addStatus": "Add Farmers",
   "footer.blacklist": "Blacklist",
   "footer.browser": "Browser",
   "footer.privacy": "Privacy Policy",
@@ -249,8 +280,8 @@ const english: Dictionary = {
   "hero.title": "Check Farmer Credit Reputation Before Giving Credit",
   "hero.subtitle":
     "KYFI helps pesticide dealers quickly identify trusted, delayed, and risky farmers using a shared dealer-powered reputation database before extending credit, so every decision stays faster, safer, and more consistent.",
-  "hero.ctaSearch": "Search Farmer Status",
-  "hero.ctaAdd": "Add Farmer Status",
+  "hero.ctaSearch": "Search Farmer",
+  "hero.ctaAdd": "Add Farmer",
   "hero.dealerAccess": "Dealer access only",
   "hero.teluguReady": "English + Telugu ready",
   "hero.maskedAadhaar": "Masked Aadhaar display",
@@ -265,28 +296,28 @@ const english: Dictionary = {
   "how.step2Title": "Search a farmer profile",
   "how.step2Text":
     "Use mandal, village, or farmer name to find the record quickly.",
-  "how.step3Title": "Review status carefully",
+  "how.step3Title": "Find Old Farmer Records",
   "how.step3Text":
-    "Check GREEN, YELLOW, and RED together before making a decision.",
+    "Check old farmer vote details before giving credit.",
   "how.step4Title": "Make a credit decision",
   "how.step4Text":
     "Use the reputation record to decide credit terms and vote if needed.",
   "how.footer":
     "Built for trust-first dealer workflows, not technical dashboards.",
-  "preview.badge": "Dealer UI preview",
-  "preview.title": "Search farmer and review key details",
-  "preview.teluguReady": "Telugu ready",
+  "preview.badge": "Old farmer preview",
+  "preview.title": "Review old farmer vote details",
   "preview.name": "Ramesh Babu",
   "preview.location": "Ramapuram Village, Kovvur Mandal",
   "preview.maskedAadhaar": "Masked Aadhaar",
   "preview.voteCount": "Vote count",
-  "preview.dateAdded": "Date added",
-  "preview.remarks": "Remarks",
-  "preview.remarksValue": "Pays after harvest cycle",
+  "preview.oldFarmer": "Old Farmer",
+  "preview.votedBy": "Voted by",
+  "preview.proof": "View votes",
+  "preview.proofValue": "Dealer details and proof images",
   "preview.blacklistedTitle": "BLACKLISTED",
   "preview.blacklistedBody":
     "This farmer has been reported by one or more dealers for confirmed unpaid dues. Review both status and blacklist before extending credit.",
-  "preview.button": "View full search result",
+  "preview.button": "View old farmer votes",
   "privacy.intro":
     "KYFI is a dealer-only farmer reputation platform for Andhra Pradesh and Telangana. This policy keeps the privacy rules aligned with the product specification.",
   "privacy.whatWeCollect": "What we collect",
@@ -485,10 +516,22 @@ const telugu: Dictionary = {
     "రైతు శోధన, స్టేటస్ నమోదు, మరియు మీ సేవ్ చేసిన రికార్డులకు త్వరిత యాక్సెస్.",
   "dashboard.feature1.title": "రైతు స్థితి శోధన",
   "dashboard.feature1.description":
-    "మండలం, గ్రామం, లేదా రైతు పేరు ద్వారా త్వరగా చెల్లింపు ప్రతిష్ఠను పరిశీలించండి.",
-  "dashboard.feature2.title": "రైతు స్థితి జోడించు",
+    "Old Farmers ను శోధించి రిస్క్ వివరాలు చూడండి మరియు మీ vote జోడించండి. మీరు జోడించిన New Farmers status ను మార్చండి: GREEN అంటే paid, YELLOW అంటే partial payment, RED అంటే unpaid. రిస్క్ ఉన్న YELLOW లేదా RED New Farmers ను Old Farmers కు move చేయవచ్చు. అన్ని records GREEN అయితే, మరొక డీలర్ ఆ రైతును తన New Farmer records లో సులభంగా జోడించగలడు.",
+  "dashboard.feature1.oldHeading": "Old Farmers",
+  "dashboard.feature1.oldDescription":
+    "Old Farmers search లో రిస్క్ వివరాలు, vote count, మరియు dealer votes కనిపిస్తాయి. రైతు రిస్క్ అని మీకు తెలిసినప్పుడు ఇక్కడ vote చేయవచ్చు.",
+  "dashboard.feature1.newHeading": "New Farmers",
+  "dashboard.feature1.newDescription":
+    "మీరు జోడించిన New Farmers కూడా ఇక్కడ కనిపిస్తారు. GREEN అంటే paid, YELLOW అంటే partial payment, RED అంటే unpaid గా status update చేయండి. రిస్క్ ఉన్న YELLOW లేదా RED records ను Old Farmers కు move చేయవచ్చు.",
+  "dashboard.feature2.title": "రైతు రికార్డ్ జోడించు",
   "dashboard.feature2.description":
-    "మొబైల్ నంబర్‌ను ప్రధాన గుర్తింపుగా ఉపయోగించి రైతు కోసం సులభమైన GREEN, YELLOW, లేదా RED ప్రతిష్ఠ రికార్డును సృష్టించండి.",
+    "మీ డీలర్ రికార్డుల కోసం New Farmers జోడించండి. రైతు పదేపదే క్రెడిట్ లేదా సరుకులు తీసుకుని డబ్బు సరిగ్గా చెల్లించకపోతే Old Farmers గా జోడించండి. ఇది ఇతర డీలర్లు క్రెడిట్ ఇవ్వడానికి ముందు రిస్క్ ఉన్న రైతులను గుర్తించడానికి సహాయపడుతుంది.",
+  "dashboard.feature2.newHeading": "New Farmers",
+  "dashboard.feature2.newDescription":
+    "మీరు వ్యక్తిగతంగా వ్యవహరించే రైతులను జోడించి, వారిని మీ స్వంత డీలర్ రికార్డులుగా నిర్వహించండి. GREEN అంటే paid, కాబట్టి మరొక డీలర్ ఆ రైతును సులభంగా జోడించగలడు. YELLOW అంటే partial payment మరియు RED అంటే unpaid, కాబట్టి మరొక డీలర్ ఆ రైతును new record గా జోడించలేడు.",
+  "dashboard.feature2.oldHeading": "Old Farmers",
+  "dashboard.feature2.oldDescription":
+    "పదేపదే క్రెడిట్ లేదా సరుకులు తీసుకుని డబ్బు సరిగ్గా చెల్లించని రైతులను రికార్డ్ చేయండి, తద్వారా ఇతర డీలర్లు రిస్క్ ఉన్న రైతులను గుర్తించగలరు.",
   "dashboard.feature3.title": "రైతు బ్లాక్లిస్ట్",
   "dashboard.feature3.description":
     "క్రెడిట్ నిర్ణయాలు తీసుకునే ముందు మండలం మరియు గ్రామం ప్రకారం నిర్ధారిత చెల్లింపు కాని రికార్డులను వీక్షించండి.",
@@ -501,6 +544,25 @@ const telugu: Dictionary = {
   "dashboard.feature6.title": "నా రికార్డులు",
   "dashboard.feature6.description":
     "మీరు వ్యక్తిగతంగా జోడించిన రైతు రికార్డులు మరియు ఓటు నవీకరణలను చూడండి.",
+  "dashboard.feature6.newHeading": "New Farmers",
+  "dashboard.feature6.newDescription":
+    "మీరు సృష్టించిన New Farmers సంఖ్య మరియు వారి వివరాలను చూడండి.",
+  "dashboard.feature6.oldHeading": "Old Farmers",
+  "dashboard.feature6.oldDescription":
+    "మీరు సృష్టించిన Old Farmers సంఖ్య మరియు వారి వివరాలను చూడండి.",
+  "dashboard.feature6.votesHeading": "My Votes to Old Farmers",
+  "dashboard.feature6.votesDescription":
+    "మీరు vote చేసిన రైతుల సంఖ్య, vote count, మరియు ప్రతి రైతు వివరాలను చూడండి.",
+  "dashboard.newFarmerStatusKicker": "New Farmer Status",
+  "dashboard.newFarmerStatusTitle": "Status signals New Farmers కోసం మాత్రమే",
+  "dashboard.newFarmerStatusDescription":
+    "మీ డీలర్ account లో New Farmer records నిర్వహించేటప్పుడు మాత్రమే GREEN, YELLOW, లేదా RED ఉపయోగించండి.",
+  "dashboard.statusGreenText":
+    "డబ్బు సరిగ్గా చెల్లించారు. ఇతర డీలర్లు ఈ రైతును తమ New Farmer records లో జోడించగలరు.",
+  "dashboard.statusYellowText":
+    "సగం చెల్లింపు. ఇది ఇతర డీలర్లకు హెచ్చరికగా ఉంటుంది మరియు easy new record creation ను block చేస్తుంది.",
+  "dashboard.statusRedText":
+    "డబ్బు చెల్లించలేదు. New Farmer record checks లో ఈ రైతు high risk గా కనిపిస్తాడు.",
   "myRecords.kicker": "నా రికార్డులు",
   "myRecords.title": "మీరు వ్యక్తిగతంగా జోడించిన రికార్డులు",
   "myRecords.description":
@@ -523,13 +585,13 @@ const telugu: Dictionary = {
   "myRecords.tabs.oldFarmers": "పాత రైతులు",
   "myRecords.tabs.newFarmers": "కొత్త రైతులు",
   "myRecords.tabs.blacklist": "బ్లాక్లిస్ట్ ఎంట్రీలు",
-  "myRecords.tabs.votes": "నా ఓట్లు",
+  "myRecords.tabs.votes": "My Votes to Old Farmers",
   "myRecords.tabs.countActions": "కౌంట్ యాక్షన్లు",
   "myRecords.summary.farmerStatuses": "రైతు స్థితులు",
   "myRecords.summary.oldFarmers": "పాత రైతులు",
   "myRecords.summary.newFarmers": "కొత్త రైతులు",
   "myRecords.summary.blacklistEntries": "బ్లాక్లిస్ట్ ఎంట్రీలు",
-  "myRecords.summary.votes": "నా ఓట్లు",
+  "myRecords.summary.votes": "My Votes to Old Farmers",
   "myRecords.summary.countActions": "కౌంట్ యాక్షన్లు",
   "myRecords.statusGreen": "ఆకుపచ్చ",
   "myRecords.statusYellow": "పసుపు",
@@ -558,7 +620,7 @@ const telugu: Dictionary = {
   "footer.contact": "సంప్రదించండి",
   "footer.home": "హోమ్",
   "footer.search": "శోధన",
-  "footer.addStatus": "స్టేటస్ జోడించండి",
+  "footer.addStatus": "రైతులను జోడించండి",
   "footer.blacklist": "బ్లాక్‌లిస్ట్",
   "footer.browser": "బ్రౌజర్",
   "footer.privacy": "గోప్యతా విధానం",
@@ -700,28 +762,28 @@ const telugu: Dictionary = {
   "how.step2Title": "రైతు ప్రొఫైల్‌ను శోధించండి",
   "how.step2Text":
     "రికార్డు కనుగొనడానికి Aadhaar, mobile, PAN, లేదా రైతు పేరును వాడండి.",
-  "how.step3Title": "స్టేటస్ మరియు blacklist‌ను సమీక్షించండి",
+  "how.step3Title": "Old Farmer రికార్డులు కనుగొనండి",
   "how.step3Text":
-    "GREEN, YELLOW, RED, మరియు blacklist హెచ్చరికలను కలిపి చూడండి.",
+    "క్రెడిట్ ఇవ్వడానికి ముందు old farmer vote వివరాలను చూడండి.",
   "how.step4Title": "రుణ నిర్ణయం తీసుకోండి",
   "how.step4Text":
     "క్రెడిట్ నిబంధనలు నిర్ణయించడానికి రేప్యుటేషన్‌ను ఉపయోగించండి, అవసరమైతే ఓటు వేయండి.",
   "how.footer":
     "టెక్నికల్ డాష్‌బోర్డుల కోసం కాదు, నమ్మక కేంద్రిత డీలర్ వర్క్‌ఫ్లోల కోసం రూపొందించబడింది.",
-  "preview.badge": "డీలర్ UI ప్రివ్యూ",
-  "preview.title": "రైతును శోధించి ముఖ్యమైన వివరాలను సమీక్షించండి",
-  "preview.teluguReady": "తెలుగు సిద్ధంగా ఉంది",
+  "preview.badge": "Old farmer preview",
+  "preview.title": "Old farmer vote వివరాలు చూడండి",
   "preview.name": "Ramesh Babu",
   "preview.location": "Ramapuram Village, Kovvur Mandal",
   "preview.maskedAadhaar": "మాస్క్ చేసిన Aadhaar",
   "preview.voteCount": "ఓట్ల సంఖ్య",
-  "preview.dateAdded": "జోడించిన తేదీ",
-  "preview.remarks": "గమనికలు",
-  "preview.remarksValue": "పంట కోత తర్వాత చెల్లిస్తాడు",
+  "preview.oldFarmer": "Old Farmer",
+  "preview.votedBy": "Vote చేసినవారు",
+  "preview.proof": "View votes",
+  "preview.proofValue": "డీలర్ వివరాలు మరియు proof images",
   "preview.blacklistedTitle": "BLACKLISTED",
   "preview.blacklistedBody":
     "ఇక్కడ ఒకటి లేదా అంతకంటే ఎక్కువ డీలర్లు నిర్ధారిత బాకీలు ఉన్నట్లు నివేదించారు. క్రెడిట్ ఇవ్వడానికి ముందు స్టేటస్ మరియు blacklist రెండింటినీ సమీక్షించండి.",
-  "preview.button": "పూర్తి శోధన ఫలితాన్ని చూడండి",
+  "preview.button": "Old farmer votes చూడండి",
   "privacy.intro":
     "KYFI అనేది Andhra Pradesh మరియు Telangana కోసం డీలర్‌లకు మాత్రమే ఉండే రైతు రేప్యుటేషన్ ప్లాట్‌ఫారమ్. ఈ పాలసీ ఉత్పత్తి స్పెసిఫికేషన్‌తో గోప్యత నియమాలను సరిపోలేలా ఉంచుతుంది.",
   "privacy.whatWeCollect": "మేము ఏమి సేకరిస్తాము",
@@ -800,8 +862,8 @@ const telugu: Dictionary = {
   "hero.title": "రుణం ఇవ్వడానికి ముందు రైతు క్రెడిట్ ప్రతిష్టను చూడండి",
   "hero.subtitle":
     "పంచుకున్న డీలర్ ఆధారిత ప్రతిష్ట డేటాబేస్‌తో నమ్మదగిన, ఆలస్య చెల్లింపులు ఉన్న, మరియు ప్రమాదకరమైన రైతులను KYFI త్వరగా గుర్తించడంలో సహాయపడుతుంది. రుణం ఇవ్వడానికి ముందు వేగంగా, సురక్షితంగా, మరియు ఒకే విధంగా నిర్ణయం తీసుకోవడానికి ఇది ఉపయోగపడుతుంది.",
-  "hero.ctaSearch": "రైతు స్టేటస్ శోధించండి",
-  "hero.ctaAdd": "రైతు స్టేటస్ జోడించండి",
+  "hero.ctaSearch": "రైతు శోధించండి",
+  "hero.ctaAdd": "రైతు జోడించండి",
   "hero.dealerAccess": "డీలర్ యాక్సెస్ మాత్రమే",
   "hero.teluguReady": "ఇంగ్లీష్ + తెలుగు అందుబాటులో",
   "hero.maskedAadhaar": "మాస్క్ చేసిన ఆధార్ ప్రదర్శన",

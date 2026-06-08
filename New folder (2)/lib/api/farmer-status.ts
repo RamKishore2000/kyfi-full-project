@@ -48,10 +48,13 @@ export type FarmerStatusDuplicatePolicy = {
 
 export type FarmerStatusVoteVoter = {
   statusId: number;
+  voteEntryId?: number;
   dealerId: number;
+  voterType?: "DEALER" | "SUPER_ADMIN";
   dealerName: string;
   dealerMobile: string;
   voteColor: FarmerStatusColor | "PENDING";
+  voteCount?: number;
   district?: string | null;
   mandal?: string | null;
   village?: string | null;

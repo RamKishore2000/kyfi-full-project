@@ -533,7 +533,10 @@ const listFarmerStatusVotesById = async (req, res, next) => {
     const voters = await getFarmerStatusVoters(statusId);
 
     return res.status(200).json({
-      totalVotes: voters.length,
+      totalVotes: voters.reduce(
+        (total, voter) => total + Number(voter.voteCount || 1),
+        0,
+      ),
       voters,
     });
   } catch (error) {

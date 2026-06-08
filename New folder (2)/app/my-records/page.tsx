@@ -55,16 +55,16 @@ function SummaryCard({
 }) {
   return (
     <Card className="border-white/80 bg-white/85 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <CardContent className="flex items-center justify-between gap-4 p-5">
-        <div>
-          <p className="font-manrope type-small uppercase tracking-[0.22em] text-slate-500">
+      <CardContent className="flex items-center justify-between gap-2 p-2.5 sm:gap-4 sm:p-5">
+        <div className="min-w-0">
+          <p className="truncate font-manrope text-[0.56rem] font-bold uppercase tracking-[0.12em] text-slate-500 sm:type-small sm:tracking-[0.22em]">
             {label}
           </p>
-          <p className="mt-2 font-manrope text-[1.85rem] font-extrabold tracking-[-0.04em] text-slate-900">
+          <p className="mt-1 font-manrope text-[1.2rem] font-extrabold tracking-[-0.04em] text-slate-900 sm:mt-2 sm:text-[1.85rem]">
             {value}
           </p>
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12 sm:rounded-2xl">
           {icon}
         </div>
       </CardContent>
@@ -110,14 +110,16 @@ function FarmerRecordCard({
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          <div className="text-right">
-            <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
-              {t("myRecords.votes")}
-            </p>
-            <p className="mt-1 font-manrope text-xl font-extrabold text-slate-900">
-              {record.voteCount}
-            </p>
-          </div>
+          {farmerType === "OLD" ? (
+            <div className="text-right">
+              <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
+                {t("myRecords.votes")}
+              </p>
+              <p className="mt-1 font-manrope text-xl font-extrabold text-slate-900">
+                {record.voteCount}
+              </p>
+            </div>
+          ) : null}
         </div>
       </summary>
 
@@ -315,6 +317,9 @@ export default function MyRecordsPage() {
   const newFarmers = farmerStatuses.filter(
     (record) => String(record.farmerType || "OLD").toUpperCase() === "NEW",
   );
+  const oldFarmerVotes = records.votes.filter(
+    (record) => String(record.farmerType || "OLD").toUpperCase() !== "NEW",
+  );
   const summaryCards = [
     {
       label: t("myRecords.summary.oldFarmers"),
@@ -328,7 +333,7 @@ export default function MyRecordsPage() {
     },
     {
       label: t("myRecords.summary.votes"),
-      value: String(records.counts.votes),
+      value: String(oldFarmerVotes.length),
       icon: <Sparkles className="h-5 w-5" />,
     },
   ];
@@ -400,7 +405,7 @@ export default function MyRecordsPage() {
             </div>
           </motion.div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-5">
             {summaryCards.map((card) => (
               <SummaryCard
                 key={card.label}
@@ -481,9 +486,9 @@ export default function MyRecordsPage() {
                   </div>
                 )
               ) : tab === "votes" ? (
-                records.votes.length ? (
+                oldFarmerVotes.length ? (
                   <div className="space-y-4">
-                    {records.votes.map((record) => (
+                    {oldFarmerVotes.map((record) => (
                       <motion.div
                         key={record.id}
                         initial={{ opacity: 0, y: 12 }}

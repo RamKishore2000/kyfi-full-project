@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Eye } from "lucide-react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { Eye, Minus, Plus } from "lucide-react";
 import { farmers } from "@/data/mock-data";
 import type { Farmer } from "@/types";
 import { useFilter } from "@/hooks/use-filter";
@@ -18,7 +18,15 @@ import { FarmerStatusBadge } from "@/components/tables/status-badge";
 import { Pagination } from "@/components/tables/pagination";
 import { TableShell, TableToolbar } from "@/components/tables/table-shell";
 import { useAdminLanguage } from "@/components/admin-language-provider";
-import { fetchFarmerVotes, type FarmerVoteRecord } from "@/lib/api/farmers";
+import {
+  decrementSuperAdminFarmerVote,
+  fetchFarmerVotes,
+  incrementSuperAdminFarmerVote,
+  type FarmerVoteRecord,
+} from "@/lib/api/farmers";
+import { getStoredAdminAccess } from "@/lib/admin-permissions";
+import { KYFI_API_BASE_URL } from "@/lib/config";
+import { imageFileToWebpDataUrl } from "@/lib/image-proof";
 
 type FarmerTableMode = "OLD" | "NEW" | "MIXED";
 
@@ -39,6 +47,7 @@ export function FarmerTableContent({
   farmerType?: FarmerTableMode;
 }) {
   const { t } = useAdminLanguage();
+  const [farmerRows, setFarmerRows] = useState<Farmer[]>(farmerRecords);
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [voteDialogOpen, setVoteDialogOpen] = useState(false);
@@ -52,17 +61,25 @@ export function FarmerTableContent({
   const [dealerStatusDialogOpen, setDealerStatusDialogOpen] = useState(false);
   const [selectedFarmerForDealerStatuses, setSelectedFarmerForDealerStatuses] =
     useState<Farmer | null>(null);
+  const [canSuperAdminVote, setCanSuperAdminVote] = useState(false);
+  const [superVoteDialogOpen, setSuperVoteDialogOpen] = useState(false);
+  const [selectedFarmerForSuperVote, setSelectedFarmerForSuperVote] =
+    useState<Farmer | null>(null);
+  const [superVoteLoading, setSuperVoteLoading] = useState(false);
+  const [superVoteError, setSuperVoteError] = useState("");
+  const [superVoteProofImage, setSuperVoteProofImage] = useState("");
+  const [proofImageFailed, setProofImageFailed] = useState(false);
   const pageSize = 5;
   const isOldMode = farmerType === "OLD";
   const isNewMode = farmerType === "NEW";
   const statusFilteredFarmers = useMemo(() => {
-    if (isOldMode || statusFilter === "All") return farmerRecords;
-    return farmerRecords.filter(
+    if (isOldMode || statusFilter === "All") return farmerRows;
+    return farmerRows.filter(
       (farmer) =>
         String(farmer.status || "").toLowerCase() ===
         statusFilter.toLowerCase(),
     );
-  }, [farmerRecords, isOldMode, statusFilter]);
+  }, [farmerRows, isOldMode, statusFilter]);
   const { query, setQuery, filtered } = useFilter(statusFilteredFarmers, [
     "name",
     "id",
@@ -88,10 +105,26 @@ export function FarmerTableContent({
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
     [filtered, page],
   );
+  const selectedVotesTotal = useMemo(
+    () =>
+      selectedFarmerVotes.reduce(
+        (total, vote) => total + Number(vote.voteCount || 1),
+        0,
+      ),
+    [selectedFarmerVotes],
+  );
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter, farmerRecords]);
+  }, [query, statusFilter, farmerRows]);
+
+  useEffect(() => {
+    setFarmerRows(farmerRecords);
+  }, [farmerRecords]);
+
+  useEffect(() => {
+    setCanSuperAdminVote(getStoredAdminAccess()?.adminRole === "SUPER_ADMIN");
+  }, []);
 
   const handlePrev = () => {
     setPage((current) => Math.max(1, current - 1));
@@ -124,6 +157,103 @@ export function FarmerTableContent({
   const openDealerStatusDialog = (farmer: Farmer) => {
     setSelectedFarmerForDealerStatuses(farmer);
     setDealerStatusDialogOpen(true);
+  };
+
+  const updateFarmerVoteCount = (
+    statusId: number,
+    voteCount: number,
+    superAdminVoteCount: number,
+  ) => {
+    setFarmerRows((current) =>
+      current.map((farmer) =>
+        farmer.statusId === statusId
+          ? { ...farmer, voteCount, superAdminVoteCount }
+          : farmer,
+      ),
+    );
+    setSelectedFarmerForSuperVote((current) =>
+      current?.statusId === statusId
+        ? { ...current, voteCount, superAdminVoteCount }
+        : current,
+    );
+  };
+
+  const openSuperVoteDialog = (farmer: Farmer) => {
+    setSelectedFarmerForSuperVote(farmer);
+    setSuperVoteError("");
+    setSuperVoteProofImage("");
+    setProofImageFailed(false);
+    setSuperVoteDialogOpen(true);
+  };
+
+  const handleSuperVoteProofChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      setSuperVoteError("");
+      const webpDataUrl = await imageFileToWebpDataUrl(file);
+      setSuperVoteProofImage(webpDataUrl);
+      setProofImageFailed(false);
+    } catch (error) {
+      setSuperVoteProofImage("");
+      setSuperVoteError(
+        error instanceof Error
+          ? error.message
+          : "Unable to prepare proof image",
+      );
+    }
+  };
+
+  const handleSuperVoteIncrement = async () => {
+    if (!selectedFarmerForSuperVote?.statusId) return;
+    if (!superVoteProofImage) {
+      setSuperVoteError("Select one proof image before voting.");
+      return;
+    }
+
+    setSuperVoteLoading(true);
+    setSuperVoteError("");
+
+    try {
+      const response = await incrementSuperAdminFarmerVote(
+        selectedFarmerForSuperVote.statusId,
+        superVoteProofImage,
+      );
+      updateFarmerVoteCount(
+        response.farmer.statusId,
+        response.farmer.voteCount,
+        response.farmer.superAdminVoteCount,
+      );
+      setSuperVoteDialogOpen(false);
+    } catch (error) {
+      setSuperVoteError(
+        error instanceof Error ? error.message : "Failed to add vote",
+      );
+    } finally {
+      setSuperVoteLoading(false);
+    }
+  };
+
+  const handleSuperVoteDecrement = async (farmer: Farmer) => {
+    if (!farmer.statusId || farmer.voteCount <= 0) return;
+    setSuperVoteError("");
+
+    try {
+      const response = await decrementSuperAdminFarmerVote(farmer.statusId);
+      updateFarmerVoteCount(
+        response.farmer.statusId,
+        response.farmer.voteCount,
+        response.farmer.superAdminVoteCount,
+      );
+    } catch (error) {
+      setSuperVoteError(
+        error instanceof Error ? error.message : "Failed to remove vote",
+      );
+    }
   };
   const isOldFarmer = (farmer: Farmer) =>
     String(farmer.farmerType || farmerType || "").toUpperCase() === "OLD";
@@ -202,17 +332,45 @@ export function FarmerTableContent({
                         {String(farmer.voteCount)}
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="px-3"
-                      disabled={!farmer.statusId}
-                      onClick={() => void openVotesDialog(farmer)}
-                    >
-                      <Eye className="h-4 w-4" />
-                      View Votes
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      {canSuperAdminVote ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 rounded-full p-0 text-red-600"
+                            disabled={!farmer.statusId || farmer.voteCount <= 0}
+                            onClick={() =>
+                              void handleSuperVoteDecrement(farmer)
+                            }
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 rounded-full p-0 text-emerald-700"
+                            disabled={!farmer.statusId}
+                            onClick={() => openSuperVoteDialog(farmer)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : null}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="px-3"
+                        disabled={!farmer.statusId}
+                        onClick={() => void openVotesDialog(farmer)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Votes
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -318,9 +476,37 @@ export function FarmerTableContent({
                 {isOldMode ? (
                   <>
                     <td className="px-4 py-4 align-middle">
-                      <span className="tabular-nums font-medium">
-                        {farmer.voteCount}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {canSuperAdminVote ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 rounded-full p-0 text-red-600"
+                            disabled={!farmer.statusId || farmer.voteCount <= 0}
+                            onClick={() =>
+                              void handleSuperVoteDecrement(farmer)
+                            }
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                        <span className="min-w-8 text-center tabular-nums font-medium">
+                          {farmer.voteCount}
+                        </span>
+                        {canSuperAdminVote ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 rounded-full p-0 text-emerald-700"
+                            disabled={!farmer.statusId}
+                            onClick={() => openSuperVoteDialog(farmer)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-4 py-4 align-middle">
                       <div className="flex justify-end">
@@ -437,31 +623,81 @@ export function FarmerTableContent({
               </div>
             ) : selectedFarmerVotes.length ? (
               <div className="space-y-3">
+                <div className="rounded-2xl border bg-muted/30 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Total votes
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">
+                    {selectedVotesTotal}
+                  </p>
+                </div>
                 {selectedFarmerVotes.map((vote) => (
                   <div
-                    key={`${vote.statusId}-${vote.dealerId}`}
+                    key={
+                      vote.voteEntryId
+                        ? `${vote.voterType || "DEALER"}-${vote.voteEntryId}`
+                        : `${vote.statusId}-${vote.dealerId}-${vote.voterType || "DEALER"}-${vote.votedAt}`
+                    }
                     className="rounded-xl border p-4"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {vote.dealerName}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          Dealer ID: {vote.dealerId}
-                        </p>
-                      </div>
-                    </div>
+                    <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {vote.dealerName}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {vote.voterType === "SUPER_ADMIN"
+                                ? "Super Admin"
+                                : "Dealer"}{" "}
+                              ID: {vote.dealerId}
+                            </p>
+                          </div>
+                          <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            {vote.voteCount && vote.voteCount > 1
+                              ? `${vote.voteCount} votes`
+                              : "1 vote"}
+                          </div>
+                        </div>
 
-                    <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                      <Info label="Mobile number" value={vote.dealerMobile} />
-                      <Info
-                        label="Voted date/time"
-                        value={new Intl.DateTimeFormat("en-IN", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(new Date(vote.votedAt))}
-                      />
+                        <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                          <Info
+                            label="Mobile number"
+                            value={vote.dealerMobile}
+                          />
+                          <Info
+                            label="Vote source"
+                            value={
+                              vote.voterType === "SUPER_ADMIN"
+                                ? "Super Admin vote"
+                                : "Dealer vote"
+                            }
+                          />
+                          <Info
+                            label="Voted date/time"
+                            value={new Intl.DateTimeFormat("en-IN", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            }).format(new Date(vote.votedAt))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border bg-muted/20 p-2">
+                        {vote.proofImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getProofImageSrc(vote.proofImageUrl)}
+                            alt="Vote proof"
+                            className="h-24 w-full rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-24 items-center justify-center rounded-lg border border-dashed bg-background px-2 text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                            No proof
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -471,6 +707,107 @@ export function FarmerTableContent({
                 No votes found for this farmer.
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={superVoteDialogOpen} onOpenChange={setSuperVoteDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Vote for {selectedFarmerForSuperVote?.name || "old farmer"}
+            </DialogTitle>
+            <DialogDescription>
+              Super Admin can add up to 3 votes for the same old farmer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid gap-3 rounded-2xl border bg-muted/30 p-4 text-sm sm:grid-cols-2">
+              <Info
+                label="Farmer"
+                value={selectedFarmerForSuperVote?.name || "-"}
+              />
+              <Info
+                label="Mobile"
+                value={selectedFarmerForSuperVote?.phone || "-"}
+              />
+              <Info
+                label="Location"
+                value={[
+                  selectedFarmerForSuperVote?.village,
+                  selectedFarmerForSuperVote?.mandal,
+                  selectedFarmerForSuperVote?.district,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              />
+              <Info
+                label="Current votes"
+                value={String(selectedFarmerForSuperVote?.voteCount ?? 0)}
+              />
+            </div>
+
+            <div className="rounded-2xl border bg-card p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Proof image
+              </p>
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-6 text-center transition hover:border-primary hover:bg-emerald-50">
+                {superVoteProofImage && !proofImageFailed ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={superVoteProofImage}
+                    alt="Selected proof preview"
+                    className="max-h-80 w-full rounded-xl object-contain"
+                    onError={() => setProofImageFailed(true)}
+                  />
+                ) : (
+                  <>
+                    <span className="text-sm font-semibold text-foreground">
+                      Click to select proof image
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      JPG, JPEG, PNG, or WebP will be converted to WebP.
+                    </span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  className="sr-only"
+                  onChange={handleSuperVoteProofChange}
+                />
+              </label>
+              {superVoteProofImage ? (
+                <button
+                  type="button"
+                  className="mt-3 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+                  onClick={() => {
+                    setSuperVoteProofImage("");
+                    setProofImageFailed(false);
+                    setSuperVoteError("");
+                  }}
+                >
+                  Remove selected image
+                </button>
+              ) : null}
+            </div>
+
+            {superVoteError ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {superVoteError}
+              </div>
+            ) : null}
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={() => void handleSuperVoteIncrement()}
+                disabled={superVoteLoading || !superVoteProofImage}
+              >
+                {superVoteLoading ? "Voting..." : "Vote"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -570,6 +907,15 @@ function Info({ label, value }: { label: string; value: string }) {
       <p className="mt-1 font-normal">{value}</p>
     </div>
   );
+}
+
+function getProofImageSrc(path: string) {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  const serverBaseUrl = KYFI_API_BASE_URL.replace(/\/api\/?$/, "");
+  return `${serverBaseUrl}${path}`;
 }
 
 function DealerStatusList({ farmer }: { farmer: Farmer }) {

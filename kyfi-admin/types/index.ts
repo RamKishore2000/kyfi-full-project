@@ -29,6 +29,8 @@ export type Farmer = {
   status: FarmerStatus;
   remarks: string;
   voteCount: number;
+  proofImageUrl?: string | null;
+  superAdminVoteCount?: number;
   reports: number;
   dateAdded: string;
   lastVerified: string;

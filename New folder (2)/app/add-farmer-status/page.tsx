@@ -932,7 +932,7 @@ export default function AddFarmerStatusPage() {
                         : "Old Farmer needs mobile, location, and proof image. New Farmer needs Aadhaar and status."}{" "}
                     </p>{" "}
                   </div>{" "}
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     {" "}
                     <button
                       type="button"
@@ -941,18 +941,18 @@ export default function AddFarmerStatusPage() {
                         setSelectedStatus("GREEN");
                       }}
                       className={[
-                        "rounded-2xl border px-4 py-4 text-left transition",
+                        "rounded-2xl border px-2.5 py-3 text-left transition sm:px-4 sm:py-4",
                         farmerType === "OLD"
                           ? "border-emerald-300 bg-emerald-50 text-emerald-900 shadow-[0_12px_30px_rgba(16,185,129,0.12)]"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                       ].join(" ")}
                     >
                       {" "}
-                      <p className="font-manrope type-card font-semibold">
+                      <p className="font-manrope text-[0.88rem] font-semibold leading-tight sm:type-card">
                         {" "}
                         {t("addFarmer.tabOld")}{" "}
                       </p>{" "}
-                      <p className="mt-1 font-manrope type-small">
+                      <p className="mt-1 hidden font-manrope type-small sm:block">
                         {" "}
                         {t("addFarmer.oldHelp")}{" "}
                       </p>{" "}
@@ -961,18 +961,18 @@ export default function AddFarmerStatusPage() {
                       type="button"
                       onClick={() => setFarmerType("NEW")}
                       className={[
-                        "rounded-2xl border px-4 py-4 text-left transition",
+                        "rounded-2xl border px-2.5 py-3 text-left transition sm:px-4 sm:py-4",
                         farmerType === "NEW"
                           ? "border-emerald-300 bg-emerald-50 text-emerald-900 shadow-[0_12px_30px_rgba(16,185,129,0.12)]"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                       ].join(" ")}
                     >
                       {" "}
-                      <p className="font-manrope type-card font-semibold">
+                      <p className="font-manrope text-[0.88rem] font-semibold leading-tight sm:type-card">
                         {" "}
                         {t("addFarmer.tabNew")}{" "}
                       </p>{" "}
-                      <p className="mt-1 font-manrope type-small">
+                      <p className="mt-1 hidden font-manrope type-small sm:block">
                         {" "}
                         {t("addFarmer.newHelp")}{" "}
                       </p>{" "}

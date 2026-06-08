@@ -5,6 +5,8 @@ const {
   updateDealerStatus,
 } = require("../controllers/admin-dealers.controller");
 const {
+  decrementSuperAdminVote,
+  incrementSuperAdminVote,
   listFarmers,
   listFarmerVotes,
 } = require("../controllers/admin-farmers.controller");
@@ -97,6 +99,18 @@ router.get(
   requireAdmin,
   requirePermission("farmers.view"),
   listFarmerVotes,
+);
+router.post(
+  "/admin/farmers/:id/super-vote/increment",
+  requireAdmin,
+  requirePermission("farmers.view"),
+  incrementSuperAdminVote,
+);
+router.post(
+  "/admin/farmers/:id/super-vote/decrement",
+  requireAdmin,
+  requirePermission("farmers.view"),
+  decrementSuperAdminVote,
 );
 router.get(
   "/admin/blacklist",
