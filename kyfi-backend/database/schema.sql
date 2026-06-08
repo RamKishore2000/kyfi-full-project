@@ -42,6 +42,18 @@ CREATE TABLE IF NOT EXISTS dealer_otp_requests (
   CONSTRAINT fk_dealer_otp_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS admin_permissions (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  admin_id BIGINT UNSIGNED NOT NULL,
+  permission_key VARCHAR(80) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_admin_permission (admin_id, permission_key),
+  KEY idx_admin_permissions_admin_id (admin_id),
+  CONSTRAINT fk_admin_permissions_admin FOREIGN KEY (admin_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS farmer_statuses (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   aadhaar VARCHAR(16) DEFAULT NULL,
@@ -96,6 +108,36 @@ CREATE TABLE IF NOT EXISTS farmer_status_count_actions (
   KEY idx_farmer_status_count_action_dealer (dealer_id),
   CONSTRAINT fk_farmer_status_count_action_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
   CONSTRAINT fk_farmer_status_count_action_dealer FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS admin_farmer_votes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  status_id BIGINT UNSIGNED NOT NULL,
+  admin_id BIGINT UNSIGNED NOT NULL,
+  vote_count INT UNSIGNED NOT NULL DEFAULT 0,
+  proof_image_path VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_admin_farmer_vote_once (status_id, admin_id),
+  KEY idx_admin_farmer_votes_status (status_id),
+  KEY idx_admin_farmer_votes_admin (admin_id),
+  CONSTRAINT fk_admin_farmer_votes_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_admin_farmer_votes_admin FOREIGN KEY (admin_id) REFERENCES dealers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS admin_farmer_vote_proofs (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  status_id BIGINT UNSIGNED NOT NULL,
+  admin_id BIGINT UNSIGNED NOT NULL,
+  proof_image_path VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_admin_farmer_vote_proofs_status (status_id),
+  KEY idx_admin_farmer_vote_proofs_admin (admin_id),
+  CONSTRAINT fk_admin_farmer_vote_proofs_status FOREIGN KEY (status_id) REFERENCES farmer_statuses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_admin_farmer_vote_proofs_admin FOREIGN KEY (admin_id) REFERENCES dealers(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS blacklist_entries (
