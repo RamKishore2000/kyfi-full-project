@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -76,7 +77,7 @@ function formatVillageSuggestion(village: VillageSearchResult) {
   return `${village.name} village, ${village.mandalName || ""} mandal`;
 }
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const english = getKyfiDictionary("en");
@@ -1477,5 +1478,13 @@ export default function RegisterPage() {
         onClose={closeToast}
       />
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
