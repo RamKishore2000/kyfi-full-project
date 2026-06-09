@@ -1,3 +1,5 @@
+"use client";
+
 import { Download } from "lucide-react";
 import { districtPerformance } from "@/data/mock-data";
 import { useAdminLanguage } from "@/components/admin-language-provider";

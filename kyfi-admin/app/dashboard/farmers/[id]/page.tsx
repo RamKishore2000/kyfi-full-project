@@ -1,21 +1,38 @@
 import { notFound } from "next/navigation";
 import { farmers } from "@/data/mock-data";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/navigation/page-header";
-import { FarmerStatusBadge } from "@/components/tables/status-badge";
 
 type FarmerDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
+export function generateStaticParams() {
+  return farmers.map((farmer) => ({ id: farmer.id }));
+}
+
 export default async function FarmerDetailPage({ params }: FarmerDetailPageProps) {
   const { id } = await params;
   const farmer = farmers.find((item) => item.id === id);
   if (!farmer) notFound();
+  const statusVariant =
+    farmer.status === "GREEN" ? "green" : farmer.status === "YELLOW" ? "yellow" : "red";
 
   return (
     <>
-      <PageHeader title={farmer.name} description={`${farmer.id} - ${farmer.village}, ${farmer.mandal} farmer status record`} />
+      <div className="mb-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="min-w-0">
+          <p className="mb-2 inline-flex rounded-full border bg-card px-3 py-1 text-xs font-semibold uppercase leading-none text-primary shadow-sm">
+            Andhra Pradesh & Telangana
+          </p>
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground md:text-3xl">
+            {farmer.name}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            {farmer.id} - {farmer.village}, {farmer.mandal} farmer status record
+          </p>
+        </div>
+      </div>
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -23,7 +40,14 @@ export default async function FarmerDetailPage({ params }: FarmerDetailPageProps
             <CardDescription>Status overview for the selected farmer.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Info label="Status" value={<FarmerStatusBadge status={farmer.status} />} />
+            <Info
+              label="Status"
+              value={
+                <Badge className="w-24 justify-center" variant={statusVariant}>
+                  {farmer.status}
+                </Badge>
+              }
+            />
             <Info label="Aadhaar" value={farmer.aadhaarMasked} />
             <Info label="Phone" value={farmer.phone} />
             <Info label="Crop" value={farmer.crop} />
