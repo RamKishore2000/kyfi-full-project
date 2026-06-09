@@ -176,6 +176,13 @@ function walkFiles(rootDir) {
 
 function expandArchive(archivePath, destinationPath) {
   fs.mkdirSync(destinationPath, { recursive: true });
+  if (archivePath.toLowerCase().endsWith(".zip")) {
+    execFileSync("unzip", ["-q", archivePath, "-d", destinationPath], {
+      stdio: "inherit",
+    });
+    return;
+  }
+
   execFileSync("tar", ["-xf", archivePath, "-C", destinationPath], {
     stdio: "inherit",
   });
