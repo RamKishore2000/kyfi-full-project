@@ -11,13 +11,21 @@ const {
 const DEFAULT_ARCHIVES = [
   {
     stateName: "Andhra Pradesh",
-    archivePath:
-      "C:\\Users\\electronics cart\\Downloads\\downloadDir2026_06_02_19_02_44_189 (1).zip",
+    archivePath: path.join(
+      process.cwd(),
+      "database",
+      "lgd-archives",
+      "andhra-pradesh-lgd.zip",
+    ),
   },
   {
     stateName: "Telangana",
-    archivePath:
-      "C:\\Users\\electronics cart\\Downloads\\downloadDir2026_06_02_19_06_09_371.zip",
+    archivePath: path.join(
+      process.cwd(),
+      "database",
+      "lgd-archives",
+      "telangana-lgd.zip",
+    ),
   },
 ];
 
