@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 const tabs = [
-  { href: "/dashboard", labelKey: "header.home", icon: Home },
+  { href: "/", labelKey: "header.home", icon: Home },
   {
     href: "/add-farmer-status",
     labelKey: "header.addStatus",
@@ -25,7 +25,7 @@ export function MobileBottomTabs() {
   const { t } = useKyfiLanguage();
 
   const visible =
-    pathname?.startsWith("/dashboard") ||
+    pathname === "/" ||
     pathname?.startsWith("/search-farmer-status") ||
     pathname?.startsWith("/add-farmer-status") ||
     pathname?.startsWith("/my-records") ||

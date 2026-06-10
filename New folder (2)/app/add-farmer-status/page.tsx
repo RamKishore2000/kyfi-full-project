@@ -10,6 +10,7 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 import { ImagePlus, Plus, X } from "lucide-react";
+import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
 import { Footer } from "@/components/kyfi/footer";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
@@ -876,10 +877,11 @@ export default function AddFarmerStatusPage() {
     }
   };
   return (
-    <main className="kyfi-shell min-h-screen">
-      {" "}
-      <Header />{" "}
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <AuthGuard>
+      <main className="kyfi-shell min-h-screen">
+        {" "}
+        <Header />{" "}
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {" "}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -2014,8 +2016,9 @@ export default function AddFarmerStatusPage() {
         tone={toast.tone}
         onClose={() => setToast((current) => ({ ...current, open: false }))}
       />{" "}
-      <Footer />{" "}
-    </main>
+        <Footer />{" "}
+      </main>
+    </AuthGuard>
   );
 }
 function Info({

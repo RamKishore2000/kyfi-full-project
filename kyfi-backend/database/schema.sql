@@ -225,6 +225,24 @@ CREATE TABLE IF NOT EXISTS subscription_settings (
 
 INSERT IGNORE INTO subscription_settings (id) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS razorpay_webhook_events (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id VARCHAR(100) NOT NULL,
+  event_type VARCHAR(100) NOT NULL,
+  razorpay_order_id VARCHAR(100) DEFAULT NULL,
+  razorpay_payment_id VARCHAR(100) DEFAULT NULL,
+  processing_status ENUM('processing', 'processed', 'ignored', 'failed') NOT NULL DEFAULT 'processing',
+  attempt_count INT UNSIGNED NOT NULL DEFAULT 1,
+  error_message VARCHAR(500) DEFAULT NULL,
+  processed_at DATETIME DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_razorpay_webhook_event_id (event_id),
+  KEY idx_razorpay_webhook_order_id (razorpay_order_id),
+  KEY idx_razorpay_webhook_payment_id (razorpay_payment_id)
+);
+
 CREATE TABLE IF NOT EXISTS districts (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   district_code VARCHAR(32) NOT NULL,

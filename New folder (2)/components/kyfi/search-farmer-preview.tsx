@@ -1082,19 +1082,16 @@ export function SearchFarmerPreview() {
               tone="success"
               label="GREEN"
               text={t("search.legendGreen")}
-              helper={t("search.legendGreen")}
             />{" "}
             <LegendItem
               tone="warning"
               label="YELLOW"
               text={t("search.legendYellow")}
-              helper={t("search.legendYellow")}
             />{" "}
             <LegendItem
               tone="destructive"
               label="RED"
               text={t("search.legendRed")}
-              helper={t("search.legendRed")}
             />{" "}
           </div>{" "}
           <div className="grid gap-4 border-b border-slate-200/80 pb-5 xl:grid-cols-[1fr_1fr_1fr_auto] xl:items-end">
@@ -1859,12 +1856,10 @@ function LegendItem({
   tone,
   label,
   text,
-  helper,
 }: {
   tone: "success" | "warning" | "destructive" | "neutral";
   label: string;
   text: string;
-  helper: string;
 }) {
   const toneClass =
     tone === "success"
@@ -1875,9 +1870,9 @@ function LegendItem({
           ? "border-red-100 bg-red-50/80"
           : "border-slate-200 bg-slate-50/90";
   return (
-    <div className={`rounded-2xl border p-2 sm:p-4 ${toneClass}`}>
+    <div className={`flex min-h-[86px] items-center justify-center rounded-2xl border p-2 sm:min-h-[96px] sm:p-4 ${toneClass}`}>
       {" "}
-      <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:flex-wrap sm:text-left">
+      <div className="flex flex-col items-center justify-center gap-2 text-center">
         {" "}
         <Badge
           className="max-sm:px-2 max-sm:py-0.5 max-sm:text-[0.58rem]"
@@ -1894,13 +1889,10 @@ function LegendItem({
           {" "}
           {label}{" "}
         </Badge>{" "}
-        <p className="font-manrope text-[0.7rem] font-bold leading-tight text-slate-900 sm:text-sm">
+        <p className="font-manrope text-[0.78rem] font-bold leading-tight text-slate-900 sm:text-base">
           {text}
         </p>{" "}
       </div>{" "}
-      <p className="mt-1 hidden text-sm leading-6 text-slate-600 sm:block">
-        {helper}
-      </p>{" "}
     </div>
   );
 }

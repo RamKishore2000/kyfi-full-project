@@ -1,5 +1,26 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function Page() {
-  redirect("/login");
+import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { useRouter } from "next/navigation";
+import DashboardPage from "./dashboard/page";
+
+export default function HomePage() {
+  const router = useRouter();
+  const [showWebsiteDashboard, setShowWebsiteDashboard] = useState(false);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      router.replace("/login");
+      return;
+    }
+
+    setShowWebsiteDashboard(true);
+  }, [router]);
+
+  if (!showWebsiteDashboard) {
+    return <main className="min-h-[100dvh] bg-[#F8F7F4]" />;
+  }
+
+  return <DashboardPage />;
 }

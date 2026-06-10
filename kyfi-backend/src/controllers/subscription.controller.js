@@ -3,6 +3,7 @@ const {
   updateSubscriptionSettings,
   createSubscriptionOrder,
   verifySubscriptionPayment,
+  processRazorpayWebhook,
 } = require("../services/subscription.service");
 
 async function getPublicSubscription(req, res, next) {
@@ -81,10 +82,25 @@ async function verifyPublicSubscriptionPayment(req, res, next) {
   }
 }
 
+async function handleRazorpayWebhook(req, res, next) {
+  try {
+    const result = await processRazorpayWebhook({
+      rawBody: req.body,
+      signature: req.get("x-razorpay-signature"),
+      eventId: req.get("x-razorpay-event-id"),
+    });
+
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getPublicSubscription,
   getAdminSubscription,
   updateAdminSubscription,
   createPublicSubscriptionOrder,
   verifyPublicSubscriptionPayment,
+  handleRazorpayWebhook,
 };

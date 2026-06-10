@@ -37,7 +37,7 @@ export function Footer() {
               <li>
                 <a
                   className="font-manrope type-nav text-slate-600 transition hover:text-primary"
-                  href="/dashboard"
+                  href="/"
                 >
                   {t("footer.home")}
                 </a>

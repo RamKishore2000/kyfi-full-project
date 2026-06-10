@@ -1,0 +1,207 @@
+MSG91 SMS OTP INTEGRATION - CLIENT STEPS
+
+Purpose:
+These steps are for getting MSG91 SMS credentials for sending OTP SMS in KYFI.
+
+Important:
+For India SMS, DLT registration and approved templates are normally required.
+The message content in MSG91 must match the approved DLT template exactly.
+
+
+1. Create or log in to MSG91 account
+
+1. Open:
+   https://msg91.com
+
+2. Log in to the MSG91 account.
+
+3. If there is no account, create a new account using company/business details.
+
+4. Complete account verification if MSG91 asks.
+
+
+2. Complete DLT registration for India SMS
+
+1. If SMS will be sent to Indian mobile numbers, complete DLT registration.
+
+2. Register company/entity on a DLT portal if not already done.
+
+3. Get the PE ID / Entity ID from the DLT portal.
+
+4. Keep the approved DLT details ready:
+   PE ID / Entity ID
+   Sender ID / Header
+   DLT Template ID
+   Approved message content
+
+5. DLT is important because SMS may fail if Sender ID, Template ID, PE ID, or message text does not match.
+
+
+3. Add Sender ID in MSG91
+
+1. Log in to MSG91 panel.
+
+2. Go to:
+   One API
+
+3. Open:
+   Sender ID
+
+4. Click:
+   Add Sender ID
+
+5. Select destination country:
+   India
+
+6. Enter Sender ID/Header.
+   For India, Sender ID is usually 6 alphabets.
+   Example:
+   KYFIIN
+
+7. Enter DLT Entity/PE ID when asked.
+
+8. Enter company/brand details if asked.
+
+9. Save Sender ID.
+
+10. Wait until Sender ID is approved/mapped in MSG91.
+
+
+4. Create OTP SMS Template in MSG91
+
+1. Log in to MSG91 panel.
+
+2. Go to:
+   SMS
+
+3. Open:
+   Templates
+
+4. Click:
+   Create Template
+
+5. Enter Template Name.
+   Example:
+   KYFI Login OTP
+
+6. Enter DLT Template ID.
+
+7. Select the mapped Sender ID.
+
+8. Enter the exact SMS content approved in the DLT portal.
+
+9. Add variable for OTP if required.
+
+Example OTP message:
+Your KYFI verification OTP is ##OTP##. Do not share it with anyone.
+
+10. Submit/create template.
+
+11. Wait until status becomes approved/verified.
+
+
+5. Get Template ID / Flow ID
+
+MSG91 may call this value Template ID or Flow ID depending on the section/API.
+
+1. Go to MSG91 SMS Templates or SendOTP section.
+
+2. Open the created OTP template.
+
+3. Copy the Template ID / Flow ID.
+
+4. Send it to developer.
+
+
+6. Get MSG91 Auth Key
+
+1. Log in to MSG91 panel.
+
+2. Go to account/API settings.
+
+3. Find:
+   Auth Key
+   Authentication Key
+   API Key
+
+4. Copy the Auth Key.
+
+5. Send it to developer securely.
+
+
+7. Details to send to developer
+
+Send these exact values:
+
+MSG91_AUTH_KEY=
+MSG91_SENDER_ID=
+MSG91_TEMPLATE_ID=
+MSG91_ROUTE=
+
+If MSG91 gives Flow ID instead of Template ID:
+
+MSG91_FLOW_ID=
+
+Also send:
+
+DLT_ENTITY_ID=
+DLT_TEMPLATE_ID=
+
+
+8. Recommended OTP template details for KYFI
+
+Template purpose:
+KYFI dealer login OTP verification.
+
+Suggested message:
+Your KYFI verification OTP is ##OTP##. Do not share it with anyone.
+
+Client should get this message approved in DLT first, then create the same template in MSG91.
+
+
+9. Testing after credentials are added
+
+After developer adds credentials:
+
+1. Try dealer login with OTP.
+
+2. Confirm OTP SMS is received.
+
+3. Check OTP SMS sender name.
+
+4. Check SMS text matches approved template.
+
+5. If SMS fails, check MSG91 logs.
+
+6. If logs show DLT mismatch, verify:
+   Sender ID
+   DLT Entity ID
+   DLT Template ID
+   Exact message text
+
+
+10. Security rules
+
+1. Do not share MSG91 Auth Key publicly.
+
+2. Do not put MSG91 Auth Key in frontend code.
+
+3. Auth Key must be stored only in backend server .env file.
+
+4. If Auth Key is leaked, regenerate/change it in MSG91.
+
+
+Official references:
+
+MSG91 SMS Documentation:
+https://docs.msg91.com/sms
+
+MSG91 Create Template ID Guide:
+https://msg91.com/help/template/how-to-create-flow-id-to-send-sms-via-api
+
+MSG91 Sender ID Guide:
+https://knowledgebase.msg91.com/how-to-add-sender-id-in-msg91
+
+MSG91 SendOTP and Template ID Guide:
+https://knowledgebase.msg91.com/where-to-find-the-sendotp-api-how-to-get-template-id-
+

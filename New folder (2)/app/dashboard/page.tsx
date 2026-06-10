@@ -1,6 +1,5 @@
 "use client";
 
-import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
 import { HeroBanner } from "@/components/kyfi/hero-banner";
 import { FeatureCard } from "@/components/kyfi/feature-card";
@@ -103,10 +102,9 @@ export default function DashboardPage() {
     },
   ];
   return (
-    <AuthGuard>
-      <main className="min-h-screen kyfi-shell">
-        <Header />
-        <HeroBanner />
+    <main className="min-h-screen kyfi-shell">
+      <Header />
+      <HeroBanner />
 
         <section
           id="features"
@@ -179,8 +177,7 @@ export default function DashboardPage() {
           <CTASection />
         </div>
 
-        <Footer />
-      </main>
-    </AuthGuard>
+      <Footer />
+    </main>
   );
 }

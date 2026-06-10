@@ -8,3 +8,8 @@
 **/.env.*.local
 kyfi-backend/.tmp-lgd-import/
 kyfi-backend/uploads/farmer-proofs/
+deploy-artifacts/
+kyfi-backend/server.stdout.log
+kyfi-backend/server.stderr.log
+/package.json
+/package-lock.json

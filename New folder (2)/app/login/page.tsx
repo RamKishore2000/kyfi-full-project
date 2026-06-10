@@ -14,6 +14,7 @@ import {
 } from "react";
 import { ArrowRight, Eye, EyeOff, Leaf, Lock, Phone } from "lucide-react";
 import { motion } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getKyfiDictionary } from "@/lib/kyfi-i18n";
@@ -107,7 +108,7 @@ export default function LoginPage() {
       window.dispatchEvent(new Event("kyfi-auth-changed"));
     }
 
-    router.push("/dashboard");
+    router.push(Capacitor.isNativePlatform() ? "/dashboard" : "/");
   };
 
   const handleResendOtp = () => {
@@ -243,8 +244,8 @@ export default function LoginPage() {
   ) : null;
 
   return (
-    <main className="min-h-screen bg-[#F8F7F4] px-2 py-2 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
-      <section className="grid min-h-[calc(100vh-1rem)] overflow-hidden rounded-[28px] bg-[#F8F7F4] shadow-[0_0_0_1px_rgba(17,24,39,0.04)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px]">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-[#F8F7F4] px-2 py-2 sm:px-4 sm:py-4 lg:min-h-screen lg:px-6 lg:py-6">
+      <section className="grid min-h-[calc(100dvh-1rem)] w-full overflow-hidden rounded-[28px] bg-[#F8F7F4] shadow-[0_0_0_1px_rgba(17,24,39,0.04)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px]">
         <div className="order-2 hidden min-h-[280px] lg:order-1 lg:block lg:min-h-[calc(100vh-3rem)]">
           <div className="relative h-full w-full overflow-hidden">
             <img
@@ -255,12 +256,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="order-1 flex min-h-[calc(100vh-1rem)] items-start justify-center overflow-y-auto bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] px-4 py-4 lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:px-6">
+        <div className="order-1 flex min-h-[calc(100dvh-1rem)] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] px-4 py-4 lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:px-6">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="w-full max-w-[34rem] py-2 lg:ml-auto lg:mr-10 lg:py-0 xl:mr-14"
+            className="my-auto w-full max-w-[34rem] py-2 lg:ml-auto lg:mr-10 lg:py-0 xl:mr-14"
           >
             <div className="no-scrollbar w-full max-w-[34rem] lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2">
               <div

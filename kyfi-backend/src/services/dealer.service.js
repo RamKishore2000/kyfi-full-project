@@ -140,6 +140,22 @@ const findDealerById = async (dealerId) => {
   return mapDealerRow(rows[0] || null);
 };
 
+const findDealerBySubscriptionOrderId = async (orderId) => {
+  await ensureDealerColumns();
+  const [rows] = await db.execute(
+    `SELECT id, role, name, mobile, password_hash, shop_name, district, state, mandal, village,
+            aadhaar_number, gst_number, aadhaar_or_gst_number, status, otp_code, language_preference,
+            subscription_status, subscription_plan_name, subscription_yearly_price,
+            subscription_started_at, subscription_expires_at, subscription_razorpay_order_id,
+            subscription_razorpay_payment_id, subscription_razorpay_signature,
+            created_at, updated_at
+     FROM dealers WHERE subscription_razorpay_order_id = ? LIMIT 1`,
+    [orderId],
+  );
+
+  return mapDealerRow(rows[0] || null);
+};
+
 const createDealer = async ({
   role,
   name,
@@ -330,6 +346,7 @@ const updateDealerStatusById = async (dealerId, status) => {
 
 module.exports = {
   findDealerById,
+  findDealerBySubscriptionOrderId,
   findDealerByMobile,
   createDealer,
   updateDealerPasswordById,

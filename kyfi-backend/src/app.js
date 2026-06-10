@@ -2,10 +2,16 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const { router } = require("./routes/dealer.routes");
+const { handleRazorpayWebhook } = require("./controllers/subscription.controller");
 
 const app = express();
 
 app.use(cors());
+app.post(
+  "/api/subscription/razorpay/webhook",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  handleRazorpayWebhook,
+);
 app.use(express.json({ limit: "25mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 

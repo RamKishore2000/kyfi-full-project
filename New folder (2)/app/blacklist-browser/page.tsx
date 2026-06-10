@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { BlacklistWarning } from "@/components/kyfi/blacklist-warning";
+import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Footer } from "@/components/kyfi/footer";
 import { Header } from "@/components/kyfi/header";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
@@ -606,8 +607,9 @@ export default function BlacklistBrowserPage() {
   };
 
   return (
-    <main className="kyfi-shell min-h-screen">
-      <Header />
+    <AuthGuard>
+      <main className="kyfi-shell min-h-screen">
+        <Header />
 
       <section className="mx-auto flex min-h-[calc(100vh-80px)] max-w-7xl items-center px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full">
@@ -1094,7 +1096,8 @@ export default function BlacklistBrowserPage() {
         </div>
       ) : null}
 
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </AuthGuard>
   );
 }
