@@ -16,7 +16,6 @@ import {
   EyeOff,
   Leaf,
   Plus,
-  Smartphone,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -163,6 +162,8 @@ function RegisterPageContent() {
     DistrictSearchResult[]
   >([]);
   const [modalDistrictLoading, setModalDistrictLoading] = useState(false);
+  const [showModalDistrictOptions, setShowModalDistrictOptions] =
+    useState(false);
   const [modalSelectedDistrict, setModalSelectedDistrict] =
     useState<DistrictSearchResult | null>(null);
   const [pendingLocationName, setPendingLocationName] = useState("");
@@ -244,6 +245,7 @@ function RegisterPageContent() {
         !modalDropdownRef.current.contains(target)
       ) {
         setModalDistrictOptions([]);
+        setShowModalDistrictOptions(false);
       }
     };
 
@@ -365,7 +367,7 @@ function RegisterPageContent() {
     }
 
     const query = modalDistrictQuery.trim();
-    if (query.length < 2) {
+    if (!showModalDistrictOptions || query.length < 2) {
       setModalDistrictOptions([]);
       setModalDistrictLoading(false);
       return;
@@ -392,7 +394,7 @@ function RegisterPageContent() {
       isCancelled = true;
       window.clearTimeout(debounce);
     };
-  }, [modalDistrictQuery, locationModal]);
+  }, [modalDistrictQuery, locationModal, showModalDistrictOptions]);
 
   const resetDependentLocationFields = () => {
     setSelectedMandal(null);
@@ -508,6 +510,7 @@ function RegisterPageContent() {
     setModalDistrictQuery(form.district.trim());
     setModalSelectedDistrict(selectedDistrict);
     setModalDistrictOptions([]);
+    setShowModalDistrictOptions(false);
     setLocationModal("mandal");
   };
 
@@ -525,6 +528,7 @@ function RegisterPageContent() {
     setLocationModal(null);
     setModalDistrictQuery("");
     setModalDistrictOptions([]);
+    setShowModalDistrictOptions(false);
     setModalSelectedDistrict(null);
     setPendingLocationName("");
     setSavingLocation(false);
@@ -534,6 +538,7 @@ function RegisterPageContent() {
     setModalSelectedDistrict(district);
     setModalDistrictQuery(district.name);
     setModalDistrictOptions([]);
+    setShowModalDistrictOptions(false);
   };
 
   const handleCreateMandal = async () => {
@@ -789,12 +794,6 @@ function RegisterPageContent() {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 rounded-full border border-[#D9D5C8] bg-[#FAF8F2] px-3 py-1.5 text-slate-700">
-                  <Smartphone className="h-3.5 w-3.5 text-[rgb(4,120,87)]" />
-                  <span className="font-manrope text-[0.75rem] font-medium">
-                    {t("login.mobilePhone")}
-                  </span>
-                </div>
               </div>
 
               <p className="font-manrope text-[0.9rem] font-medium tracking-[0.02em] text-slate-700 lg:text-[0.88rem]">
@@ -1330,7 +1329,7 @@ function RegisterPageContent() {
               <button
                 type="button"
                 onClick={closeLocationModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
@@ -1349,11 +1348,13 @@ function RegisterPageContent() {
                       onChange={(event) => {
                         setModalSelectedDistrict(null);
                         setModalDistrictQuery(event.target.value);
+                        setShowModalDistrictOptions(true);
                       }}
                       placeholder="Type district name"
                       className="h-12 w-full rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
                     />
-                    {modalDistrictQuery.trim().length >= 2 ? (
+                    {showModalDistrictOptions &&
+                    modalDistrictQuery.trim().length >= 2 ? (
                       <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                         {modalDistrictLoading ? (
                           <div className="px-4 py-3 text-sm text-slate-500">
@@ -1436,13 +1437,13 @@ function RegisterPageContent() {
                 </>
               ) : null}
 
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4">
+              <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-600">
                   {locationModal === "mandal"
                     ? "District is required. Mandal name is required."
                     : "Mandal is already selected. Village name is required."}
                 </p>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
                   <Button
                     type="button"
                     variant="outline"

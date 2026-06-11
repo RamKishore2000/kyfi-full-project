@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Footer } from "@/components/kyfi/footer";
 import { Header } from "@/components/kyfi/header";
+import { AppBackButton } from "@/components/kyfi/app-back-button";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ export default function ChangePasswordPage() {
     <AuthGuard>
       <main className="kyfi-shell min-h-screen">
         <Header />
+        <AppBackButton />
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-3xl">

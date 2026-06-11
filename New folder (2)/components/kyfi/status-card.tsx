@@ -33,6 +33,7 @@ export function StatusCard({
 
   return (
     <motion.div
+      className="h-full"
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
@@ -41,15 +42,15 @@ export function StatusCard({
     >
       <Card
         className={cn(
-          "h-full border shadow-[0_16px_50px_rgba(15,23,42,0.08)] max-sm:shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
+          "h-full border shadow-[0_16px_50px_rgba(15,23,42,0.08)] max-sm:rounded-[1rem] max-sm:shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
           statusStyles[status],
         )}
       >
-        <CardContent className="space-y-5 p-6 max-sm:space-y-1.5 max-sm:px-2.5 max-sm:py-2.5">
-          <div className="flex items-center justify-between gap-3 max-sm:gap-2">
+        <CardContent className="space-y-5 p-6 max-sm:flex max-sm:h-[5.5rem] max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:space-y-1 max-sm:px-2 max-sm:py-2 max-sm:text-center">
+          <div className="flex items-center justify-between gap-3 max-sm:justify-center max-sm:gap-0">
             <Badge
               variant={badgeVariant}
-              className="max-sm:px-2 max-sm:py-0.5 max-sm:text-[0.62rem]"
+              className="max-sm:rounded-full max-sm:px-2.5 max-sm:py-1 max-sm:text-[0.58rem] max-sm:tracking-[0.08em]"
             >
               {status}
             </Badge>
@@ -66,10 +67,10 @@ export function StatusCard({
               Reputation signal
             </span>
           </div>
-          <div className="space-y-2 max-sm:space-y-0.5">
+          <div className="space-y-2 max-sm:space-y-0">
             <h3
               className={cn(
-                "font-manrope text-[1.08rem] font-bold tracking-[-0.02em] lg:text-[1.15rem] max-sm:text-[0.72rem]",
+                "font-manrope text-[1.08rem] font-bold tracking-[-0.02em] lg:text-[1.15rem] max-sm:text-[0.7rem] max-sm:font-extrabold max-sm:leading-tight",
                 status === "GREEN"
                   ? "text-emerald-900"
                   : status === "YELLOW"

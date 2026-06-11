@@ -103,10 +103,9 @@ export function HowItWorks() {
         </p>
       </motion.div>
 
-      <div className="flex flex-col md:hidden">
+      <div className="grid grid-cols-2 gap-3 md:hidden">
         {steps.map((step, index) => {
           const Icon = step.icon;
-          const isLast = index === steps.length - 1;
 
           return (
             <div key={step.title} className="flex flex-col items-stretch">
@@ -117,28 +116,28 @@ export function HowItWorks() {
                 transition={{ delay: index * 0.06, duration: 0.35 }}
                 whileHover={{ y: -4, scale: 1.01 }}
               >
-                <Card className="h-full min-h-[250px] overflow-hidden border-white/80 bg-white/85 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-                  <CardContent className="space-y-4 p-5 sm:p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                        <Icon className="h-5 w-5" />
+                <Card className="h-[9rem] overflow-hidden border-white/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.07)]">
+                  <CardContent className="flex h-full flex-col justify-between p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                        <Icon className="h-4.5 w-4.5" />
                       </div>
-                      <Badge variant="secondary">Step {index + 1}</Badge>
+                      <Badge variant="secondary" className="px-2 py-1 text-[0.62rem]">
+                        Step {index + 1}
+                      </Badge>
                     </div>
 
-                    <div className="space-y-2">
-                      <h3 className="max-w-[12ch] font-manrope text-[0.98rem] font-bold tracking-[-0.02em] text-slate-900">
+                    <div className="space-y-1">
+                      <h3 className="font-manrope text-[0.82rem] font-extrabold leading-tight tracking-[-0.02em] text-slate-900">
                         {step.title}
                       </h3>
-                      <p className="max-w-[22ch] font-manrope text-[0.85rem] leading-6 text-slate-600">
+                      <p className="line-clamp-2 font-manrope text-[0.68rem] font-medium leading-4 text-slate-600">
                         {step.text}
                       </p>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
-
-              {!isLast && <MobileConnector />}
             </div>
           );
         })}

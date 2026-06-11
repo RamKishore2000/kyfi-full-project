@@ -28,7 +28,6 @@ import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 import {
   createMandal,
   createVillage,
-  fetchVillagesByMandal,
   searchDistricts,
   searchMandals,
   searchVillages,
@@ -216,8 +215,8 @@ function FarmerStatusCard({
   const hideCountControls =
     farmer.farmerType !== "NEW" && farmer.statusColor === "GREEN";
   const rowGridClass = hideCountControls
-    ? "grid grid-cols-[1fr_1fr_auto] gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto_auto] xl:items-center"
-    : "grid grid-cols-[1fr_1fr_auto] gap-2 xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_minmax(220px,1.08fr)_auto] xl:items-center";
+    ? "grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto_auto] xl:items-center"
+    : "grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_auto] xl:grid-cols-[minmax(180px,1.15fr)_minmax(180px,1fr)_minmax(180px,1fr)_minmax(220px,1.08fr)_auto] xl:items-center";
   const statusBadge = getStatusBadge({ farmer, t });
   const shouldShowStatusBadge =
     farmer.farmerType !== "OLD" ||
@@ -269,9 +268,27 @@ function FarmerStatusCard({
           <div className={rowGridClass}>
             <InfoCard
               icon={MapPin}
+              label={t("search.district")}
+              value={farmer.district || "-"}
+              className="h-full sm:hidden max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
+            />
+            <InfoCard
+              icon={MapPin}
               label={t("search.location")}
               value={`${farmer.village}, ${farmer.mandal}`}
-              className="h-full max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
+              className="h-full max-sm:hidden"
+            />
+            <InfoCard
+              icon={MapPin}
+              label={t("profile.mandal")}
+              value={farmer.mandal || "-"}
+              className="h-full sm:hidden max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
+            />
+            <InfoCard
+              icon={MapPin}
+              label={t("profile.village")}
+              value={farmer.village || "-"}
+              className="h-full sm:hidden max-sm:rounded-[14px] max-sm:px-2 max-sm:py-2"
             />
             <InfoCard
               icon={Phone}
@@ -364,7 +381,7 @@ function FarmerStatusCard({
               )}
             </div>
 
-            <div className="flex items-center justify-end self-center max-sm:row-span-2 max-sm:h-full max-sm:justify-end">
+            <div className="flex items-center justify-end self-center max-sm:hidden">
               <button
                 type="button"
                 onClick={() => setExpanded((current) => !current)}
@@ -384,17 +401,14 @@ function FarmerStatusCard({
         </div>
       </div>
       {expanded ? (
-        <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6 max-sm:px-3 max-sm:py-3">
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6 max-sm:hidden">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MiniInfo label={t("search.district")} value={farmer.district} />
             <MiniInfo
-              label={t("search.location")}
-              value={`${farmer.village}, ${farmer.mandal}`}
+              label={t("profile.mandal")}
+              value={farmer.mandal || "-"}
             />
-            <MiniInfo
-              label={t("search.remarks")}
-              value={farmer.remarks || "-"}
-            />
+            <MiniInfo label={t("profile.village")} value={farmer.village || "-"} />
             <MiniInfo
               label={t("search.maskedAadhaar")}
               value={maskAadhaar(farmer.aadhaar)}
@@ -437,6 +451,7 @@ export function SearchFarmerPreview() {
   >([]);
   const [districtSearchLoading, setDistrictSearchLoading] = useState(false);
   const [districtActiveIndex, setDistrictActiveIndex] = useState(-1);
+  const [showDistrictOptions, setShowDistrictOptions] = useState(false);
   const [selectedDistrict, setSelectedDistrict] =
     useState<DistrictSearchResult | null>(null);
   const [selectedMandal, setSelectedMandal] =
@@ -505,13 +520,17 @@ export function SearchFarmerPreview() {
       setVillageSearchLoading(false);
       return;
     }
+    if (villageQuery.length < 2) {
+      setVillageOptions([]);
+      setVillageActiveIndex(-1);
+      setVillageSearchLoading(false);
+      return;
+    }
     let isCancelled = false;
     setVillageSearchLoading(true);
     const debounce = window.setTimeout(
       () => {
-        const request = villageQuery
-          ? searchVillages({ mandalId, query: villageQuery })
-          : fetchVillagesByMandal(mandalId);
+        const request = searchVillages({ mandalId, query: villageQuery });
         request
           .then((items) => {
             if (isCancelled) return;
@@ -527,7 +546,7 @@ export function SearchFarmerPreview() {
             }
           });
       },
-      villageQuery ? 220 : 0,
+      220,
     );
     return () => {
       isCancelled = true;
@@ -565,7 +584,7 @@ export function SearchFarmerPreview() {
       villageId: null,
     }));
     setHideMandalSuggestions(true);
-    setHideVillageSuggestions(false);
+    setHideVillageSuggestions(true);
     setMandalOptions([]);
     setVillageOptions([]);
     setMandalActiveIndex(-1);
@@ -651,11 +670,16 @@ export function SearchFarmerPreview() {
     };
   }, [districtQuery, locationModal]);
   const openMandalModal = () => {
+    const currentDistrict =
+      mandalOptions.find((item) => item.id === form.mandalId)?.districtName ||
+      "";
+
     setPendingLocationName(form.mandal.trim());
     setSelectedDistrict(null);
-    setDistrictQuery("");
+    setDistrictQuery(currentDistrict.trim());
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
+    setShowDistrictOptions(false);
     setLocationModal("mandal");
   };
   const openVillageModal = () => {
@@ -673,6 +697,7 @@ export function SearchFarmerPreview() {
     setDistrictQuery("");
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
+    setShowDistrictOptions(false);
     setSelectedDistrict(null);
     setSelectedMandal(null);
     setPendingLocationName("");
@@ -683,9 +708,15 @@ export function SearchFarmerPreview() {
     setDistrictQuery(district.name);
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
+    setShowDistrictOptions(false);
   };
   const handleDistrictKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (!districtOptions.length || locationModal !== "mandal") return;
+    if (
+      !districtOptions.length ||
+      !showDistrictOptions ||
+      locationModal !== "mandal"
+    )
+      return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setDistrictActiveIndex(
@@ -703,6 +734,7 @@ export function SearchFarmerPreview() {
       if (selected) chooseDistrict(selected);
     } else if (event.key === "Escape") {
       setDistrictOptions([]);
+      setShowDistrictOptions(false);
     }
   };
   const handleCreateMandal = async () => {
@@ -1209,7 +1241,7 @@ export function SearchFarmerPreview() {
                 onKeyDown={handleVillageKeyDown}
               />{" "}
               {form.mandalId &&
-              form.village.trim().length >= 0 &&
+              form.village.trim().length >= 2 &&
               !hideVillageSuggestions ? (
                 <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                   {" "}
@@ -1305,7 +1337,7 @@ export function SearchFarmerPreview() {
               </div>{" "}
               <Badge
                 variant="outline"
-                className="border-slate-200 bg-white px-3 py-1.5"
+                className="hidden border-slate-200 bg-white px-3 py-1.5 sm:inline-flex"
               >
                 {" "}
                 {summaryCount} {t("search.found")}{" "}
@@ -1371,7 +1403,7 @@ export function SearchFarmerPreview() {
               <button
                 type="button"
                 onClick={closeLocationModal}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
                 aria-label="Close modal"
               >
                 {" "}
@@ -1394,12 +1426,13 @@ export function SearchFarmerPreview() {
                       onChange={(event) => {
                         setSelectedDistrict(null);
                         setDistrictQuery(event.target.value);
+                        setShowDistrictOptions(true);
                       }}
                       onKeyDown={handleDistrictKeyDown}
                       placeholder="Type district name"
                       className="h-12 rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
                     />{" "}
-                    {districtQuery.trim().length >= 2 ? (
+                    {showDistrictOptions && districtQuery.trim().length >= 2 ? (
                       <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                         {" "}
                         {districtSearchLoading ? (
@@ -1493,7 +1526,7 @@ export function SearchFarmerPreview() {
                   </div>{" "}
                 </>
               ) : null}{" "}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4">
+              <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 {" "}
                 <p className="text-sm text-slate-600">
                   {" "}
@@ -1501,7 +1534,7 @@ export function SearchFarmerPreview() {
                     ? "District is required. Mandal name is required."
                     : "Mandal is already selected. Village name is required."}{" "}
                 </p>{" "}
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
                   {" "}
                   <Button
                     type="button"

@@ -8,7 +8,8 @@ import { DashboardPreview } from "@/components/kyfi/dashboard-preview";
 import { StatusCard } from "@/components/kyfi/status-card";
 import { CTASection } from "@/components/kyfi/cta-section";
 import { Footer } from "@/components/kyfi/footer";
-import { BarChart3, CirclePlus, Search } from "lucide-react";
+import { BarChart3, CirclePlus, Search, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 export default function DashboardPage() {
@@ -17,6 +18,8 @@ export default function DashboardPage() {
     {
       icon: <Search className="h-5 w-5" />,
       title: t("dashboard.feature1.title"),
+      mobileTitle: "Search Farmer",
+      mobileDescription: "Check old and new farmer records.",
       description: t("dashboard.feature1.description"),
       descriptionContent: (
         <div className="space-y-3 font-manrope">
@@ -43,6 +46,8 @@ export default function DashboardPage() {
     {
       icon: <CirclePlus className="h-5 w-5" />,
       title: t("dashboard.feature2.title"),
+      mobileTitle: "Add Farmer",
+      mobileDescription: "Add new or old farmer details.",
       description: t("dashboard.feature2.description"),
       descriptionContent: (
         <div className="space-y-3 font-manrope">
@@ -69,6 +74,7 @@ export default function DashboardPage() {
     {
       icon: <BarChart3 className="h-5 w-5" />,
       title: t("dashboard.feature6.title"),
+      mobileDescription: "View your records and votes.",
       description: t("dashboard.feature6.description"),
       descriptionContent: (
         <div className="space-y-3 font-manrope">
@@ -126,6 +132,20 @@ export default function DashboardPage() {
             {features.map((feature, index) => (
               <FeatureCard key={feature.title} {...feature} index={index} />
             ))}
+            <Link
+              href="/profile"
+              className="flex h-[7.75rem] flex-col justify-between rounded-[1.5rem] border border-emerald-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.07)] transition hover:border-emerald-300 hover:bg-emerald-50 md:hidden"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-emerald-50 text-emerald-700">
+                <UserRound className="h-5 w-5" />
+              </span>
+              <span className="block font-manrope text-[1.05rem] font-extrabold tracking-[-0.03em] text-slate-950">
+                {t("header.profile")}
+              </span>
+              <span className="mt-1 block font-manrope text-[0.72rem] font-semibold leading-4 text-slate-500">
+                Manage your dealer account.
+              </span>
+            </Link>
           </div>
         </section>
 

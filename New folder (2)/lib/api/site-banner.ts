@@ -3,8 +3,10 @@ import { KYFI_API_BASE_URL } from "@/lib/config";
 export type SiteBannerRecord = {
   desktopImageUrl: string | null;
   mobileImageUrl: string | null;
+  mobileImageUrls?: string[];
   desktopImageName: string | null;
   mobileImageName: string | null;
+  mobileImageNames?: Array<string | null>;
   updatedByDealerId: number | null;
   createdAt: string | null;
   updatedAt: string | null;

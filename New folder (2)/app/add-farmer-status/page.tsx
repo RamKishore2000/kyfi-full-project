@@ -30,7 +30,6 @@ import {
 import { imageFileToWebpDataUrl } from "@/lib/image-proof";
 import {
   searchMandals,
-  fetchVillagesByMandal,
   searchVillages,
   searchDistricts,
   createMandal,
@@ -121,6 +120,7 @@ export default function AddFarmerStatusPage() {
   >([]);
   const [districtSearchLoading, setDistrictSearchLoading] = useState(false);
   const [districtActiveIndex, setDistrictActiveIndex] = useState(-1);
+  const [showDistrictOptions, setShowDistrictOptions] = useState(false);
   const [selectedDistrict, setSelectedDistrict] =
     useState<DistrictSearchResult | null>(null);
   const [selectedMandal, setSelectedMandal] =
@@ -230,6 +230,7 @@ export default function AddFarmerStatusPage() {
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
     setDistrictSearchLoading(false);
+    setShowDistrictOptions(false);
     setSelectedDistrict(null);
     setSelectedMandal(null);
     setPendingLocationName("");
@@ -368,13 +369,17 @@ export default function AddFarmerStatusPage() {
       setVillageSearchLoading(false);
       return;
     }
+    if (villageQuery.length < 2) {
+      setVillageOptions([]);
+      setVillageActiveIndex(-1);
+      setVillageSearchLoading(false);
+      return;
+    }
     let isCancelled = false;
     setVillageSearchLoading(true);
     const debounce = window.setTimeout(
       () => {
-        const request = villageQuery
-          ? searchVillages({ mandalId, query: villageQuery })
-          : fetchVillagesByMandal(mandalId);
+        const request = searchVillages({ mandalId, query: villageQuery });
         request
           .then((items) => {
             if (isCancelled) return;
@@ -390,7 +395,7 @@ export default function AddFarmerStatusPage() {
             }
           });
       },
-      villageQuery ? 220 : 0,
+      220,
     );
     return () => {
       isCancelled = true;
@@ -428,7 +433,7 @@ export default function AddFarmerStatusPage() {
       villageId: null,
     }));
     setHideMandalSuggestions(true);
-    setHideVillageSuggestions(false);
+    setHideVillageSuggestions(true);
     setMandalOptions([]);
     setVillageOptions([]);
     setMandalActiveIndex(-1);
@@ -524,6 +529,7 @@ export default function AddFarmerStatusPage() {
     setDistrictQuery(form.district.trim());
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
+    setShowDistrictOptions(false);
     setLocationModal("mandal");
   };
   const openVillageModal = () => {
@@ -542,6 +548,7 @@ export default function AddFarmerStatusPage() {
     setDistrictQuery("");
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
+    setShowDistrictOptions(false);
     setSelectedDistrict(null);
     setSelectedMandal(null);
     setPendingLocationName("");
@@ -552,9 +559,15 @@ export default function AddFarmerStatusPage() {
     setDistrictQuery(district.name);
     setDistrictOptions([]);
     setDistrictActiveIndex(-1);
+    setShowDistrictOptions(false);
   };
   const handleDistrictKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (!districtOptions.length || locationModal !== "mandal") return;
+    if (
+      !districtOptions.length ||
+      !showDistrictOptions ||
+      locationModal !== "mandal"
+    )
+      return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setDistrictActiveIndex(
@@ -572,6 +585,7 @@ export default function AddFarmerStatusPage() {
       if (selected) chooseDistrict(selected);
     } else if (event.key === "Escape") {
       setDistrictOptions([]);
+      setShowDistrictOptions(false);
     }
   };
   const handleCreateMandal = async () => {
@@ -1228,7 +1242,9 @@ export default function AddFarmerStatusPage() {
                           onKeyDown={handleVillageKeyDown}
                           onFocus={() => {
                             if (!form.mandalId) return;
-                            setHideVillageSuggestions(false);
+                            if (form.village.trim().length >= 2) {
+                              setHideVillageSuggestions(false);
+                            }
                           }}
                           disabled={!form.mandalId}
                           required
@@ -1242,7 +1258,9 @@ export default function AddFarmerStatusPage() {
                               : "",
                           ].join(" ")}
                         />{" "}
-                        {form.mandalId && !hideVillageSuggestions ? (
+                        {form.mandalId &&
+                        form.village.trim().length >= 2 &&
+                        !hideVillageSuggestions ? (
                           <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                             {" "}
                             {villageSearchLoading ? (
@@ -1575,7 +1593,7 @@ export default function AddFarmerStatusPage() {
               <button
                 type="button"
                 onClick={closeExistingFarmerModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
@@ -1870,12 +1888,13 @@ export default function AddFarmerStatusPage() {
                       onChange={(event) => {
                         setSelectedDistrict(null);
                         setDistrictQuery(event.target.value);
+                        setShowDistrictOptions(true);
                       }}
                       onKeyDown={handleDistrictKeyDown}
                       placeholder="Type district name"
                       className="h-12 rounded-full border border-slate-200 bg-white shadow-none focus:border-[rgb(4,120,87)]"
                     />{" "}
-                    {districtQuery.trim().length >= 2 ? (
+                    {showDistrictOptions && districtQuery.trim().length >= 2 ? (
                       <div className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                         {" "}
                         {districtSearchLoading ? (
@@ -1971,7 +1990,7 @@ export default function AddFarmerStatusPage() {
                   </div>{" "}
                 </>
               ) : null}{" "}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4">
+              <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 {" "}
                 <p className="text-sm text-slate-600">
                   {" "}
@@ -1979,7 +1998,7 @@ export default function AddFarmerStatusPage() {
                     ? "District is required. Mandal name is required."
                     : "Mandal is already selected. Village name is required."}{" "}
                 </p>{" "}
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
                   {" "}
                   <Button
                     type="button"

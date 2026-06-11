@@ -244,8 +244,8 @@ export default function LoginPage() {
   ) : null;
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-[#F8F7F4] px-2 py-2 sm:px-4 sm:py-4 lg:min-h-screen lg:px-6 lg:py-6">
-      <section className="grid min-h-[calc(100dvh-1rem)] w-full overflow-hidden rounded-[28px] bg-[#F8F7F4] shadow-[0_0_0_1px_rgba(17,24,39,0.04)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px]">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-[#F8F7F4] px-0 py-0 sm:px-4 sm:py-4 lg:min-h-screen lg:px-6 lg:py-6">
+      <section className="grid min-h-[100dvh] w-full overflow-hidden bg-[#F8F7F4] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px] lg:shadow-[0_0_0_1px_rgba(17,24,39,0.04)]">
         <div className="order-2 hidden min-h-[280px] lg:order-1 lg:block lg:min-h-[calc(100vh-3rem)]">
           <div className="relative h-full w-full overflow-hidden">
             <img
@@ -256,29 +256,34 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="order-1 flex min-h-[calc(100dvh-1rem)] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] px-4 py-4 lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:px-6">
+        <div className="order-1 flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#F8F7F4_0%,#F3EEE4_100%)] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] lg:px-6 lg:py-4">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
-            className="my-auto w-full max-w-[34rem] py-2 lg:ml-auto lg:mr-10 lg:py-0 xl:mr-14"
+            className="my-auto w-full max-w-[29rem] py-2 lg:ml-auto lg:mr-10 lg:max-w-[34rem] lg:py-0 xl:mr-14"
           >
+            <div className="mb-6 flex flex-col items-center justify-center text-center lg:hidden">
+              <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[rgb(4,120,87)] text-white shadow-[0_16px_34px_rgba(4,120,87,0.22)]">
+                <Leaf className="h-6 w-6" />
+              </div>
+              <p className="mt-3 font-manrope text-[2.05rem] font-black leading-none tracking-[-0.06em] text-[rgb(4,120,87)]">
+                KYFI
+              </p>
+            </div>
+
             <div className="no-scrollbar w-full max-w-[34rem] lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2">
               <div
-                className="relative w-full rounded-[32px] px-5 py-4 sm:px-6 sm:py-5 lg:px-5 lg:py-4"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 18% 12%, rgba(255,255,255,0.66) 0, rgba(255,255,255,0.14) 18%, rgba(255,255,255,0) 42%), radial-gradient(circle at 82% 78%, rgba(212,175,55,0.08) 0, rgba(212,175,55,0.02) 18%, rgba(212,175,55,0) 38%), linear-gradient(180deg, rgba(248,247,244,0.98) 0%, rgba(244,240,232,0.94) 100%)",
-                }}
+                className="relative w-full rounded-none border-0 bg-transparent px-0 py-0 shadow-none sm:px-0 sm:py-0 lg:rounded-[32px] lg:border-0 lg:bg-[linear-gradient(180deg,rgba(248,247,244,0.98)_0%,rgba(244,240,232,0.94)_100%)] lg:px-5 lg:py-4 lg:shadow-none"
               >
-                <div className="space-y-4 lg:space-y-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="space-y-5 lg:space-y-4">
+                <div className="hidden items-start justify-between gap-4 lg:flex">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[rgb(4,120,87)] text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[rgb(4,120,87)] text-white shadow-[0_12px_28px_rgba(4,120,87,0.22)] lg:h-11 lg:w-11 lg:rounded-[16px] lg:shadow-none">
                       <Leaf className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-manrope text-[1.6rem] font-black leading-none tracking-[-0.05em] text-[rgb(4,120,87)]">
+                      <p className="font-manrope text-[1.75rem] font-black leading-none tracking-[-0.05em] text-[rgb(4,120,87)] lg:text-[1.6rem]">
                         KYFI
                       </p>
                       <p className="hidden font-manrope text-[0.64rem] font-semibold uppercase tracking-[0.24em] text-slate-500 lg:block">
@@ -287,29 +292,32 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-2 rounded-full border border-[#D9D5C8] bg-[#FAF8F2] px-4 py-2 text-slate-700">
-                    <Phone className="h-4 w-4 text-[rgb(4,120,87)]" />
-                    <span className="font-manrope text-[0.82rem] font-medium">
-                      {t("login.mobilePhone")}
-                    </span>
-                  </div>
                 </div>
 
-                <p className="font-manrope text-[0.96rem] font-medium tracking-[0.02em] text-slate-700">
+                <div className="text-center lg:hidden">
+                  <h1 className="font-manrope text-[2rem] font-black leading-[1.05] tracking-[-0.055em] text-slate-950">
+                    Welcome back
+                  </h1>
+                  <p className="mt-2 font-manrope text-[0.86rem] font-semibold uppercase tracking-[0.18em] text-[rgb(4,120,87)]">
+                    Dealer access
+                  </p>
+                </div>
+
+                <p className="hidden font-manrope text-[1.05rem] font-semibold tracking-[-0.01em] text-slate-800 lg:block lg:text-[0.96rem] lg:font-medium lg:tracking-[0.02em] lg:text-slate-700">
                   {t("login.dealerAccessCaps")}
                 </p>
 
-                <div className="grid grid-cols-2 rounded-full bg-[#EEF0EA] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
+                <div className="grid grid-cols-2 rounded-full bg-[#EBEEE8] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                   <button
                     type="button"
-                    className="rounded-full bg-[rgb(4,120,87)] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-105"
+                    className="rounded-full bg-[rgb(4,120,87)] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_24px_rgba(4,120,87,0.22)] transition hover:brightness-105 lg:font-semibold lg:shadow-none"
                   >
                     {t("login.loginCard")}
                   </button>
                   <button
                     type="button"
                     onClick={() => router.push("/register")}
-                    className="rounded-full px-4 py-3 text-sm font-semibold text-slate-600 transition hover:text-[rgb(4,120,87)]"
+                    className="rounded-full px-4 py-3 text-sm font-bold text-slate-600 transition hover:text-[rgb(4,120,87)] lg:font-semibold"
                   >
                     {t("login.registerCard")}
                   </button>
@@ -394,7 +402,7 @@ export default function LoginPage() {
                         setStep("mobile");
                         setError("");
                       }}
-                      className="mx-auto block font-manrope text-xs font-semibold text-[rgb(4,120,87)] transition hover:text-[rgb(4,120,87)]"
+                      className="mx-auto block font-manrope text-sm font-bold text-[rgb(4,120,87)] transition hover:text-[rgb(4,120,87)] lg:text-xs lg:font-semibold"
                     >
                       {t("login.loginWithOtp")}
                     </button>
@@ -457,7 +465,7 @@ export default function LoginPage() {
                       <label className="font-manrope text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                         {t("login.otp")}
                       </label>
-                      <div className="grid grid-cols-6 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-6 gap-3 sm:gap-4">
                         {Array.from({ length: 6 }).map((_, index) => (
                           <input
                             key={index}
@@ -475,7 +483,7 @@ export default function LoginPage() {
                               handleOtpKeyDown(index, event)
                             }
                             onPaste={index === 0 ? handleOtpPaste : undefined}
-                            className="h-14 rounded-2xl border border-slate-200 bg-white text-center font-manrope text-[1.05rem] font-semibold tracking-[0.35em] text-slate-900 outline-none transition focus:border-emerald-700 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+                            className="h-12 w-full rounded-none border-0 border-b-2 border-slate-300 bg-transparent px-0 text-center font-manrope text-[1.35rem] font-bold leading-none text-slate-900 outline-none transition focus:border-[rgb(4,120,87)] focus:ring-0"
                             aria-label={`OTP digit ${index + 1}`}
                           />
                         ))}
@@ -529,7 +537,7 @@ export default function LoginPage() {
                         setStep("mobile");
                         setError("");
                       }}
-                      className="mx-auto block font-manrope text-xs font-semibold text-[rgb(4,120,87)] transition hover:text-[rgb(4,120,87)]"
+                      className="mx-auto block font-manrope text-sm font-bold text-[rgb(4,120,87)] transition hover:text-[rgb(4,120,87)] lg:text-xs lg:font-semibold"
                     >
                       {t("login.loginWithPassword")}
                     </button>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Footer } from "@/components/kyfi/footer";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
+import { AppBackButton } from "@/components/kyfi/app-back-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ export default function SettingsPage() {
     <AuthGuard>
       <main className="kyfi-shell min-h-screen">
         <Header />
+        <AppBackButton />
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-3xl">

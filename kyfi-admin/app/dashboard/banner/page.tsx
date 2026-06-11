@@ -1,7 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2, MonitorSmartphone, Save, Smartphone, Upload } from "lucide-react";
+import {
+  Loader2,
+  MonitorSmartphone,
+  Save,
+  Smartphone,
+  Upload,
+} from "lucide-react";
 import { useAdminLanguage } from "@/components/admin-language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,14 +101,49 @@ function UploadPreviewCard({
   );
 }
 
+const emptyMobileSlots: Array<string | null> = [null, null, null];
+const emptyMobileFileSlots: Array<File | null> = [null, null, null];
+
+function getMobileImageUrls(banner: SiteBannerRecord | null): Array<string | null> {
+  if (!banner) return [...emptyMobileSlots];
+
+  return [
+    banner.mobileImageUrls?.[0] ?? banner.mobileImageUrl ?? null,
+    banner.mobileImageUrls?.[1] ?? null,
+    banner.mobileImageUrls?.[2] ?? null,
+  ];
+}
+
+function getMobileImageNames(banner: SiteBannerRecord | null): Array<string | null> {
+  if (!banner) return [...emptyMobileSlots];
+
+  return [
+    banner.mobileImageNames?.[0] ?? banner.mobileImageName ?? null,
+    banner.mobileImageNames?.[1] ?? null,
+    banner.mobileImageNames?.[2] ?? null,
+  ];
+}
+
 export default function HeroBannerAdminPage() {
   const { t } = useAdminLanguage();
   const [desktopPreview, setDesktopPreview] = useState<string | null>(null);
-  const [mobilePreview, setMobilePreview] = useState<string | null>(null);
+  const [mobilePreviews, setMobilePreviews] = useState<Array<string | null>>([
+    null,
+    null,
+    null,
+  ]);
   const [desktopFile, setDesktopFile] = useState<File | null>(null);
-  const [mobileFile, setMobileFile] = useState<File | null>(null);
+  const [mobileFiles, setMobileFiles] = useState<Array<File | null>>([
+    null,
+    null,
+    null,
+  ]);
   const [desktopName, setDesktopName] = useState<string | null>(null);
-  const [mobileName, setMobileName] = useState<string | null>(null);
+  const [mobileNames, setMobileNames] = useState<Array<string | null>>([
+    null,
+    null,
+    null,
+  ]);
   const [currentBanner, setCurrentBanner] = useState<SiteBannerRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,7 +159,7 @@ export default function HeroBannerAdminPage() {
 
         setCurrentBanner(response.banner);
         setDesktopPreview(response.banner.desktopImageUrl);
-        setMobilePreview(response.banner.mobileImageUrl);
+        setMobilePreviews(getMobileImageUrls(response.banner));
       })
       .catch((fetchError) => {
         if (!mounted) return;
@@ -139,11 +180,13 @@ export default function HeroBannerAdminPage() {
       if (desktopPreview?.startsWith("blob:")) {
         URL.revokeObjectURL(desktopPreview);
       }
-      if (mobilePreview?.startsWith("blob:")) {
-        URL.revokeObjectURL(mobilePreview);
-      }
+      mobilePreviews.forEach((preview) => {
+        if (preview?.startsWith("blob:")) {
+          URL.revokeObjectURL(preview);
+        }
+      });
     };
-  }, [desktopPreview, mobilePreview]);
+  }, [desktopPreview, mobilePreviews]);
 
   const currentImages = useMemo(
     () => [
@@ -154,9 +197,21 @@ export default function HeroBannerAdminPage() {
         icon: MonitorSmartphone,
       },
       {
-        label: t("banner.mobile"),
-        src: currentBanner?.mobileImageUrl ?? null,
-        name: currentBanner?.mobileImageName ?? null,
+        label: `${t("banner.mobile")} 1`,
+        src: currentBanner?.mobileImageUrls?.[0] ?? currentBanner?.mobileImageUrl ?? null,
+        name: currentBanner?.mobileImageNames?.[0] ?? currentBanner?.mobileImageName ?? null,
+        icon: Smartphone,
+      },
+      {
+        label: `${t("banner.mobile")} 2`,
+        src: currentBanner?.mobileImageUrls?.[1] ?? null,
+        name: currentBanner?.mobileImageNames?.[1] ?? null,
+        icon: Smartphone,
+      },
+      {
+        label: `${t("banner.mobile")} 3`,
+        src: currentBanner?.mobileImageUrls?.[2] ?? null,
+        name: currentBanner?.mobileImageNames?.[2] ?? null,
         icon: Smartphone,
       },
     ],
@@ -168,7 +223,7 @@ export default function HeroBannerAdminPage() {
     setError("");
     setSuccess("");
 
-    if (!desktopFile && !mobileFile) {
+    if (!desktopFile && !mobileFiles.some(Boolean)) {
       setError("Select at least one banner image to update.");
       return;
     }
@@ -176,30 +231,63 @@ export default function HeroBannerAdminPage() {
     setSaving(true);
 
     try {
-      const payload: { desktopImageDataUrl?: string; mobileImageDataUrl?: string } = {};
+      const payload: {
+        desktopImageDataUrl?: string;
+        mobileImageDataUrl?: string;
+        mobileImageDataUrls?: Array<string | null>;
+      } = {};
 
       if (desktopFile) {
         payload.desktopImageDataUrl = await readFileAsDataUrl(desktopFile);
       }
 
-      if (mobileFile) {
-        payload.mobileImageDataUrl = await readFileAsDataUrl(mobileFile);
+      if (mobileFiles.some(Boolean)) {
+        payload.mobileImageDataUrls = await Promise.all(
+          mobileFiles.map((file) => (file ? readFileAsDataUrl(file) : Promise.resolve(null))),
+        );
       }
 
       const response = await updateAdminSiteBanner(payload);
       setCurrentBanner(response.banner);
       setDesktopPreview(response.banner.desktopImageUrl);
-      setMobilePreview(response.banner.mobileImageUrl);
+      setMobilePreviews(getMobileImageUrls(response.banner));
       setDesktopFile(null);
-      setMobileFile(null);
+      setMobileFiles([...emptyMobileFileSlots]);
       setDesktopName(null);
-      setMobileName(null);
+      setMobileNames([...emptyMobileSlots]);
       setSuccess(response.message);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : t("banner.failedUpdate"));
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleMobileImageChange(index: number, file: File | null) {
+    setMobilePreviews((previousPreviews) => {
+      const previousPreview = previousPreviews[index];
+      if (previousPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(previousPreview);
+      }
+
+      const nextPreviews = [...previousPreviews];
+      nextPreviews[index] = file
+        ? URL.createObjectURL(file)
+        : getMobileImageUrls(currentBanner)[index];
+      return nextPreviews;
+    });
+
+    setMobileFiles((previousFiles) => {
+      const nextFiles = [...previousFiles];
+      nextFiles[index] = file;
+      return nextFiles;
+    });
+
+    setMobileNames((previousNames) => {
+      const nextNames = [...previousNames];
+      nextNames[index] = file?.name ?? null;
+      return nextNames;
+    });
   }
 
   return (
@@ -236,7 +324,7 @@ export default function HeroBannerAdminPage() {
         <Card className="border-border/70 shadow-sm">
           <CardContent className="p-6 sm:p-8">
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
                 <UploadPreviewCard
                   title={t("banner.desktop")}
                   hint={t("banner.desktopHint")}
@@ -250,26 +338,31 @@ export default function HeroBannerAdminPage() {
                     }
                     setDesktopFile(file);
                     setDesktopName(file?.name ?? null);
-                    setDesktopPreview(file ? URL.createObjectURL(file) : currentBanner?.desktopImageUrl ?? null);
+                    setDesktopPreview(
+                      file
+                        ? URL.createObjectURL(file)
+                        : currentBanner?.desktopImageUrl ?? null,
+                    );
                   }}
                 />
 
-                <UploadPreviewCard
-                  title={t("banner.mobile")}
-                  hint={t("banner.mobileHint")}
-                  icon={Smartphone}
-                  preview={mobilePreview}
-                  fileName={mobileName}
-                  recommendedSize="1080 x 1350"
-                  onChange={(file) => {
-                    if (mobilePreview?.startsWith("blob:")) {
-                      URL.revokeObjectURL(mobilePreview);
-                    }
-                    setMobileFile(file);
-                    setMobileName(file?.name ?? null);
-                    setMobilePreview(file ? URL.createObjectURL(file) : currentBanner?.mobileImageUrl ?? null);
-                  }}
-                />
+                <div className="grid gap-5 md:grid-cols-3 xl:grid-cols-1">
+                  {mobilePreviews.map((preview, index) => (
+                    <UploadPreviewCard
+                      key={index}
+                      title={`${t("banner.mobile")} ${index + 1}`}
+                      hint={t("banner.mobileHint")}
+                      icon={Smartphone}
+                      preview={preview}
+                      fileName={
+                        mobileNames[index] ??
+                        getMobileImageNames(currentBanner)[index]
+                      }
+                      recommendedSize="1080 x 1350"
+                      onChange={(file) => handleMobileImageChange(index, file)}
+                    />
+                  ))}
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">

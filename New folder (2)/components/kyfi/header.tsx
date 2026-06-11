@@ -48,6 +48,7 @@ function MenuItem({
 export function Header() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [hideSubtitle, setHideSubtitle] = useState(false);
+  const [nativeApp, setNativeApp] = useState(false);
   const [dealerLoggedIn, setDealerLoggedIn] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
@@ -87,7 +88,9 @@ export function Header() {
   };
 
   useEffect(() => {
-    setHideSubtitle(Capacitor.isNativePlatform());
+    const isNative = Capacitor.isNativePlatform();
+    setNativeApp(isNative);
+    setHideSubtitle(isNative);
   }, []);
 
   useEffect(() => {
@@ -122,6 +125,7 @@ export function Header() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       className="sticky top-0 z-50 border-b border-slate-200/70 bg-white px-0 pt-0 backdrop-blur-xl"
+      style={nativeApp ? { backgroundColor: "#F8F8F6" } : undefined}
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 px-0 py-2">

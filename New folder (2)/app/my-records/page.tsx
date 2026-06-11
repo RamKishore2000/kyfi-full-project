@@ -54,17 +54,17 @@ function SummaryCard({
   icon: ReactNode;
 }) {
   return (
-    <Card className="border-white/80 bg-white/85 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <CardContent className="flex items-center justify-between gap-2 p-2.5 sm:gap-4 sm:p-5">
+    <Card className="border-white/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:bg-white/85 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+      <CardContent className="flex h-[5.5rem] items-center justify-between gap-2 p-3 sm:h-auto sm:gap-4 sm:p-5">
         <div className="min-w-0">
-          <p className="truncate font-manrope text-[0.56rem] font-bold uppercase tracking-[0.12em] text-slate-500 sm:type-small sm:tracking-[0.22em]">
+          <p className="truncate font-manrope text-[0.52rem] font-extrabold uppercase tracking-[0.08em] text-slate-500 sm:type-small sm:tracking-[0.22em]">
             {label}
           </p>
-          <p className="mt-1 font-manrope text-[1.2rem] font-extrabold tracking-[-0.04em] text-slate-900 sm:mt-2 sm:text-[1.85rem]">
+          <p className="mt-1 font-manrope text-[1.2rem] font-black tracking-[-0.05em] text-slate-900 sm:mt-2 sm:text-[1.85rem] sm:font-extrabold">
             {value}
           </p>
         </div>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12 sm:rounded-2xl">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12 sm:rounded-2xl">
           {icon}
         </div>
       </CardContent>
@@ -83,12 +83,12 @@ function FarmerRecordCard({
     String(record.farmerType || "OLD").toUpperCase() === "NEW" ? "NEW" : "OLD";
 
   return (
-    <details className="group rounded-3xl border border-white/80 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <summary className="list-none cursor-pointer p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
+    <details className="group rounded-[1.35rem] border border-white/80 bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+      <summary className="list-none cursor-pointer p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+          <div className="space-y-1.5 sm:space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
+              <h3 className="font-manrope text-[1rem] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-[1.04rem] sm:font-bold sm:tracking-[-0.02em]">
                 {record.farmerName}
               </h3>
               <Badge variant={farmerType === "NEW" ? "outline" : "secondary"}>
@@ -102,20 +102,20 @@ function FarmerRecordCard({
                 </Badge>
               ) : null}
             </div>
-            <p className="font-manrope type-small text-slate-500">
+            <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-600 sm:type-small sm:text-slate-500">
               {record.district}, {record.mandal}, {record.village}
             </p>
-            <p className="font-manrope type-small text-slate-500">
+            <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-500 sm:type-small">
               {t("myRecords.mobile")}:{" "}
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
           {farmerType === "OLD" ? (
-            <div className="text-right">
-              <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
+            <div className="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2 text-left sm:block sm:bg-transparent sm:p-0 sm:text-right">
+              <p className="font-manrope text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-emerald-700 sm:type-small sm:tracking-[0.2em] sm:text-slate-500">
                 {t("myRecords.votes")}
               </p>
-              <p className="mt-1 font-manrope text-xl font-extrabold text-slate-900">
+              <p className="font-manrope text-lg font-black text-emerald-900 sm:mt-1 sm:text-xl sm:font-extrabold sm:text-slate-900">
                 {record.voteCount}
               </p>
             </div>
@@ -123,9 +123,9 @@ function FarmerRecordCard({
         </div>
       </summary>
 
-      <div className="border-t border-slate-100 px-5 pb-5 pt-2">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-4">
+      <div className="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-2">
+        <div className="grid gap-2 sm:gap-4 md:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.mobile")}
             </p>
@@ -133,7 +133,7 @@ function FarmerRecordCard({
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.remarks")}
             </p>
@@ -141,7 +141,7 @@ function FarmerRecordCard({
               {record.remarks || t("myRecords.noRemarks")}
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.status")}
             </p>
@@ -230,29 +230,29 @@ function VoteRecordCard({
   t: (key: string) => string;
 }) {
   return (
-    <details className="group rounded-3xl border border-white/80 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <summary className="list-none cursor-pointer p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
+    <details className="group rounded-[1.35rem] border border-white/80 bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+      <summary className="list-none cursor-pointer p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+          <div className="space-y-1.5 sm:space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-manrope text-[1.04rem] font-bold tracking-[-0.02em] text-slate-900">
+              <h3 className="font-manrope text-[1rem] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-[1.04rem] sm:font-bold sm:tracking-[-0.02em]">
                 {record.farmerName}
               </h3>
               <Badge variant="success">{t("myRecords.voted")}</Badge>
             </div>
-            <p className="font-manrope type-small text-slate-500">
+            <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-600 sm:type-small sm:text-slate-500">
               {record.district}, {record.mandal}, {record.village}
             </p>
-            <p className="font-manrope type-small text-slate-500">
+            <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-500 sm:type-small">
               {t("myRecords.mobile")}:{" "}
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          <div className="text-right">
-            <p className="font-manrope type-small uppercase tracking-[0.2em] text-slate-500">
+          <div className="rounded-2xl bg-slate-50 px-3 py-2 text-left sm:bg-transparent sm:p-0 sm:text-right">
+            <p className="font-manrope text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-slate-500 sm:type-small sm:tracking-[0.2em]">
               {t("myRecords.votedAt")}
             </p>
-            <p className="mt-1 font-manrope text-sm font-semibold text-slate-900">
+            <p className="mt-1 font-manrope text-[0.78rem] font-bold leading-5 text-slate-900 sm:text-sm sm:font-semibold">
               {formatVoteDate(record.actedAt || record.votedAt) ||
                 t("myRecords.notProvided")}
             </p>
@@ -260,9 +260,9 @@ function VoteRecordCard({
         </div>
       </summary>
 
-      <div className="border-t border-slate-100 px-5 pb-5 pt-2">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-4">
+      <div className="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-2">
+        <div className="grid gap-2 sm:gap-4 md:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.actionType")}
             </p>
@@ -270,7 +270,7 @@ function VoteRecordCard({
               {t("myRecords.voted")}
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.mobile")}
             </p>
@@ -278,7 +278,7 @@ function VoteRecordCard({
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
             <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
               {t("myRecords.status")}
             </p>
@@ -416,8 +416,8 @@ export default function MyRecordsPage() {
             ))}
           </div>
 
-          <div className="mt-8 rounded-[2rem] border border-white/80 bg-white/85 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-            <div className="grid grid-cols-3 gap-2 rounded-[1.5rem] bg-slate-100 p-1 md:max-w-2xl">
+          <div className="mt-6 rounded-[1.5rem] border border-white/80 bg-white/85 p-2 shadow-[0_14px_34px_rgba(15,23,42,0.07)] sm:mt-8 sm:rounded-[2rem] sm:p-3 sm:shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+            <div className="grid grid-cols-3 gap-1 rounded-[1.25rem] bg-slate-100/90 p-1 md:max-w-2xl md:gap-2 md:rounded-[1.5rem]">
               {tabs.map((item) => {
                 const active = tab === item.key;
                 return (
@@ -426,7 +426,7 @@ export default function MyRecordsPage() {
                     type="button"
                     onClick={() => setTab(item.key)}
                     className={[
-                      "rounded-[1.1rem] px-4 py-3 text-sm font-semibold transition",
+                      "rounded-[0.95rem] px-1.5 py-2 text-[0.64rem] font-extrabold leading-tight transition sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-sm sm:font-semibold",
                       active
                         ? "bg-white text-emerald-800 shadow-sm"
                         : "text-slate-500 hover:text-slate-800",
@@ -438,7 +438,7 @@ export default function MyRecordsPage() {
               })}
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="p-2 pt-4 sm:p-6">
               {loading ? (
                 <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-slate-500">
                   {t("myRecords.loading")}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Footer } from "@/components/kyfi/footer";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
+import { AppBackButton } from "@/components/kyfi/app-back-button";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,8 @@ export default function ProfilePage() {
   const [districtLoading, setDistrictLoading] = useState(false);
   const [showDistrictSuggestions, setShowDistrictSuggestions] = useState(false);
   const [districtSearchLoading, setDistrictSearchLoading] = useState(false);
+  const [showModalDistrictOptions, setShowModalDistrictOptions] =
+    useState(false);
   const [mandalModalName, setMandalModalName] = useState("");
   const [mandalModalSaving, setMandalModalSaving] = useState(false);
   const [villageModalName, setVillageModalName] = useState("");
@@ -307,7 +310,7 @@ export default function ProfilePage() {
     }
 
     const query = districtQuery.trim();
-    if (query.length < 2) {
+    if (!showModalDistrictOptions || query.length < 2) {
       setDistrictOptions([]);
       setDistrictSearchLoading(false);
       return;
@@ -336,7 +339,7 @@ export default function ProfilePage() {
       isCancelled = true;
       window.clearTimeout(debounce);
     };
-  }, [districtQuery, mandalModalOpen]);
+  }, [districtQuery, mandalModalOpen, showModalDistrictOptions]);
 
   const handleChange = (field: keyof typeof form) => (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -393,6 +396,8 @@ export default function ProfilePage() {
     setSelectedDistrict(
       districtOptions.find((district) => district.name.trim().toLowerCase() === form.district.trim().toLowerCase()) ?? null,
     );
+    setDistrictOptions([]);
+    setShowModalDistrictOptions(false);
     setMandalModalName("");
     setMandalModalOpen(true);
   };
@@ -413,6 +418,7 @@ export default function ProfilePage() {
     setMandalModalOpen(false);
     setDistrictOptions([]);
     setDistrictSearchLoading(false);
+    setShowModalDistrictOptions(false);
     setDistrictQuery("");
     setSelectedDistrict(null);
     setMandalModalName("");
@@ -583,6 +589,7 @@ export default function ProfilePage() {
     <AuthGuard>
       <main className="kyfi-shell min-h-screen">
         <Header />
+        <AppBackButton />
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-3xl">
@@ -878,10 +885,11 @@ export default function ProfilePage() {
                     onChange={(event) => {
                       setDistrictQuery(event.target.value);
                       setSelectedDistrict(null);
+                      setShowModalDistrictOptions(true);
                     }}
                     placeholder="Type district name"
                   />
-                  {districtQuery.trim().length >= 2 ? (
+                  {showModalDistrictOptions && districtQuery.trim().length >= 2 ? (
                     <div className="max-h-56 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                       {districtSearchLoading ? (
                         <div className="px-4 py-3 font-manrope text-sm text-slate-500">Searching...</div>
@@ -894,6 +902,7 @@ export default function ProfilePage() {
                               setSelectedDistrict(district);
                               setDistrictQuery(district.name);
                               setDistrictOptions([]);
+                              setShowModalDistrictOptions(false);
                             }}
                             className="flex w-full flex-col items-start gap-1 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-emerald-50"
                           >
