@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { Capacitor } from "@capacitor/core";
 import {
-  Leaf,
   KeyRound,
   LogIn,
   LogOut,
@@ -125,7 +124,7 @@ export function Header() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       className="sticky top-0 z-50 border-b border-slate-200/70 bg-white px-0 pt-0 backdrop-blur-xl"
-      style={nativeApp ? { backgroundColor: "#F8F8F6" } : undefined}
+      style={nativeApp ? { backgroundColor: "#F6FAF7" } : undefined}
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 px-0 py-2">
@@ -134,19 +133,11 @@ export function Header() {
             onClick={() => router.push("/")}
             className="flex items-center gap-3 rounded-2xl px-1 py-0.5 text-left transition hover:bg-slate-50/80"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgb(4,120,87)] text-white shadow-[0_14px_30px_rgba(4,120,87,0.22)] sm:h-12 sm:w-12">
-              <Leaf className="h-5 w-5 sm:h-6 sm:w-6" />
-            </div>
-            <div className="leading-tight">
-              <div className="font-manrope text-[1.06rem] font-extrabold tracking-[-0.03em] text-[rgb(4,120,87)]">
-                KYFI
-              </div>
-              {!hideSubtitle ? (
-                <div className="hidden font-manrope text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:block">
-                  {t("header.subtitle")}
-                </div>
-              ) : null}
-            </div>
+            <img
+              src="/kyfi-logo.png"
+              alt="KYFI"
+              className="h-12 w-auto object-contain sm:h-16"
+            />
           </button>
 
           <nav className="hidden items-center gap-2 lg:flex">
@@ -270,7 +261,7 @@ export function Header() {
 
                 setProfileMenuOpen((value) => !value);
               }}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white text-slate-700 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition hover:text-emerald-800"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-100 bg-white text-[rgb(4,120,87)] shadow-[0_12px_30px_rgba(4,120,87,0.12)] transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50"
               aria-label={dealerLoggedIn ? t("header.profileMenu") : "Login"}
               aria-expanded={profileMenuOpen}
               aria-haspopup={dealerLoggedIn ? "menu" : undefined}

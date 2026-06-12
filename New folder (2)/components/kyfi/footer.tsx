@@ -1,6 +1,5 @@
 "use client";
 
-import { Leaf } from "lucide-react";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 export function Footer() {
@@ -11,17 +10,11 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-3 lg:px-8 max-sm:px-3 max-sm:py-10">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgb(4,120,87)] text-white shadow-[0_12px_24px_rgba(4,120,87,0.22)]">
-              <Leaf className="h-6 w-6" />
-            </div>
-            <div>
-              <div className="font-manrope text-[1.06rem] font-extrabold tracking-[-0.03em] text-[rgb(4,120,87)]">
-                KYFI
-              </div>
-              <div className="font-manrope text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                {t("header.subtitle")}
-              </div>
-            </div>
+            <img
+              src="/kyfi-logo.png"
+              alt="KYFI"
+              className="h-20 w-auto object-contain"
+            />
           </div>
           <p className="max-w-md font-manrope type-body">
             {t("footer.description")}

@@ -12,7 +12,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
-import { ArrowRight, Eye, EyeOff, Leaf, Lock, Phone } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
@@ -264,12 +264,11 @@ export default function LoginPage() {
             className="my-auto w-full max-w-[29rem] py-2 lg:ml-auto lg:mr-10 lg:max-w-[34rem] lg:py-0 xl:mr-14"
           >
             <div className="mb-6 flex flex-col items-center justify-center text-center lg:hidden">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[rgb(4,120,87)] text-white shadow-[0_16px_34px_rgba(4,120,87,0.22)]">
-                <Leaf className="h-6 w-6" />
-              </div>
-              <p className="mt-3 font-manrope text-[2.05rem] font-black leading-none tracking-[-0.06em] text-[rgb(4,120,87)]">
-                KYFI
-              </p>
+              <img
+                src="/kyfi-logo.png"
+                alt="KYFI"
+                className="h-16 w-auto object-contain"
+              />
             </div>
 
             <div className="no-scrollbar w-full max-w-[34rem] lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2">
@@ -279,17 +278,11 @@ export default function LoginPage() {
                 <div className="space-y-5 lg:space-y-4">
                 <div className="hidden items-start justify-between gap-4 lg:flex">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[rgb(4,120,87)] text-white shadow-[0_12px_28px_rgba(4,120,87,0.22)] lg:h-11 lg:w-11 lg:rounded-[16px] lg:shadow-none">
-                      <Leaf className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-manrope text-[1.75rem] font-black leading-none tracking-[-0.05em] text-[rgb(4,120,87)] lg:text-[1.6rem]">
-                        KYFI
-                      </p>
-                      <p className="hidden font-manrope text-[0.64rem] font-semibold uppercase tracking-[0.24em] text-slate-500 lg:block">
-                        KNOW YOUR FARMER INFORMATION
-                      </p>
-                    </div>
+                    <img
+                      src="/kyfi-logo.png"
+                      alt="KYFI"
+                      className="h-14 w-auto object-contain"
+                    />
                   </div>
 
                 </div>
@@ -310,7 +303,7 @@ export default function LoginPage() {
                 <div className="grid grid-cols-2 rounded-full bg-[#EBEEE8] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                   <button
                     type="button"
-                    className="rounded-full bg-[rgb(4,120,87)] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_24px_rgba(4,120,87,0.22)] transition hover:brightness-105 lg:font-semibold lg:shadow-none"
+                    className="rounded-full bg-[rgb(4,120,87)] px-4 py-3 text-sm font-bold text-white transition hover:brightness-105 lg:font-semibold"
                   >
                     {t("login.loginCard")}
                   </button>
@@ -381,19 +374,21 @@ export default function LoginPage() {
 
                     {errorBanner}
 
-                    <Button
-                      size="lg"
-                      className="h-12 w-full rounded-full !bg-[rgb(4,120,87)] px-5 !text-white transition hover:!bg-[rgb(4,120,87)] hover:brightness-105"
-                      type="submit"
-                      disabled={isPasswordLoggingIn}
-                    >
-                      <span className="flex items-center gap-2">
-                        {isPasswordLoggingIn
-                          ? t("login.loggingIn")
-                          : t("login.loginAndGo")}
-                        <ArrowRight className="h-4 w-4" />
-                      </span>
-                    </Button>
+                    <div className="pt-2 lg:pt-0">
+                      <Button
+                        size="lg"
+                        className="h-12 w-full rounded-full !bg-[rgb(4,120,87)] px-5 !text-white transition hover:!bg-[rgb(4,120,87)] hover:brightness-105"
+                        type="submit"
+                        disabled={isPasswordLoggingIn}
+                      >
+                        <span className="flex items-center gap-2">
+                          {isPasswordLoggingIn
+                            ? t("login.loggingIn")
+                            : t("login.loginAndGo")}
+                          <ArrowRight className="h-4 w-4" />
+                        </span>
+                      </Button>
+                    </div>
 
                     <button
                       type="button"

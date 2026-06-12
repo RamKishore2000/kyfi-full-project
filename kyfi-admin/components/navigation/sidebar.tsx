@@ -94,17 +94,11 @@ export function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r bg-card/80 px-4 py-5 backdrop-blur lg:block">
       <Link href="/dashboard" className="mb-8 flex items-center gap-3 px-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
-          <Leaf className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-base font-semibold leading-5 text-primary">
-            KYFI Admin
-          </p>
-          <p className="text-xs font-normal leading-5 text-muted-foreground">
-            {t("sidebar.subtitle")}
-          </p>
-        </div>
+        <img
+          src="/kyfi-logo.png"
+          alt="KYFI Admin"
+          className="h-20 w-auto object-contain"
+        />
       </Link>
       <nav className="space-y-1">
         {links

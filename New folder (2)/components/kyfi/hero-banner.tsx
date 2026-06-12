@@ -14,7 +14,7 @@ export function HeroBanner() {
   const [banner, setBanner] = useState<SiteBannerRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileSlideIndex, setMobileSlideIndex] = useState(0);
-  const mobileSliderRef = useRef<HTMLDivElement | null>(null);
+  const mobileTouchStartXRef = useRef<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -75,40 +75,45 @@ export function HeroBanner() {
   const visibleMobileImages = loading ? ["/hero-banner.png"] : mobileImages;
 
   useEffect(() => {
+    setMobileSlideIndex((current) =>
+      current >= visibleMobileImages.length ? 0 : current,
+    );
+  }, [visibleMobileImages.length]);
+
+  useEffect(() => {
     if (visibleMobileImages.length <= 1) return;
 
     const autoSlideTimer = window.setInterval(() => {
-      const slider = mobileSliderRef.current;
-      if (!slider) return;
-
-      const nextIndex = (mobileSlideIndex + 1) % visibleMobileImages.length;
-      slider.scrollTo({
-        left: slider.clientWidth * nextIndex,
-        behavior: "smooth",
-      });
-      setMobileSlideIndex(nextIndex);
+      setMobileSlideIndex((current) => (current + 1) % visibleMobileImages.length);
     }, 3500);
 
     return () => window.clearInterval(autoSlideTimer);
-  }, [mobileSlideIndex, visibleMobileImages.length]);
+  }, [visibleMobileImages.length]);
 
   function scrollToMobileSlide(index: number) {
-    const slider = mobileSliderRef.current;
-    if (!slider) return;
-
-    slider.scrollTo({
-      left: slider.clientWidth * index,
-      behavior: "smooth",
-    });
     setMobileSlideIndex(index);
   }
 
-  function handleMobileSliderScroll() {
-    const slider = mobileSliderRef.current;
-    if (!slider) return;
+  function handleMobileTouchStart(clientX: number) {
+    mobileTouchStartXRef.current = clientX;
+  }
 
-    const nextIndex = Math.round(slider.scrollLeft / slider.clientWidth);
-    setMobileSlideIndex(Math.min(nextIndex, visibleMobileImages.length - 1));
+  function handleMobileTouchEnd(clientX: number) {
+    const startX = mobileTouchStartXRef.current;
+    mobileTouchStartXRef.current = null;
+
+    if (startX === null || visibleMobileImages.length <= 1) return;
+
+    const deltaX = startX - clientX;
+    if (Math.abs(deltaX) < 36) return;
+
+    setMobileSlideIndex((current) => {
+      if (deltaX > 0) {
+        return (current + 1) % visibleMobileImages.length;
+      }
+
+      return (current - 1 + visibleMobileImages.length) % visibleMobileImages.length;
+    });
   }
 
   const heroTitle =
@@ -160,23 +165,34 @@ export function HeroBanner() {
           >
             <div className="relative overflow-hidden border-y border-white/70 shadow-none sm:rounded-[2rem] sm:border sm:shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
               <div
-                ref={mobileSliderRef}
-                onScroll={handleMobileSliderScroll}
-                className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="overflow-hidden"
+                onTouchStart={(event) =>
+                  handleMobileTouchStart(event.touches[0]?.clientX ?? 0)
+                }
+                onTouchEnd={(event) =>
+                  handleMobileTouchEnd(event.changedTouches[0]?.clientX ?? 0)
+                }
               >
-                {visibleMobileImages.map((imageUrl, index) => (
-                  <div key={`${imageUrl}-${index}`} className="min-w-full snap-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageUrl}
-                      alt={`${t("hero.title")} ${index + 1}`}
-                      className="block h-auto w-full object-cover"
-                      onError={(event) => {
-                        event.currentTarget.src = "/hero-banner.png";
-                      }}
-                    />
-                  </div>
-                ))}
+                <div
+                  className="flex transition-transform duration-500 ease-out"
+                  style={{
+                    transform: `translateX(-${mobileSlideIndex * 100}%)`,
+                  }}
+                >
+                  {visibleMobileImages.map((imageUrl, index) => (
+                    <div key={`${imageUrl}-${index}`} className="min-w-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageUrl}
+                        alt={`${t("hero.title")} ${index + 1}`}
+                        className="block h-auto w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.src = "/hero-banner.png";
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {visibleMobileImages.length > 1 ? (
@@ -188,11 +204,12 @@ export function HeroBanner() {
                       aria-label={`Show mobile banner ${index + 1}`}
                       onClick={() => scrollToMobileSlide(index)}
                       className={[
-                        "h-2 rounded-full transition-all duration-200",
+                        "!min-h-0 rounded-full p-0 transition-all duration-200",
                         mobileSlideIndex === index
-                          ? "w-6 bg-emerald-700"
-                          : "w-2 bg-white/80",
+                          ? "h-2 w-6 bg-emerald-700"
+                          : "h-2 w-2 bg-white/80",
                       ].join(" ")}
+                      style={{ minHeight: "0.5rem" }}
                     />
                   ))}
                 </div>

@@ -14,7 +14,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Leaf,
   Plus,
   X,
 } from "lucide-react";
@@ -764,8 +763,8 @@ function RegisterPageContent() {
   const villageDisabled = !selectedMandal;
 
   return (
-    <main className="min-h-screen bg-[#F8F7F4] px-2 py-2 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
-      <section className="grid min-h-[calc(100vh-1rem)] overflow-hidden rounded-[28px] bg-[#F8F7F4] shadow-[0_0_0_1px_rgba(17,24,39,0.04)] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px]">
+    <main className="min-h-screen bg-[#F8F7F4] px-0 py-0 lg:px-6 lg:py-6">
+      <section className="grid min-h-screen overflow-hidden bg-[#F8F7F4] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px] lg:shadow-[0_0_0_1px_rgba(17,24,39,0.04)]">
         <div className="order-2 hidden min-h-[280px] lg:order-1 lg:block lg:min-h-[calc(100vh-3rem)]">
           <div className="relative h-full w-full overflow-hidden">
             <img
@@ -776,27 +775,30 @@ function RegisterPageContent() {
           </div>
         </div>
 
-        <div className="order-1 flex min-h-[calc(100vh-1rem)] items-start justify-center overflow-hidden bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] px-4 py-2 lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:px-6">
+        <div className="order-1 flex min-h-screen items-start justify-center overflow-y-auto bg-[#F8F7F4] px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] lg:px-6 lg:py-2">
           <div className="no-scrollbar w-full max-w-[34rem] lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2">
-            <div className="space-y-3 px-1 py-1 sm:px-2 sm:py-2">
-              <div className="flex items-start justify-between gap-3">
+            <div className="space-y-4 px-0 py-0 lg:space-y-3 lg:px-1 lg:py-1">
+              <div className="flex items-start justify-center gap-3 lg:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[rgb(4,120,87)] text-white">
-                    <Leaf className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-manrope text-[1.45rem] font-black leading-none tracking-[-0.05em] text-[rgb(4,120,87)]">
-                      KYFI
-                    </p>
-                    <p className="hidden font-manrope text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-slate-500 lg:block">
-                      KNOW YOUR FARMER INFORMATION
-                    </p>
-                  </div>
+                  <img
+                    src="/kyfi-logo.png"
+                    alt="KYFI"
+                    className="h-16 w-auto object-contain lg:h-20"
+                  />
                 </div>
 
               </div>
 
-              <p className="font-manrope text-[0.9rem] font-medium tracking-[0.02em] text-slate-700 lg:text-[0.88rem]">
+              <div className="text-center lg:hidden">
+                <h1 className="font-manrope text-[2rem] font-black leading-[1.05] tracking-[-0.055em] text-slate-950">
+                  Create account
+                </h1>
+                <p className="mt-2 font-manrope text-[0.86rem] font-semibold uppercase tracking-[0.18em] text-[rgb(4,120,87)]">
+                  Dealer access
+                </p>
+              </div>
+
+              <p className="hidden font-manrope text-[0.9rem] font-medium tracking-[0.02em] text-slate-700 lg:block lg:text-[0.88rem]">
                 {t("register.dealerAccess")}
               </p>
 

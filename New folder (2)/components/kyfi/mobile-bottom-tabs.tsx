@@ -45,7 +45,7 @@ export function MobileBottomTabs() {
         className={cn(
           "fixed z-50 border border-slate-200/80 bg-white/95 px-2 pt-2 shadow-[0_-12px_40px_rgba(15,23,42,0.12)] backdrop-blur-2xl",
           isNative
-            ? "inset-x-0 bottom-0 rounded-t-[1.25rem] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+            ? "inset-x-0 bottom-0 rounded-t-[1.15rem] pb-[max(0.2rem,env(safe-area-inset-bottom))]"
             : "inset-x-3 bottom-3 rounded-[1.5rem] pb-[max(0.35rem,env(safe-area-inset-bottom))] md:hidden",
         )}
       >
@@ -64,7 +64,7 @@ export function MobileBottomTabs() {
                   router.push((isNative && tab.href === "/" ? "/dashboard" : tab.href) as any)
                 }
                 className={cn(
-                  "flex min-h-[3.35rem] flex-col items-center justify-center gap-0.5 rounded-[1rem] px-1.5 py-1.5 text-center transition",
+                  "flex min-h-[3.05rem] flex-col items-center justify-center gap-0.5 rounded-[0.95rem] px-1.5 py-1 text-center transition",
                   active
                     ? "text-emerald-800"
                     : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-800",
@@ -73,15 +73,15 @@ export function MobileBottomTabs() {
               >
                 <span
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-[0.9rem] transition",
+                    "flex h-7 w-7 items-center justify-center rounded-[0.85rem] transition",
                     active
                       ? "bg-emerald-50 text-emerald-800"
                       : "bg-transparent text-current",
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4.5 w-4.5" />
                 </span>
-                <span className="w-full text-[0.64rem] font-semibold leading-tight tracking-[-0.01em]">
+                <span className="w-full text-[0.68rem] font-semibold leading-tight tracking-[-0.01em]">
                   {t(tab.labelKey)}
                 </span>
                 {active ? (
@@ -100,7 +100,7 @@ export function MobileBottomTabs() {
       </nav>
 
       <div
-        className={cn(isNative ? "h-[5.35rem]" : "h-[6.5rem] md:hidden")}
+        className={cn(isNative ? "h-[4.9rem]" : "h-[6.5rem] md:hidden")}
         aria-hidden="true"
       />
     </>
