@@ -16,15 +16,16 @@ export function NativeStatusBar() {
     document.body.classList.add("kyfi-native-app");
     document.documentElement.classList.add("kyfi-native-root");
 
-    const isLoginPage = pathname?.startsWith("/login");
+    const isAuthPage =
+      pathname?.startsWith("/login") || pathname?.startsWith("/register");
 
-    document.body.classList.toggle("kyfi-native-login", Boolean(isLoginPage));
+    document.body.classList.toggle("kyfi-native-login", Boolean(isAuthPage));
     document.documentElement.classList.toggle(
       "kyfi-native-login-root",
-      Boolean(isLoginPage),
+      Boolean(isAuthPage),
     );
 
-    const backgroundColor = isLoginPage ? "#F8F7F4" : "#F6FAF7";
+    const backgroundColor = isAuthPage ? "#F8F7F4" : "#F6FAF7";
 
     void StatusBar.setOverlaysWebView({ overlay: false });
     void StatusBar.setBackgroundColor({ color: backgroundColor });

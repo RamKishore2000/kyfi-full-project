@@ -128,8 +128,8 @@ const english: Dictionary = {
   "footer.browser": "Browser",
   "footer.privacy": "Privacy Policy",
   "footer.terms": "Terms of Use",
-  "footer.apTs": "Andhra Pradesh & Telangana",
-  "footer.support": "Support for dealers",
+  "footer.apTs": "Service region: Andhra Pradesh & Telangana",
+  "footer.support": "Support: smartdealers916@gmail.com | 8886000815",
   "footer.description":
     "A trusted farmer credit reputation platform for pesticide dealers across Andhra Pradesh and Telangana.",
   "footer.copyright": "© 2026 KYFI. All rights reserved.",
@@ -625,8 +625,8 @@ const telugu: Dictionary = {
   "footer.browser": "బ్రౌజర్",
   "footer.privacy": "గోప్యతా విధానం",
   "footer.terms": "వినియోగ నిబంధనలు",
-  "footer.apTs": "ఆంధ్రప్రదేశ్ & తెలంగాణ",
-  "footer.support": "డీలర్ల కోసం మద్దతు",
+  "footer.apTs": "సేవా ప్రాంతం: ఆంధ్రప్రదేశ్ & తెలంగాణ",
+  "footer.support": "సపోర్ట్: smartdealers916@gmail.com | 8886000815",
   "footer.description":
     "ఆంధ్రప్రదేశ్ మరియు తెలంగాణ అంతటా పీడన మందుల డీలర్ల కోసం నమ్మకమైన రైతు క్రెడిట్ ప్రతిష్ఠా ప్లాట్‌ఫారమ్.",
   "login.dealerAccess": "డీలర్ యాక్సెస్",

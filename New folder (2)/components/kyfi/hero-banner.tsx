@@ -163,7 +163,7 @@ export function HeroBanner() {
             transition={{ duration: 0.45 }}
             className="mb-0"
           >
-            <div className="relative overflow-hidden border-y border-white/70 shadow-none sm:rounded-[2rem] sm:border sm:shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
+            <div className="relative overflow-hidden rounded-[1.15rem] border-y border-white/70 shadow-none sm:rounded-[2rem] sm:border sm:shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
               <div
                 className="overflow-hidden"
                 onTouchStart={(event) =>
@@ -195,26 +195,26 @@ export function HeroBanner() {
                 </div>
               </div>
 
-              {visibleMobileImages.length > 1 ? (
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-                  {visibleMobileImages.map((_, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      aria-label={`Show mobile banner ${index + 1}`}
-                      onClick={() => scrollToMobileSlide(index)}
-                      className={[
-                        "!min-h-0 rounded-full p-0 transition-all duration-200",
-                        mobileSlideIndex === index
-                          ? "h-2 w-6 bg-emerald-700"
-                          : "h-2 w-2 bg-white/80",
-                      ].join(" ")}
-                      style={{ minHeight: "0.5rem" }}
-                    />
-                  ))}
-                </div>
-              ) : null}
             </div>
+            {visibleMobileImages.length > 1 ? (
+              <div className="mt-3 flex justify-center gap-1.5">
+                {visibleMobileImages.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    aria-label={`Show mobile banner ${index + 1}`}
+                    onClick={() => scrollToMobileSlide(index)}
+                    className={[
+                      "!min-h-0 rounded-full p-0 transition-all duration-200",
+                      mobileSlideIndex === index
+                        ? "h-2 w-6 bg-emerald-700"
+                        : "h-2 w-2 bg-slate-300",
+                    ].join(" ")}
+                    style={{ minHeight: "0.5rem" }}
+                  />
+                ))}
+              </div>
+            ) : null}
           </motion.div>
         </div>
 

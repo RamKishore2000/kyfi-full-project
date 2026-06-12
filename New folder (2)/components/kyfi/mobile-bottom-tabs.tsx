@@ -33,7 +33,14 @@ export function MobileBottomTabs() {
     pathname?.startsWith("/add-farmer-status") ||
     pathname?.startsWith("/my-records") ||
     pathname?.startsWith("/profile") ||
-    pathname?.startsWith("/settings");
+    pathname?.startsWith("/settings") ||
+    pathname?.startsWith("/privacy-policy") ||
+    pathname?.startsWith("/terms-of-use") ||
+    pathname?.startsWith("/refund-policy") ||
+    pathname?.startsWith("/cancellation-policy") ||
+    pathname?.startsWith("/digital-service-delivery") ||
+    pathname?.startsWith("/contact-support") ||
+    pathname?.startsWith("/subscription-pricing");
 
   if (!visible) {
     return null;

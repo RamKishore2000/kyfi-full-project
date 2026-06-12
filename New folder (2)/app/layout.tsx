@@ -7,6 +7,7 @@ import "@fontsource/manrope/700.css";
 import "@fontsource/manrope/800.css";
 import "./globals.css";
 import { NativeStatusBar } from "@/components/kyfi/native-status-bar";
+import { NativeBackHandler } from "@/components/kyfi/native-back-handler";
 import { LanguageProvider } from "@/components/kyfi/language-provider";
 import { MobileBottomTabs } from "@/components/kyfi/mobile-bottom-tabs";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <NativeStatusBar />
+          <NativeBackHandler />
           {children}
           <MobileBottomTabs />
         </LanguageProvider>

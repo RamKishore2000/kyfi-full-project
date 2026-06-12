@@ -98,7 +98,7 @@ export function HowItWorks() {
         <h2 className="mt-4 font-manrope text-[clamp(1.9rem,3vw,3rem)] font-extrabold tracking-[-0.04em] text-slate-900 lg:whitespace-nowrap">
           {t("how.subtitle")}
         </h2>
-        <p className="mt-4 max-w-2xl font-manrope text-[1rem] leading-8 text-slate-600">
+        <p className="mt-4 hidden max-w-2xl font-manrope text-[1rem] leading-8 text-slate-600 md:block">
           {t("how.footer")}
         </p>
       </motion.div>
@@ -290,7 +290,7 @@ export function HowItWorks() {
         </motion.div>
       </div>
 
-      <div className="mt-5 flex items-center gap-2 font-manrope text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+      <div className="mt-5 hidden items-center gap-2 font-manrope text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:flex">
         <ArrowRight className="h-4 w-4 text-emerald-600" />
         {t("how.footer")}
       </div>

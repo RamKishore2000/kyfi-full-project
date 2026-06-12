@@ -59,6 +59,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.native-only-policy-links {
+  display: none;
+}
+
 @layer utilities {
   .type-hero {
     font-family: "Manrope", ui-sans-serif, system-ui;
@@ -204,6 +208,10 @@ body {
 }
 
 @media (max-width: 767px) {
+  .native-only-policy-links {
+    display: block;
+  }
+
   body {
     background:
       radial-gradient(
@@ -469,6 +477,10 @@ body {
 
   body.kyfi-native-app footer {
     display: none !important;
+  }
+
+  body.kyfi-native-app .native-only-policy-links {
+    display: block;
   }
 
   body.kyfi-native-app main:not(.kyfi-shell) {

@@ -1,0 +1,126 @@
+KYFI - Details Required From Client For Razorpay Account Creation
+=================================================================
+
+Purpose
+-------
+We will create the Razorpay account for KYFI subscription payments.
+Please provide the below business details and documents so we can complete the
+Razorpay account setup and KYC activation.
+
+
+1. Basic Business Details Required
+----------------------------------
+Please provide:
+
+1. Business / company / shop name.
+2. Owner / authorized person full name.
+3. Business mobile number.
+4. Business email ID.
+5. Business address.
+6. City.
+7. State.
+8. PIN code.
+9. Business type:
+   - Individual
+   - Proprietorship
+   - Partnership
+   - LLP
+   - Private Limited Company
+10. GST number, if available.
+11. PAN number.
+
+
+2. KYFI Payment Details
+-----------------------
+Please confirm:
+
+1. Final yearly subscription price.
+2. Business name to show on Razorpay payment page.
+3. Support email to show to customers.
+4. Support mobile number to show to customers.
+
+
+3. Bank Details Required For Settlement
+---------------------------------------
+Please provide bank details where Razorpay should send payment settlements:
+
+1. Account holder name.
+2. Bank account number.
+3. IFSC code.
+4. Bank name.
+5. Branch name.
+6. Cancelled cheque or bank passbook front page or recent bank statement.
+
+
+4. Documents Required Based On Business Type
+--------------------------------------------
+Please provide documents based on your business type.
+
+
+A. If Individual / Proprietorship
+---------------------------------
+Please provide:
+
+1. Owner PAN card.
+2. Owner Aadhaar card.
+3. GST certificate, if GST registered.
+4. Shop / business registration proof, if available.
+5. Bank proof:
+   - Cancelled cheque, or
+   - Bank statement, or
+   - Passbook front page.
+6. Business address proof, if available.
+
+
+C. If LLP / Private Limited Company
+-----------------------------------
+Please provide:
+
+1. Company PAN card.
+2. Certificate of Incorporation.
+3. GST certificate, if GST registered.
+4. MOA / AOA or LLP agreement.
+5. Board resolution / authorization letter, if available.
+6. PAN card of authorized director/signatory.
+7. Aadhaar card of authorized director/signatory.
+8. Bank proof in company/LLP name.
+9. Registered office address proof.
+
+
+5. OTP / Verification Requirement
+---------------------------------
+During Razorpay account creation and KYC verification, OTP may come to:
+
+1. Registered business mobile number.
+2. Registered business email ID.
+3. Aadhaar-linked mobile number, if Aadhaar verification is required.
+
+Please be available to share OTP during account setup.
+
+
+7. Final Checklist To Send Us
+-----------------------------
+Please send:
+
+1. Business name.
+2. Owner/authorized person name.
+3. Business mobile number.
+4. Business email ID.
+5. Business address.
+6. Business type.
+7. PAN number and PAN card copy.
+8. Aadhaar card copy of owner/authorized person.
+9. GST certificate, if available.
+10. Bank account details.
+11. Bank proof/cancelled cheque.
+12. Business registration proof, if available.
+13. Final yearly subscription price.
+14. Support email.
+15. Support mobile number.
+
+
+Important Note
+--------------
+Razorpay may ask for additional documents during KYC review depending on the
+business type and compliance checks. If Razorpay asks for any extra document, we
+will inform you immediately.

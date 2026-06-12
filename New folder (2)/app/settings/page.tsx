@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  BadgeIndianRupee,
+  FileCheck2,
+  Headphones,
+  RefreshCcw,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
 import { Footer } from "@/components/kyfi/footer";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
 import { AppBackButton } from "@/components/kyfi/app-back-button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
 import { fetchCurrentDealer, updateDealerLanguage } from "@/lib/api/profile";
@@ -32,6 +39,39 @@ export default function SettingsPage() {
   const showToast = (nextMessage: string, tone: "success" | "error" = "success") => {
     setToast({ open: true, message: nextMessage, tone });
   };
+
+  const policyLinks = [
+    {
+      label: "Privacy Policy",
+      href: "/privacy-policy",
+      icon: ShieldCheck,
+    },
+    {
+      label: "Terms of Use",
+      href: "/terms-of-use",
+      icon: FileCheck2,
+    },
+    {
+      label: "Refund Policy",
+      href: "/refund-policy",
+      icon: BadgeIndianRupee,
+    },
+    {
+      label: "Cancellation",
+      href: "/cancellation-policy",
+      icon: RefreshCcw,
+    },
+    {
+      label: "Digital Delivery",
+      href: "/digital-service-delivery",
+      icon: Truck,
+    },
+    {
+      label: "Contact Support",
+      href: "/contact-support",
+      icon: Headphones,
+    },
+  ];
 
   useEffect(() => {
     const loadLanguage = async () => {
@@ -96,9 +136,37 @@ export default function SettingsPage() {
             </div>
           ) : null}
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="overflow-hidden border-white/80 bg-white/85 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-              <CardContent className="space-y-4 p-6">
+          <div className="grid gap-8 lg:grid-cols-2">
+            <section className="native-only-policy-links space-y-4 lg:col-span-2">
+                <div className="border-l-4 border-[rgb(4,120,87)] pl-4">
+                  <p className="font-manrope type-nav text-slate-900">Policies</p>
+                  <h2 className="mt-1 font-manrope type-card text-slate-900">
+                    KYFI support and policy links
+                  </h2>
+                  <p className="mt-2 font-manrope type-body text-slate-600">
+                    Access KYFI payment, refund, and support information inside the app.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {policyLinks.map(({ label, href, icon: Icon }) => (
+                    <button
+                      key={href}
+                      type="button"
+                      onClick={() => router.push(href as any)}
+                      className="flex min-h-[4.35rem] items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-left transition hover:border-emerald-200 hover:bg-emerald-50"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-[rgb(4,120,87)]">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="font-manrope text-[0.78rem] font-bold leading-4 text-slate-900">
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+            </section>
+
+            <section className="space-y-4 border-l-4 border-[rgb(4,120,87)] pl-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-manrope type-nav text-slate-900">{t("settings.language")}</p>
@@ -142,11 +210,9 @@ export default function SettingsPage() {
                     </p>
                   </button>
                 </div>
-              </CardContent>
-            </Card>
+            </section>
 
-            <Card className="overflow-hidden border-white/80 bg-white/85 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-              <CardContent className="space-y-4 p-6">
+            <section className="space-y-4 border-l-4 border-[rgb(4,120,87)] pl-4">
                 <div>
                   <p className="font-manrope type-nav text-slate-900">{t("settings.changePassword")}</p>
                   <h2 className="mt-1 font-manrope type-card text-slate-900">
@@ -162,8 +228,8 @@ export default function SettingsPage() {
                 >
                   {t("settings.submitPassword")}
                 </Button>
-              </CardContent>
-            </Card>
+            </section>
+
           </div>
         </section>
 

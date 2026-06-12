@@ -8,6 +8,7 @@ import { DashboardPreview } from "@/components/kyfi/dashboard-preview";
 import { StatusCard } from "@/components/kyfi/status-card";
 import { CTASection } from "@/components/kyfi/cta-section";
 import { Footer } from "@/components/kyfi/footer";
+import { SubscriptionSummary } from "@/components/kyfi/subscription-summary";
 import { BarChart3, CirclePlus, Search, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
@@ -148,6 +149,8 @@ export default function DashboardPage() {
             </Link>
           </div>
         </section>
+
+        <SubscriptionSummary />
 
         <div className="hidden md:block">
           <DashboardPreview />
