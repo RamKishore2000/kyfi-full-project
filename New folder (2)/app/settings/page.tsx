@@ -124,10 +124,19 @@ export default function SettingsPage() {
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-3xl">
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
-              {t("settings.title")}
+              <span className="hidden kyfi-native-inline">App preferences</span>
+              <span className="kyfi-browser-inline">{t("settings.title")}</span>
             </p>
-            <h1 className="mt-3 font-manrope type-section text-slate-900">{t("settings.title")}</h1>
-            <p className="mt-4 font-manrope type-body text-slate-600">{t("settings.description")}</p>
+            <h1 className="mt-3 font-manrope type-section text-slate-900">
+              <span className="hidden kyfi-native-inline">Settings</span>
+              <span className="kyfi-browser-inline">{t("settings.title")}</span>
+            </h1>
+            <p className="mt-4 font-manrope type-body text-slate-600">
+              <span className="hidden kyfi-native-inline">
+                Manage language, security, policies, and support.
+              </span>
+              <span className="kyfi-browser-inline">{t("settings.description")}</span>
+            </p>
           </div>
 
           {error ? (
@@ -137,8 +146,8 @@ export default function SettingsPage() {
           ) : null}
 
           <div className="grid gap-8 lg:grid-cols-2">
-            <section className="native-only-policy-links space-y-4 lg:col-span-2">
-                <div className="border-l-4 border-[rgb(4,120,87)] pl-4">
+            <section className="kyfi-settings-accent-card native-only-policy-links space-y-4 lg:col-span-2">
+                <div className="kyfi-settings-accent-content border-l-4 border-[rgb(4,120,87)] pl-4">
                   <p className="font-manrope type-nav text-slate-900">Policies</p>
                   <h2 className="mt-1 font-manrope type-card text-slate-900">
                     KYFI support and policy links
@@ -166,7 +175,7 @@ export default function SettingsPage() {
                 </div>
             </section>
 
-            <section className="space-y-4 border-l-4 border-[rgb(4,120,87)] pl-4">
+            <section className="kyfi-settings-accent-card space-y-4 border-l-4 border-[rgb(4,120,87)] pl-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-manrope type-nav text-slate-900">{t("settings.language")}</p>
@@ -212,7 +221,7 @@ export default function SettingsPage() {
                 </div>
             </section>
 
-            <section className="space-y-4 border-l-4 border-[rgb(4,120,87)] pl-4">
+            <section className="kyfi-settings-accent-card space-y-4 border-l-4 border-[rgb(4,120,87)] pl-4">
                 <div>
                   <p className="font-manrope type-nav text-slate-900">{t("settings.changePassword")}</p>
                   <h2 className="mt-1 font-manrope type-card text-slate-900">

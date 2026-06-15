@@ -763,7 +763,7 @@ function RegisterPageContent() {
   const villageDisabled = !selectedMandal;
 
   return (
-    <main className="min-h-screen bg-[#F8F7F4] px-0 py-0 lg:px-6 lg:py-6">
+    <main className="kyfi-auth-page min-h-screen bg-[#F8F7F4] px-0 py-0 lg:px-6 lg:py-6">
       <section className="grid min-h-screen overflow-hidden bg-[#F8F7F4] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px] lg:shadow-[0_0_0_1px_rgba(17,24,39,0.04)]">
         <div className="order-2 hidden min-h-[280px] lg:order-1 lg:block lg:min-h-[calc(100vh-3rem)]">
           <div className="relative h-full w-full overflow-hidden">
@@ -783,7 +783,7 @@ function RegisterPageContent() {
                   <img
                     src="/kyfi-logo.png"
                     alt="KYFI"
-                    className="h-16 w-auto object-contain lg:h-20"
+                    className="h-16 w-auto object-contain lg:h-14"
                   />
                 </div>
 
@@ -1310,11 +1310,11 @@ function RegisterPageContent() {
 
       {locationModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeLocationModal}
         >
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="kyfi-location-modal-panel w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
@@ -1331,7 +1331,7 @@ function RegisterPageContent() {
               <button
                 type="button"
                 onClick={closeLocationModal}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
+                className="kyfi-location-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />

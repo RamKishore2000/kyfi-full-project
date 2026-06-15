@@ -1374,12 +1374,12 @@ export function SearchFarmerPreview() {
       </section>
       {locationModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeLocationModal}
         >
           {" "}
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="kyfi-location-modal-panel w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
             {" "}
@@ -1403,7 +1403,7 @@ export function SearchFarmerPreview() {
               <button
                 type="button"
                 onClick={closeLocationModal}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
+                className="kyfi-location-modal-close inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:border-slate-200 sm:text-slate-600 sm:shadow-none"
                 aria-label="Close modal"
               >
                 {" "}

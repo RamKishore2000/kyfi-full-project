@@ -4,6 +4,7 @@ import { BarChart3, CirclePlus, Home, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
@@ -24,7 +25,92 @@ export function MobileBottomTabs() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useKyfiLanguage();
-  const isNative = Capacitor.isNativePlatform();
+  const [platformState, setPlatformState] = useState({
+    resolved: false,
+    isNative: false,
+  });
+  const isNative = platformState.isNative;
+  const [isKeyboardActive, setIsKeyboardActive] = useState(false);
+  const [isNativeAuthenticated, setIsNativeAuthenticated] = useState(false);
+  const viewportHeightRef = useRef(0);
+
+  useEffect(() => {
+    setPlatformState({
+      resolved: true,
+      isNative: Capacitor.isNativePlatform(),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!platformState.resolved) {
+      return;
+    }
+
+    if (!isNative) {
+      setIsNativeAuthenticated(true);
+      return;
+    }
+
+    setIsNativeAuthenticated(
+      Boolean(window.localStorage.getItem("kyfi_token")),
+    );
+  }, [isNative, pathname, platformState.resolved]);
+
+  useEffect(() => {
+    if (!isNative) {
+      return;
+    }
+
+    const visualViewport = window.visualViewport;
+    viewportHeightRef.current = Math.max(
+      window.innerHeight,
+      visualViewport?.height ?? 0,
+    );
+
+    const isEditableElement = (element: Element | null) =>
+      element instanceof HTMLElement &&
+      element.matches("input, textarea, select, [contenteditable='true']");
+
+    const handleFocusIn = (event: FocusEvent) => {
+      if (isEditableElement(event.target as Element | null)) {
+        setIsKeyboardActive(true);
+      }
+    };
+
+    const handleFocusOut = () => {
+      window.setTimeout(() => {
+        setIsKeyboardActive(isEditableElement(document.activeElement));
+      }, 80);
+    };
+
+    const handleViewportResize = () => {
+      const currentHeight = visualViewport?.height ?? window.innerHeight;
+      const keyboardHeight = viewportHeightRef.current - currentHeight;
+
+      if (keyboardHeight > 120) {
+        setIsKeyboardActive(true);
+        return;
+      }
+
+      if (currentHeight > viewportHeightRef.current) {
+        viewportHeightRef.current = currentHeight;
+      }
+
+      setIsKeyboardActive(false);
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+    visualViewport?.addEventListener("resize", handleViewportResize);
+    window.addEventListener("resize", handleViewportResize);
+
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+      visualViewport?.removeEventListener("resize", handleViewportResize);
+      window.removeEventListener("resize", handleViewportResize);
+    };
+  }, [isNative]);
 
   const visible =
     pathname === "/" ||
@@ -42,7 +128,17 @@ export function MobileBottomTabs() {
     pathname?.startsWith("/contact-support") ||
     pathname?.startsWith("/subscription-pricing");
 
-  if (!visible) {
+  const isNativeEntryRoute = isNative && pathname === "/";
+  const isAuthenticationRoute =
+    pathname?.startsWith("/login") || pathname?.startsWith("/register");
+
+  if (
+    !platformState.resolved ||
+    !visible ||
+    isAuthenticationRoute ||
+    isNativeEntryRoute ||
+    (isNative && (!isNativeAuthenticated || isKeyboardActive))
+  ) {
     return null;
   }
 
@@ -50,7 +146,7 @@ export function MobileBottomTabs() {
     <>
       <nav
         className={cn(
-          "fixed z-50 border border-slate-200/80 bg-white/95 px-2 pt-2 shadow-[0_-12px_40px_rgba(15,23,42,0.12)] backdrop-blur-2xl",
+          "kyfi-mobile-bottom-tabs fixed z-50 border border-slate-200/80 bg-white/95 px-2 pt-2 shadow-[0_-12px_40px_rgba(15,23,42,0.12)] backdrop-blur-2xl",
           isNative
             ? "inset-x-0 bottom-0 rounded-t-[1.15rem] pb-[max(0.2rem,env(safe-area-inset-bottom))]"
             : "inset-x-3 bottom-3 rounded-[1.5rem] pb-[max(0.35rem,env(safe-area-inset-bottom))] md:hidden",

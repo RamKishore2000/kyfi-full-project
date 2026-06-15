@@ -15,6 +15,8 @@ type DealerInfo = {
   id?: number;
   name?: string;
   mobile?: string;
+  subscriptionStatus?: string;
+  subscriptionExpiresAt?: string | null;
 };
 
 type SubscriptionCheckoutProps = {
@@ -94,6 +96,8 @@ function useDealerFromStorage(providedDealer?: DealerInfo | null) {
         id: Number(parsed.id || 0) || undefined,
         name: parsed.name,
         mobile: parsed.mobile,
+        subscriptionStatus: parsed.subscriptionStatus,
+        subscriptionExpiresAt: parsed.subscriptionExpiresAt,
       });
     } catch {
       setDealer(null);
@@ -156,6 +160,13 @@ export function SubscriptionCheckout({
   const canPay = Boolean(
     dealer?.id && dealer.mobile && subscription && yearlyPrice !== null,
   );
+  const subscriptionExpiry = dealer?.subscriptionExpiresAt
+    ? new Date(dealer.subscriptionExpiresAt)
+    : null;
+  const isRenewal =
+    Boolean(subscriptionExpiry) &&
+    !Number.isNaN(subscriptionExpiry?.getTime()) &&
+    subscriptionExpiry!.getTime() <= Date.now();
 
   const handleSuccess = () => {
     setMessage("Subscription activated successfully.");
@@ -279,8 +290,18 @@ export function SubscriptionCheckout({
             Subscription
           </p>
           <h2 className="font-manrope text-[1.15rem] font-extrabold tracking-[-0.05em] text-slate-950 sm:text-[1.4rem]">
-            Activate your yearly plan
+            {isRenewal ? "Renew your yearly plan" : "Activate your yearly plan"}
           </h2>
+          {isRenewal ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-semibold text-amber-900">
+                Your yearly plan has expired.
+              </p>
+              <p className="mt-1 text-sm leading-5 text-amber-800">
+                Please renew your subscription to continue using KYFI dealer features.
+              </p>
+            </div>
+          ) : null}
           <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-600">
             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
               {planTitle}
@@ -342,7 +363,7 @@ export function SubscriptionCheckout({
               "--tw-ring-color": KYFI_GREEN,
             } as CSSProperties}
           >
-            {paying ? "Processing..." : "Subscribe Now"}
+            {paying ? "Processing..." : isRenewal ? "Renew Now" : "Subscribe Now"}
           </Button>
         </div>
       </div>

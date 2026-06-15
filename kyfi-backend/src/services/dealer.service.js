@@ -1,6 +1,19 @@
 const bcrypt = require("bcrypt");
 const db = require("../config/db");
 
+function parseMysqlUtcDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const normalized = String(value).trim().replace(" ", "T");
+  return new Date(/[zZ]|[+-]\d{2}:\d{2}$/.test(normalized) ? normalized : `${normalized}Z`);
+}
+
 async function hasDealerColumn(columnName) {
   const [rows] = await db.execute(
     `SELECT COUNT(*) AS count
@@ -325,6 +338,41 @@ const updateDealerSubscriptionById = async (dealerId, updates) => {
   return result.affectedRows > 0;
 };
 
+const normalizeDealerSubscription = async (dealer) => {
+  if (!dealer || dealer.role !== "dealer") {
+    return dealer;
+  }
+
+  const status = String(dealer.subscription_status || "inactive").toLowerCase();
+  if (status !== "active") {
+    return dealer;
+  }
+
+  const expiresAt = parseMysqlUtcDate(dealer.subscription_expires_at);
+  const hasValidExpiry =
+    expiresAt &&
+    !Number.isNaN(expiresAt.getTime()) &&
+    expiresAt.getTime() > Date.now();
+
+  if (hasValidExpiry) {
+    return dealer;
+  }
+
+  await updateDealerSubscriptionById(dealer.id, {
+    subscriptionStatus: "inactive",
+  });
+
+  return {
+    ...dealer,
+    subscription_status: "inactive",
+  };
+};
+
+const findDealerByIdWithSubscriptionCheck = async (dealerId) => {
+  const dealer = await findDealerById(dealerId);
+  return normalizeDealerSubscription(dealer);
+};
+
 const listDealers = async () => {
   await ensureDealerColumns();
   const [rows] = await db.execute(
@@ -353,6 +401,8 @@ module.exports = {
   updateDealerProfileById,
   updateDealerSettingsById,
   updateDealerSubscriptionById,
+  normalizeDealerSubscription,
+  findDealerByIdWithSubscriptionCheck,
   listDealers,
   updateDealerStatusById,
 };

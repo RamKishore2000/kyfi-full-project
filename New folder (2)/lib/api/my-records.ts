@@ -1,4 +1,5 @@
 import { KYFI_API_BASE_URL } from "@/lib/config";
+import { handleSubscriptionExpiry } from "@/lib/api/subscription-expiry";
 
 type ApiErrorPayload = {
   message?: string;
@@ -121,6 +122,7 @@ export async function fetchMyRecords() {
     | null;
 
   if (!response.ok) {
+    handleSubscriptionExpiry(data);
     throw new Error(
       (data as ApiErrorPayload | null)?.message || "Request failed",
     );

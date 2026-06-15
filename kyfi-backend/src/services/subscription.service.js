@@ -8,6 +8,20 @@ const {
 
 const TABLE_NAME = "subscription_settings";
 const WEBHOOK_EVENTS_TABLE = "razorpay_webhook_events";
+const SUBSCRIPTION_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
+
+function parseMysqlUtcDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const normalized = String(value).trim().replace(" ", "T");
+  return new Date(/[zZ]|[+-]\d{2}:\d{2}$/.test(normalized) ? normalized : `${normalized}Z`);
+}
 
 async function ensureSubscriptionTable() {
   await db.execute(`
@@ -195,7 +209,14 @@ async function activateDealerSubscription({ dealer, orderId, paymentId, signatur
 
   const settings = await getSubscriptionSettings();
   const startedAt = new Date();
-  const expiresAt = new Date(startedAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+  const currentExpiry = parseMysqlUtcDate(dealer.subscription_expires_at);
+  const renewalBase =
+    currentExpiry &&
+    !Number.isNaN(currentExpiry.getTime()) &&
+    currentExpiry.getTime() > startedAt.getTime()
+      ? currentExpiry
+      : startedAt;
+  const expiresAt = new Date(renewalBase.getTime() + SUBSCRIPTION_DURATION_MS);
   const updates = {
     subscriptionStatus: "active",
     subscriptionPlanName: settings.planName,
@@ -247,7 +268,8 @@ async function createSubscriptionOrder({ dealerId, mobile }) {
   });
 
   await updateDealerSubscriptionById(dealer.id, {
-    subscriptionStatus: "inactive",
+    subscriptionStatus:
+      dealer.subscription_status === "active" ? "active" : "inactive",
     subscriptionPlanName: settings.planName,
     subscriptionYearlyPrice: settings.yearlyPrice,
     subscriptionRazorpayOrderId: order.id,

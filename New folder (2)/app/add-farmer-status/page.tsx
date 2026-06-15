@@ -904,17 +904,17 @@ export default function AddFarmerStatusPage() {
           className="mb-8 max-w-3xl"
         >
           {" "}
-          <p className="font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
+          <p className="kyfi-add-native-kicker font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
             {" "}
             {isTe
               ? "డీలర్‌లకు మాత్రమే రికార్డు నమోదు"
               : "Dealer farmer record entry"}{" "}
           </p>{" "}
-          <h1 className="mt-3 font-manrope type-section text-slate-900">
+          <h1 className="kyfi-add-native-title mt-3 font-manrope type-section text-slate-900">
             {" "}
             {isTe ? "రైతు status జోడించండి" : "Add Farmer Record"}{" "}
           </h1>{" "}
-          <p className="mt-4 font-manrope type-body">
+          <p className="kyfi-add-native-description mt-4 font-manrope type-body">
             {" "}
             {isTe
               ? "Aadhaar ను ప్రధాన గుర్తింపుగా ఉపయోగించి సాధారణ రైతు రేప్యుటేషన్ రికార్డును సృష్టించండి."
@@ -1499,7 +1499,7 @@ export default function AddFarmerStatusPage() {
                     </p>
                   ) : null}{" "}
                 </form>{" "}
-                <div className="space-y-5 border-t border-slate-200 pt-6">
+                <div className="kyfi-add-farmer-help space-y-5 border-t border-slate-200 pt-6">
                   {" "}
                   <div className="flex items-center justify-between">
                     {" "}
@@ -1836,12 +1836,12 @@ export default function AddFarmerStatusPage() {
       ) : null}
       {locationModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeLocationModal}
         >
           {" "}
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="kyfi-location-modal-panel w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
             {" "}
@@ -1865,7 +1865,7 @@ export default function AddFarmerStatusPage() {
               <button
                 type="button"
                 onClick={closeLocationModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="kyfi-location-modal-close inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
                 aria-label="Close modal"
               >
                 {" "}

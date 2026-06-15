@@ -87,23 +87,27 @@ export function HowItWorks() {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+    <section className="kyfi-how-section mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.25 }}
-        className="mb-8 max-w-2xl"
+        className="kyfi-how-heading mb-8 max-w-2xl"
       >
-        <p className="kyfi-section-kicker">{t("how.title")}</p>
+        <p className="kyfi-section-kicker">
+          <span className="hidden kyfi-native-inline">How KYFI Works</span>
+          <span className="kyfi-browser-inline">{t("how.title")}</span>
+        </p>
         <h2 className="mt-4 font-manrope text-[clamp(1.9rem,3vw,3rem)] font-extrabold tracking-[-0.04em] text-slate-900 lg:whitespace-nowrap">
-          {t("how.subtitle")}
+          <span className="hidden kyfi-native-inline">Simple dealer workflow</span>
+          <span className="kyfi-browser-inline">{t("how.subtitle")}</span>
         </h2>
         <p className="mt-4 hidden max-w-2xl font-manrope text-[1rem] leading-8 text-slate-600 md:block">
           {t("how.footer")}
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-2 gap-3 md:hidden">
+      <div className="kyfi-how-mobile-grid grid grid-cols-2 gap-3 md:hidden">
         {steps.map((step, index) => {
           const Icon = step.icon;
 
@@ -116,22 +120,22 @@ export function HowItWorks() {
                 transition={{ delay: index * 0.06, duration: 0.35 }}
                 whileHover={{ y: -4, scale: 1.01 }}
               >
-                <Card className="h-[9rem] overflow-hidden border-white/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.07)]">
-                  <CardContent className="flex h-full flex-col justify-between p-4">
+                <Card className="kyfi-how-card h-[9rem] overflow-hidden border-white/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.07)]">
+                  <CardContent className="kyfi-how-card-content flex h-full flex-col justify-between p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                      <div className="kyfi-how-icon flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                         <Icon className="h-4.5 w-4.5" />
                       </div>
-                      <Badge variant="secondary" className="px-2 py-1 text-[0.62rem]">
+                      <Badge variant="secondary" className="kyfi-how-step-badge px-2 py-1 text-[0.62rem]">
                         Step {index + 1}
                       </Badge>
                     </div>
 
                     <div className="space-y-1">
-                      <h3 className="font-manrope text-[0.82rem] font-extrabold leading-tight tracking-[-0.02em] text-slate-900">
+                      <h3 className="kyfi-how-title font-manrope text-[0.82rem] font-extrabold leading-tight tracking-[-0.02em] text-slate-900">
                         {step.title}
                       </h3>
-                      <p className="line-clamp-2 font-manrope text-[0.68rem] font-medium leading-4 text-slate-600">
+                      <p className="kyfi-how-text line-clamp-2 font-manrope text-[0.68rem] font-medium leading-4 text-slate-600">
                         {step.text}
                       </p>
                     </div>

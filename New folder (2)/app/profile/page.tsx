@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { X } from "lucide-react";
 import { Footer } from "@/components/kyfi/footer";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
@@ -594,10 +595,19 @@ export default function ProfilePage() {
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-8 max-w-3xl">
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
-              {t("profile.title")}
+              <span className="hidden kyfi-native-inline">Dealer account</span>
+              <span className="kyfi-browser-inline">{t("profile.title")}</span>
             </p>
-            <h1 className="mt-3 font-manrope type-section text-slate-900">{t("profile.title")}</h1>
-            <p className="mt-4 font-manrope type-body text-slate-600">{t("profile.onlyApproved")}</p>
+            <h1 className="mt-3 font-manrope type-section text-slate-900">
+              <span className="hidden kyfi-native-inline">My Profile</span>
+              <span className="kyfi-browser-inline">{t("profile.title")}</span>
+            </h1>
+            <p className="mt-4 font-manrope type-body text-slate-600">
+              <span className="hidden kyfi-native-inline">
+                Keep your contact and location details up to date.
+              </span>
+              <span className="kyfi-browser-inline">{t("profile.onlyApproved")}</span>
+            </p>
           </div>
 
           {loading ? (
@@ -861,8 +871,8 @@ export default function ProfilePage() {
         </section>
 
         {mandalModalOpen ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-            <div className="w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
+          <div className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <div className="kyfi-location-modal-panel w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-manrope type-small uppercase tracking-[0.22em] text-emerald-700">
@@ -872,8 +882,8 @@ export default function ProfilePage() {
                     Create a mandal under an existing district
                   </h3>
                 </div>
-                <Button type="button" variant="ghost" className="h-10 w-10 rounded-full" onClick={closeMandalModal}>
-                  ×
+                <Button type="button" variant="ghost" className="kyfi-location-modal-close h-10 w-10 rounded-full" onClick={closeMandalModal}>
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
 
@@ -959,8 +969,8 @@ export default function ProfilePage() {
         ) : null}
 
         {villageModalOpen ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
-            <div className="w-full max-w-xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
+          <div className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <div className="kyfi-location-modal-panel w-full max-w-xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-manrope type-small uppercase tracking-[0.22em] text-emerald-700">
@@ -970,8 +980,8 @@ export default function ProfilePage() {
                     Create a village under the selected mandal
                   </h3>
                 </div>
-                <Button type="button" variant="ghost" className="h-10 w-10 rounded-full" onClick={closeVillageModal}>
-                  ×
+                <Button type="button" variant="ghost" className="kyfi-location-modal-close h-10 w-10 rounded-full" onClick={closeVillageModal}>
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
 

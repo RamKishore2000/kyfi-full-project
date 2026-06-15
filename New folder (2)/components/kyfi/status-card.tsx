@@ -42,15 +42,15 @@ export function StatusCard({
     >
       <Card
         className={cn(
-          "h-full border shadow-[0_16px_50px_rgba(15,23,42,0.08)] max-sm:rounded-[1rem] max-sm:shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
+          "kyfi-status-card h-full border shadow-[0_16px_50px_rgba(15,23,42,0.08)] max-sm:rounded-[1rem] max-sm:shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
           statusStyles[status],
         )}
       >
-        <CardContent className="space-y-5 p-6 max-sm:flex max-sm:h-[5.5rem] max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:space-y-1 max-sm:px-2 max-sm:py-2 max-sm:text-center">
+        <CardContent className="kyfi-status-card-content space-y-5 p-6 max-sm:flex max-sm:h-[5.5rem] max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:space-y-1 max-sm:px-2 max-sm:py-2 max-sm:text-center">
           <div className="flex items-center justify-between gap-3 max-sm:justify-center max-sm:gap-0">
             <Badge
               variant={badgeVariant}
-              className="max-sm:rounded-full max-sm:px-2.5 max-sm:py-1 max-sm:text-[0.58rem] max-sm:tracking-[0.08em]"
+              className="kyfi-status-badge max-sm:rounded-full max-sm:px-2.5 max-sm:py-1 max-sm:text-[0.58rem] max-sm:tracking-[0.08em]"
             >
               {status}
             </Badge>
@@ -70,7 +70,7 @@ export function StatusCard({
           <div className="space-y-2 max-sm:space-y-0">
             <h3
               className={cn(
-                "font-manrope text-[1.08rem] font-bold tracking-[-0.02em] lg:text-[1.15rem] max-sm:text-[0.7rem] max-sm:font-extrabold max-sm:leading-tight",
+                "kyfi-status-title font-manrope text-[1.08rem] font-bold tracking-[-0.02em] lg:text-[1.15rem] max-sm:text-[0.7rem] max-sm:font-extrabold max-sm:leading-tight",
                 status === "GREEN"
                   ? "text-emerald-900"
                   : status === "YELLOW"
@@ -82,7 +82,7 @@ export function StatusCard({
             </h3>
             <p
               className={cn(
-                "hidden font-manrope text-[0.95rem] leading-7 sm:block",
+                "kyfi-status-text hidden font-manrope text-[0.95rem] leading-7 sm:block",
                 status === "GREEN"
                   ? "text-emerald-900/70"
                   : status === "YELLOW"

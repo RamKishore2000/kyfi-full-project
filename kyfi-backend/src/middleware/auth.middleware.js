@@ -4,8 +4,11 @@ const {
   hasPermission,
   hasAnyPermission,
 } = require("../services/admin-access.service");
+const {
+  findDealerByIdWithSubscriptionCheck,
+} = require("../services/dealer.service");
 
-const requireAuth = (req, res, next) => {
+const requireAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   const secret = process.env.JWT_SECRET || "kyfi-secret-key";
@@ -20,8 +23,34 @@ const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 
-  req.user = payload;
-  return next();
+  try {
+    if (payload.role === "dealer") {
+      const dealer = await findDealerByIdWithSubscriptionCheck(payload.dealerId);
+
+      if (!dealer) {
+        return res.status(401).json({
+          success: false,
+          code: "DEALER_NOT_FOUND",
+          message: "Dealer account not found",
+        });
+      }
+
+      if (dealer.subscription_status !== "active") {
+        return res.status(403).json({
+          success: false,
+          code: "SUBSCRIPTION_EXPIRED",
+          message: "Your subscription has expired. Please renew your plan.",
+        });
+      }
+
+      req.dealer = dealer;
+    }
+
+    req.user = payload;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 };
 
 const requireAdmin = async (req, res, next) => {

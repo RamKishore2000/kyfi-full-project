@@ -244,7 +244,7 @@ export default function LoginPage() {
   ) : null;
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-[#F8F7F4] px-0 py-0 sm:px-4 sm:py-4 lg:min-h-screen lg:px-6 lg:py-6">
+    <main className="kyfi-auth-page flex min-h-[100dvh] items-center justify-center bg-[#F8F7F4] px-0 py-0 sm:px-4 sm:py-4 lg:min-h-screen lg:px-6 lg:py-6">
       <section className="grid min-h-[100dvh] w-full overflow-hidden bg-[#F8F7F4] lg:min-h-[calc(100vh-3rem)] lg:grid-cols-2 lg:rounded-[34px] lg:shadow-[0_0_0_1px_rgba(17,24,39,0.04)]">
         <div className="order-2 hidden min-h-[280px] lg:order-1 lg:block lg:min-h-[calc(100vh-3rem)]">
           <div className="relative h-full w-full overflow-hidden">

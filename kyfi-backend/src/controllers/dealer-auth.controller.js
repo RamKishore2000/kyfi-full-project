@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const {
   findDealerById,
   findDealerByMobile,
+  normalizeDealerSubscription,
   createDealer,
   updateDealerPasswordById,
   updateDealerProfileById,
@@ -118,11 +119,13 @@ const loginDealer = async (req, res, next) => {
   }
 
   try {
-    const dealer = await findDealerByMobile(mobile);
+    let dealer = await findDealerByMobile(mobile);
 
     if (!dealer) {
       return res.status(401).json({ message: "Invalid phone number or password" });
     }
+
+    dealer = await normalizeDealerSubscription(dealer);
 
     const secret = process.env.JWT_SECRET || "kyfi-secret-key";
     const loginMode = mode === "otp" ? "otp" : "password";
@@ -152,7 +155,8 @@ const loginDealer = async (req, res, next) => {
         secret,
       );
 
-      return res.status(200).json(buildDealerAuthResponse(otpResult.dealer, token, "OTP verified successfully"));
+      const normalizedDealer = await normalizeDealerSubscription(otpResult.dealer);
+      return res.status(200).json(buildDealerAuthResponse(normalizedDealer, token, "OTP verified successfully"));
     } else {
       if (!password) {
         return res.status(400).json({ message: "Password is required" });
@@ -250,12 +254,15 @@ const verifyDealerOtpRequest = async (req, res, next) => {
   }
 
   try {
-    const dealer = await findDealerByMobile(mobile);
+    let dealer = await findDealerByMobile(mobile);
     if (!dealer) {
       return res.status(401).json({ message: "Invalid phone number or OTP" });
     }
 
+    dealer = await normalizeDealerSubscription(dealer);
+
     const otpResult = await verifyDealerOtp(mobile, otp);
+    const normalizedDealer = await normalizeDealerSubscription(otpResult.dealer);
     const secret = process.env.JWT_SECRET || "kyfi-secret-key";
     const token = signJwt(
       {
@@ -271,27 +278,27 @@ const verifyDealerOtpRequest = async (req, res, next) => {
       message: "OTP verified successfully",
       token,
       dealer: {
-        id: otpResult.dealer.id,
-        role: otpResult.dealer.role,
-        name: otpResult.dealer.name,
-        mobile: otpResult.dealer.mobile,
-        shopName: otpResult.dealer.shop_name,
-        district: otpResult.dealer.district,
-        state: otpResult.dealer.state,
-        mandal: otpResult.dealer.mandal,
-        village: otpResult.dealer.village,
-        aadhaarOrGstNumber: otpResult.dealer.aadhaar_or_gst_number,
-        status: otpResult.dealer.status,
-        languagePreference: otpResult.dealer.language_preference || "en",
-        subscriptionStatus: otpResult.dealer.subscription_status || "inactive",
-        subscriptionPlanName: otpResult.dealer.subscription_plan_name || null,
+        id: normalizedDealer.id,
+        role: normalizedDealer.role,
+        name: normalizedDealer.name,
+        mobile: normalizedDealer.mobile,
+        shopName: normalizedDealer.shop_name,
+        district: normalizedDealer.district,
+        state: normalizedDealer.state,
+        mandal: normalizedDealer.mandal,
+        village: normalizedDealer.village,
+        aadhaarOrGstNumber: normalizedDealer.aadhaar_or_gst_number,
+        status: normalizedDealer.status,
+        languagePreference: normalizedDealer.language_preference || "en",
+        subscriptionStatus: normalizedDealer.subscription_status || "inactive",
+        subscriptionPlanName: normalizedDealer.subscription_plan_name || null,
         subscriptionYearlyPrice:
-          otpResult.dealer.subscription_yearly_price !== null &&
-          otpResult.dealer.subscription_yearly_price !== undefined
-            ? Number(otpResult.dealer.subscription_yearly_price)
+          normalizedDealer.subscription_yearly_price !== null &&
+          normalizedDealer.subscription_yearly_price !== undefined
+            ? Number(normalizedDealer.subscription_yearly_price)
             : null,
-        subscriptionStartedAt: otpResult.dealer.subscription_started_at || null,
-        subscriptionExpiresAt: otpResult.dealer.subscription_expires_at || null,
+        subscriptionStartedAt: normalizedDealer.subscription_started_at || null,
+        subscriptionExpiresAt: normalizedDealer.subscription_expires_at || null,
       },
     });
   } catch (error) {

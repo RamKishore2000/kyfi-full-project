@@ -49,8 +49,8 @@ export function SubscriptionSummary() {
       : "Loading...";
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-12 lg:px-8">
-      <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.06)] sm:p-6 lg:p-7">
+    <section className="kyfi-subscription-summary mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-12 lg:px-8">
+      <div className="kyfi-subscription-shell rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.06)] sm:p-6 lg:p-7">
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-[rgb(4,120,87)]">
@@ -59,7 +59,7 @@ export function SubscriptionSummary() {
             <h2 className="mt-2 font-manrope text-2xl font-black tracking-[-0.04em] text-slate-950 sm:text-3xl">
               Yearly dealer access
             </h2>
-            <p className="mt-3 max-w-xl font-manrope text-sm leading-6 text-slate-600 sm:text-base">
+            <p className="kyfi-subscription-description mt-3 max-w-xl font-manrope text-sm leading-6 text-slate-600 sm:text-base">
               Digital access for farmer search, new farmer records, old farmer
               votes, and dealer account tools. No physical delivery is involved.
             </p>

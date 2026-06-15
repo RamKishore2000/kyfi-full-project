@@ -46,25 +46,28 @@ function formatVoteDate(value?: string) {
 
 function SummaryCard({
   label,
+  nativeLabel,
   value,
   icon,
 }: {
   label: string;
+  nativeLabel: string;
   value: string;
   icon: ReactNode;
 }) {
   return (
-    <Card className="border-white/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:bg-white/85 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <CardContent className="flex h-[5.5rem] items-center justify-between gap-2 p-3 sm:h-auto sm:gap-4 sm:p-5">
+    <Card className="kyfi-record-summary-card border-white/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:bg-white/85 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+      <CardContent className="kyfi-record-summary-content flex h-[5.5rem] items-center justify-between gap-2 p-3 sm:h-auto sm:gap-4 sm:p-5">
         <div className="min-w-0">
-          <p className="truncate font-manrope text-[0.52rem] font-extrabold uppercase tracking-[0.08em] text-slate-500 sm:type-small sm:tracking-[0.22em]">
-            {label}
+          <p className="kyfi-record-summary-label truncate font-manrope text-[0.52rem] font-extrabold uppercase tracking-[0.08em] text-slate-500 sm:type-small sm:tracking-[0.22em]">
+            <span className="hidden kyfi-native-inline">{nativeLabel}</span>
+            <span className="kyfi-browser-inline">{label}</span>
           </p>
           <p className="mt-1 font-manrope text-[1.2rem] font-black tracking-[-0.05em] text-slate-900 sm:mt-2 sm:text-[1.85rem] sm:font-extrabold">
             {value}
           </p>
         </div>
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12 sm:rounded-2xl">
+        <div className="kyfi-record-summary-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12 sm:rounded-2xl">
           {icon}
         </div>
       </CardContent>
@@ -323,16 +326,19 @@ export default function MyRecordsPage() {
   const summaryCards = [
     {
       label: t("myRecords.summary.oldFarmers"),
+      nativeLabel: "Old Farmers",
       value: String(oldFarmers.length),
       icon: <FolderOpen className="h-5 w-5" />,
     },
     {
       label: t("myRecords.summary.newFarmers"),
+      nativeLabel: "New Farmers",
       value: String(newFarmers.length),
       icon: <Sparkles className="h-5 w-5" />,
     },
     {
       label: t("myRecords.summary.votes"),
+      nativeLabel: "My Voted Old Farmers",
       value: String(oldFarmerVotes.length),
       icon: <Sparkles className="h-5 w-5" />,
     },
@@ -378,12 +384,19 @@ export default function MyRecordsPage() {
             className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
           >
             <div className="max-w-3xl">
-              <p className="kyfi-section-kicker">{t("myRecords.kicker")}</p>
+              <p className="kyfi-section-kicker">
+                <span className="hidden kyfi-native-inline">Dealer activity</span>
+                <span className="kyfi-browser-inline">{t("myRecords.kicker")}</span>
+              </p>
               <h1 className="mt-4 font-manrope text-[clamp(2rem,4vw,3.3rem)] font-extrabold tracking-[-0.05em] text-slate-900 lg:whitespace-nowrap">
-                {t("myRecords.title")}
+                <span className="hidden kyfi-native-inline">My Records</span>
+                <span className="kyfi-browser-inline">{t("myRecords.title")}</span>
               </h1>
               <p className="mt-4 max-w-2xl text-[1rem] leading-8 text-slate-600">
-                {t("myRecords.description")}
+                <span className="hidden kyfi-native-inline">
+                  Review your old farmers, new farmers, and votes.
+                </span>
+                <span className="kyfi-browser-inline">{t("myRecords.description")}</span>
               </p>
             </div>
 
@@ -405,11 +418,12 @@ export default function MyRecordsPage() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-3 gap-2 sm:gap-5">
+          <div className="kyfi-record-summary-grid grid grid-cols-3 gap-2 sm:gap-5">
             {summaryCards.map((card) => (
               <SummaryCard
                 key={card.label}
                 label={card.label}
+                nativeLabel={card.nativeLabel}
                 value={card.value}
                 icon={card.icon}
               />
@@ -417,7 +431,7 @@ export default function MyRecordsPage() {
           </div>
 
           <div className="mt-6 rounded-[1.5rem] border border-white/80 bg-white/85 p-2 shadow-[0_14px_34px_rgba(15,23,42,0.07)] sm:mt-8 sm:rounded-[2rem] sm:p-3 sm:shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-            <div className="grid grid-cols-3 gap-1 rounded-[1.25rem] bg-slate-100/90 p-1 md:max-w-2xl md:gap-2 md:rounded-[1.5rem]">
+            <div className="kyfi-record-tabs grid grid-cols-3 gap-1 rounded-[1.25rem] bg-slate-100/90 p-1 md:max-w-2xl md:gap-2 md:rounded-[1.5rem]">
               {tabs.map((item) => {
                 const active = tab === item.key;
                 return (
@@ -426,7 +440,7 @@ export default function MyRecordsPage() {
                     type="button"
                     onClick={() => setTab(item.key)}
                     className={[
-                      "rounded-[0.95rem] px-1.5 py-2 text-[0.64rem] font-extrabold leading-tight transition sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-sm sm:font-semibold",
+                      "kyfi-record-tab rounded-[0.95rem] px-1.5 py-2 text-[0.64rem] font-extrabold leading-tight transition sm:rounded-[1.1rem] sm:px-4 sm:py-3 sm:text-sm sm:font-semibold",
                       active
                         ? "bg-white text-emerald-800 shadow-sm"
                         : "text-slate-500 hover:text-slate-800",

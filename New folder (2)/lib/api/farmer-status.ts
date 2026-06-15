@@ -1,4 +1,5 @@
 import { KYFI_API_BASE_URL } from "@/lib/config";
+import { handleSubscriptionExpiry } from "@/lib/api/subscription-expiry";
 
 export type FarmerStatusColor = "GREEN" | "YELLOW" | "RED";
 
@@ -90,6 +91,7 @@ async function apiRequest<TResponse>(
     | null;
 
   if (!response.ok) {
+    handleSubscriptionExpiry(data);
     throw new Error(
       (data as ApiErrorPayload | null)?.message || "Request failed",
     );

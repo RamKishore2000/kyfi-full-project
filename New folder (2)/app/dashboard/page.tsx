@@ -115,27 +115,42 @@ export default function DashboardPage() {
 
         <section
           id="features"
-          className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-18"
+          className="kyfi-shortcuts-section mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-18"
         >
           <div className="max-w-2xl">
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
+              <span className="hidden kyfi-native-inline">
+                KYFI Tools
+              </span>
+              <span className="kyfi-browser-inline">
               {t("menu.shortcuts")}
+              </span>
             </p>
             <h2 className="mt-3 font-manrope type-section lg:whitespace-nowrap">
+              <span className="hidden kyfi-native-inline">
+                Quick actions for dealers
+              </span>
+              <span className="kyfi-browser-inline">
               {t("dashboard.shortcutsTitle")}
+              </span>
             </h2>
             <p className="mt-4 font-manrope type-body">
+              <span className="hidden kyfi-native-inline">
+                Search farmers, add records, and check saved activity in one place.
+              </span>
+              <span className="kyfi-browser-inline">
               {t("dashboard.shortcutsDescription")}
+              </span>
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 md:mt-8 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
+          <div className="kyfi-shortcuts-grid mt-6 grid grid-cols-2 gap-3 md:mt-8 md:grid-cols-2 md:gap-5 xl:grid-cols-3">
             {features.map((feature, index) => (
               <FeatureCard key={feature.title} {...feature} index={index} />
             ))}
             <Link
               href="/profile"
-              className="flex h-[7.75rem] flex-col justify-between rounded-[1.5rem] border border-emerald-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.07)] transition hover:border-emerald-300 hover:bg-emerald-50 md:hidden"
+              className="kyfi-profile-shortcut flex h-[7.75rem] flex-col justify-between rounded-[1.5rem] border border-emerald-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.07)] transition hover:border-emerald-300 hover:bg-emerald-50 md:hidden"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-emerald-50 text-emerald-700">
                 <UserRound className="h-5 w-5" />
@@ -160,21 +175,32 @@ export default function DashboardPage() {
 
         <section
           id="status"
-          className="mx-auto max-w-7xl px-4 pt-4 pb-8 sm:px-6 sm:pt-10 sm:pb-14 lg:px-8 lg:pt-12 lg:pb-16"
+          className="kyfi-status-section mx-auto max-w-7xl px-4 pt-4 pb-8 sm:px-6 sm:pt-10 sm:pb-14 lg:px-8 lg:pt-12 lg:pb-16"
         >
-          <div className="max-w-3xl">
+          <div className="kyfi-status-heading max-w-3xl">
             <p className="kyfi-section-kicker">
-              {t("dashboard.newFarmerStatusKicker")}
+              <span className="hidden kyfi-native-inline">New farmer signals</span>
+              <span className="kyfi-browser-inline">
+                {t("dashboard.newFarmerStatusKicker")}
+              </span>
             </p>
             <h2 className="mt-4 font-manrope text-[clamp(1.9rem,3vw,3rem)] font-extrabold tracking-[-0.04em] text-slate-900">
-              {t("dashboard.newFarmerStatusTitle")}
+              <span className="hidden kyfi-native-inline">Understand payment behavior</span>
+              <span className="kyfi-browser-inline">
+                {t("dashboard.newFarmerStatusTitle")}
+              </span>
             </h2>
             <p className="mt-4 max-w-2xl text-[1rem] leading-8 text-slate-600">
-              {t("dashboard.newFarmerStatusDescription")}
+              <span className="hidden kyfi-native-inline">
+                Use simple color signals before adding or changing a new farmer record.
+              </span>
+              <span className="kyfi-browser-inline">
+                {t("dashboard.newFarmerStatusDescription")}
+              </span>
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-1.5 md:gap-5">
+          <div className="kyfi-status-grid mt-10 grid grid-cols-3 gap-1.5 md:gap-5">
             <StatusCard
               status="GREEN"
               title={t("search.legendGreen")}
