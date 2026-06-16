@@ -606,7 +606,7 @@ const getFarmerStatusVoters = async (statusId) => {
        fs.district,
        fs.mandal,
        fs.village,
-       DATE_FORMAT(fsca.updated_at, '%Y-%m-%d %H:%i:%s') AS voted_at
+       DATE_FORMAT(DATE_ADD('1970-01-01 00:00:00', INTERVAL (UNIX_TIMESTAMP(fsca.updated_at) + 19800) SECOND), '%Y-%m-%d %H:%i:%s') AS voted_at
      FROM farmer_status_count_actions fsca
      INNER JOIN farmer_statuses fs ON fs.id = fsca.status_id
      INNER JOIN dealers d ON d.id = fsca.dealer_id
@@ -629,7 +629,7 @@ const getFarmerStatusVoters = async (statusId) => {
        fs.district,
        fs.mandal,
        fs.village,
-       DATE_FORMAT(afvp.created_at, '%Y-%m-%d %H:%i:%s') AS voted_at
+       DATE_FORMAT(DATE_ADD('1970-01-01 00:00:00', INTERVAL (UNIX_TIMESTAMP(afvp.created_at) + 19800) SECOND), '%Y-%m-%d %H:%i:%s') AS voted_at
      FROM admin_farmer_votes afv
      INNER JOIN farmer_statuses fs ON fs.id = afv.status_id
      LEFT JOIN dealers d ON d.id = afv.admin_id
