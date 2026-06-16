@@ -35,7 +35,19 @@ function getStatusLabel(statusColor: string, t: (key: string) => string) {
 function formatVoteDate(value?: string) {
   if (!value) return "";
 
-  const parsed = new Date(value);
+  const localTimestamp = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2}):(\d{2})/,
+  );
+  const parsed = localTimestamp
+    ? new Date(
+        Number(localTimestamp[1]),
+        Number(localTimestamp[2]) - 1,
+        Number(localTimestamp[3]),
+        Number(localTimestamp[4]),
+        Number(localTimestamp[5]),
+        Number(localTimestamp[6]),
+      )
+    : new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
 
   return new Intl.DateTimeFormat("en-IN", {
@@ -85,25 +97,16 @@ function FarmerRecordCard({
   const farmerType =
     String(record.farmerType || "OLD").toUpperCase() === "NEW" ? "NEW" : "OLD";
 
-  return (
-    <details className="group rounded-[1.35rem] border border-white/80 bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <summary className="list-none cursor-pointer p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
-          <div className="space-y-1.5 sm:space-y-1">
+  if (farmerType === "NEW") {
+    return (
+      <article className="rounded-[1.35rem] border border-white/80 bg-white/95 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:p-5 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1.5 sm:space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-manrope text-[1rem] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-[1.04rem] sm:font-bold sm:tracking-[-0.02em]">
                 {record.farmerName}
               </h3>
-              <Badge variant={farmerType === "NEW" ? "outline" : "secondary"}>
-                {farmerType === "NEW"
-                  ? t("myRecords.tabs.newFarmers")
-                  : t("myRecords.tabs.oldFarmers")}
-              </Badge>
-              {record.blacklisted ? (
-                <Badge variant="destructive">
-                  {t("myRecords.blacklisted")}
-                </Badge>
-              ) : null}
+              <Badge variant="outline">{t("myRecords.tabs.newFarmers")}</Badge>
             </div>
             <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-600 sm:type-small sm:text-slate-500">
               {record.district}, {record.mandal}, {record.village}
@@ -113,50 +116,55 @@ function FarmerRecordCard({
               {record.mobileNumber || t("myRecords.notProvided")}
             </p>
           </div>
-          {farmerType === "OLD" ? (
-            <div className="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2 text-left sm:block sm:bg-transparent sm:p-0 sm:text-right">
-              <p className="font-manrope text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-emerald-700 sm:type-small sm:tracking-[0.2em] sm:text-slate-500">
-                {t("myRecords.votes")}
-              </p>
-              <p className="font-manrope text-lg font-black text-emerald-900 sm:mt-1 sm:text-xl sm:font-extrabold sm:text-slate-900">
-                {record.voteCount}
-              </p>
-            </div>
-          ) : null}
+          <div className="shrink-0">
+            <Badge
+              variant={
+                record.statusColor === "GREEN"
+                  ? "success"
+                  : record.statusColor === "YELLOW"
+                    ? "warning"
+                    : "destructive"
+              }
+            >
+              {getStatusLabel(record.statusColor, t)}
+            </Badge>
+          </div>
         </div>
-      </summary>
+      </article>
+    );
+  }
 
-      <div className="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-2">
-        <div className="grid gap-2 sm:gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.mobile")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">
-              {record.mobileNumber || t("myRecords.notProvided")}
-            </p>
+  return (
+    <article className="rounded-[1.35rem] border border-white/80 bg-white/95 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:p-5 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+        <div className="space-y-1.5 sm:space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-manrope text-[1rem] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-[1.04rem] sm:font-bold sm:tracking-[-0.02em]">
+              {record.farmerName}
+            </h3>
+            <Badge variant="secondary">{t("myRecords.tabs.oldFarmers")}</Badge>
+            {record.blacklisted ? (
+              <Badge variant="destructive">{t("myRecords.blacklisted")}</Badge>
+            ) : null}
           </div>
-          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.remarks")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">
-              {record.remarks || t("myRecords.noRemarks")}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.status")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">
-              {record.blacklisted
-                ? record.blacklistReason || t("myRecords.blacklisted")
-                : t("myRecords.generalRepayment")}
-            </p>
-          </div>
+          <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-600 sm:type-small sm:text-slate-500">
+            {record.district}, {record.mandal}, {record.village}
+          </p>
+          <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-500 sm:type-small">
+            {t("myRecords.mobile")}:{" "}
+            {record.mobileNumber || t("myRecords.notProvided")}
+          </p>
+        </div>
+        <div className="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2 text-left sm:block sm:bg-transparent sm:p-0 sm:text-right">
+          <p className="font-manrope text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-emerald-700 sm:type-small sm:tracking-[0.2em] sm:text-slate-500">
+            {t("myRecords.votes")}
+          </p>
+          <p className="font-manrope text-lg font-black text-emerald-900 sm:mt-1 sm:text-xl sm:font-extrabold sm:text-slate-900">
+            {record.voteCount}
+          </p>
         </div>
       </div>
-    </details>
+    </article>
   );
 }
 
@@ -233,65 +241,34 @@ function VoteRecordCard({
   t: (key: string) => string;
 }) {
   return (
-    <details className="group rounded-[1.35rem] border border-white/80 bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
-      <summary className="list-none cursor-pointer p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
-          <div className="space-y-1.5 sm:space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-manrope text-[1rem] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-[1.04rem] sm:font-bold sm:tracking-[-0.02em]">
-                {record.farmerName}
-              </h3>
-              <Badge variant="success">{t("myRecords.voted")}</Badge>
-            </div>
-            <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-600 sm:type-small sm:text-slate-500">
-              {record.district}, {record.mandal}, {record.village}
-            </p>
-            <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-500 sm:type-small">
-              {t("myRecords.mobile")}:{" "}
-              {record.mobileNumber || t("myRecords.notProvided")}
-            </p>
+    <article className="rounded-[1.35rem] border border-white/80 bg-white/95 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)] sm:rounded-3xl sm:bg-white/90 sm:p-5 sm:shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+        <div className="space-y-1.5 sm:space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-manrope text-[1rem] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-[1.04rem] sm:font-bold sm:tracking-[-0.02em]">
+              {record.farmerName}
+            </h3>
+            <Badge variant="success">{t("myRecords.voted")}</Badge>
           </div>
-          <div className="rounded-2xl bg-slate-50 px-3 py-2 text-left sm:bg-transparent sm:p-0 sm:text-right">
-            <p className="font-manrope text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-slate-500 sm:type-small sm:tracking-[0.2em]">
-              {t("myRecords.votedAt")}
-            </p>
-            <p className="mt-1 font-manrope text-[0.78rem] font-bold leading-5 text-slate-900 sm:text-sm sm:font-semibold">
-              {formatVoteDate(record.actedAt || record.votedAt) ||
-                t("myRecords.notProvided")}
-            </p>
-          </div>
+          <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-600 sm:type-small sm:text-slate-500">
+            {record.district}, {record.mandal}, {record.village}
+          </p>
+          <p className="font-manrope text-[0.78rem] font-semibold leading-5 text-slate-500 sm:type-small">
+            {t("myRecords.mobile")}:{" "}
+            {record.mobileNumber || t("myRecords.notProvided")}
+          </p>
         </div>
-      </summary>
-
-      <div className="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-2">
-        <div className="grid gap-2 sm:gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.actionType")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">
-              {t("myRecords.voted")}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.mobile")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">
-              {record.mobileNumber || t("myRecords.notProvided")}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-slate-50 p-3 sm:p-4">
-            <p className="font-manrope type-small uppercase tracking-[0.18em] text-slate-500">
-              {t("myRecords.status")}
-            </p>
-            <p className="mt-2 font-manrope type-nav text-slate-900">
-              {getStatusLabel(record.statusColor, t)}
-            </p>
-          </div>
+        <div className="rounded-2xl bg-slate-50 px-3 py-2 text-left sm:bg-transparent sm:p-0 sm:text-right">
+          <p className="font-manrope text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-slate-500 sm:type-small sm:tracking-[0.2em]">
+            {t("myRecords.votedAt")}
+          </p>
+          <p className="mt-1 font-manrope text-[0.78rem] font-bold leading-5 text-slate-900 sm:text-sm sm:font-semibold">
+            {formatVoteDate(record.actedAt || record.votedAt) ||
+              t("myRecords.notProvided")}
+          </p>
         </div>
       </div>
-    </details>
+    </article>
   );
 }
 

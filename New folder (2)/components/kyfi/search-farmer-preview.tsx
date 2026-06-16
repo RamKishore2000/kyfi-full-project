@@ -160,7 +160,19 @@ function formatDate(date: Date, language: "en" | "te") {
 }
 
 function formatVotedDate(value: string, language: "en" | "te") {
-  const date = new Date(value);
+  const localTimestamp = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2}):(\d{2})/,
+  );
+  const date = localTimestamp
+    ? new Date(
+        Number(localTimestamp[1]),
+        Number(localTimestamp[2]) - 1,
+        Number(localTimestamp[3]),
+        Number(localTimestamp[4]),
+        Number(localTimestamp[5]),
+        Number(localTimestamp[6]),
+      )
+    : new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
   return new Intl.DateTimeFormat(language === "te" ? "te-IN" : "en-GB", {
     day: "2-digit",
@@ -168,7 +180,6 @@ function formatVotedDate(value: string, language: "en" | "te") {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Asia/Kolkata",
   }).format(date);
 }
 
