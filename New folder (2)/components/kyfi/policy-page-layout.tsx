@@ -3,6 +3,7 @@
 import { AppBackButton } from "@/components/kyfi/app-back-button";
 import { Footer } from "@/components/kyfi/footer";
 import { Header } from "@/components/kyfi/header";
+import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 type PolicySection = {
   title: string;
@@ -28,6 +29,8 @@ export function PolicyPageLayout({
   sections,
   note,
 }: PolicyPageLayoutProps) {
+  const { translateText } = useKyfiLanguage();
+
   return (
     <main className="kyfi-shell min-h-screen">
       <Header />
@@ -36,13 +39,13 @@ export function PolicyPageLayout({
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <div className="max-w-3xl">
           <p className="font-manrope type-small uppercase tracking-[0.22em] text-emerald-700">
-            {kicker}
+            {translateText(kicker)}
           </p>
           <h1 className="mt-3 font-manrope type-section text-slate-950">
-            {title}
+            {translateText(title)}
           </h1>
           <p className="mt-4 font-manrope type-body text-slate-600">
-            {description}
+            {translateText(description)}
           </p>
         </div>
 
@@ -62,13 +65,13 @@ export function PolicyPageLayout({
               </div>
               <div>
                 <p className="font-manrope text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-                  {section.subtitle}
+                  {translateText(section.subtitle)}
                 </p>
                 <h2 className="mt-2 font-manrope text-2xl font-black tracking-[-0.03em] text-slate-950">
-                  {section.title}
+                  {translateText(section.title)}
                 </h2>
                 <p className="mt-3 font-manrope type-body leading-relaxed text-slate-650">
-                  {section.description}
+                  {translateText(section.description)}
                 </p>
               </div>
             </article>
@@ -78,10 +81,10 @@ export function PolicyPageLayout({
         {note ? (
           <div className="mt-8 border-l-4 border-[rgb(4,120,87)] bg-emerald-50/70 px-5 py-4">
             <p className="font-manrope type-nav text-emerald-900">
-              {note.title}
+              {translateText(note.title)}
             </p>
             <p className="mt-2 font-manrope type-body text-slate-700">
-              {note.description}
+              {translateText(note.description)}
             </p>
           </div>
         ) : null}

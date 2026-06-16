@@ -91,7 +91,7 @@ export function Footer() {
                   className="font-manrope type-nav text-slate-600 transition hover:text-primary"
                   href="/refund-policy"
                 >
-                  Refund Policy
+                  {t("footer.refund")}
                 </a>
               </li>
               <li>
@@ -99,7 +99,7 @@ export function Footer() {
                   className="font-manrope type-nav text-slate-600 transition hover:text-primary"
                   href="/cancellation-policy"
                 >
-                  Cancellation Policy
+                  {t("footer.cancellation")}
                 </a>
               </li>
               <li>
@@ -107,7 +107,7 @@ export function Footer() {
                   className="font-manrope type-nav text-slate-600 transition hover:text-primary"
                   href="/digital-service-delivery"
                 >
-                  Digital Service Delivery
+                  {t("footer.digitalDelivery")}
                 </a>
               </li>
               <li>
@@ -115,7 +115,7 @@ export function Footer() {
                   className="font-manrope type-nav text-slate-600 transition hover:text-primary"
                   href="/contact-support"
                 >
-                  Contact Support
+                  {t("footer.contactSupport")}
                 </a>
               </li>
             </ul>

@@ -326,19 +326,19 @@ export default function MyRecordsPage() {
   const summaryCards = [
     {
       label: t("myRecords.summary.oldFarmers"),
-      nativeLabel: "Old Farmers",
+      nativeLabel: t("myRecords.summary.oldFarmers"),
       value: String(oldFarmers.length),
       icon: <FolderOpen className="h-5 w-5" />,
     },
     {
       label: t("myRecords.summary.newFarmers"),
-      nativeLabel: "New Farmers",
+      nativeLabel: t("myRecords.summary.newFarmers"),
       value: String(newFarmers.length),
       icon: <Sparkles className="h-5 w-5" />,
     },
     {
       label: t("myRecords.summary.votes"),
-      nativeLabel: "My Voted Old Farmers",
+      nativeLabel: t("myRecords.summary.votes"),
       value: String(oldFarmerVotes.length),
       icon: <Sparkles className="h-5 w-5" />,
     },

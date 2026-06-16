@@ -6,6 +6,7 @@ import {
   fetchSubscriptionSettings,
   type SubscriptionRecord,
 } from "@/lib/api/subscription";
+import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 function formatCurrency(amount?: number | null, currency = "INR") {
   const value = Number(amount || 0);
@@ -17,6 +18,7 @@ function formatCurrency(amount?: number | null, currency = "INR") {
 }
 
 export function SubscriptionSummary() {
+  const { t } = useKyfiLanguage();
   const [subscription, setSubscription] = useState<SubscriptionRecord | null>(
     null,
   );
@@ -46,7 +48,7 @@ export function SubscriptionSummary() {
   const price =
     subscription?.yearlyPrice !== undefined && subscription?.yearlyPrice !== null
       ? formatCurrency(subscription.yearlyPrice, subscription.currency || "INR")
-      : "Loading...";
+      : t("subscription.loading");
 
   return (
     <section className="kyfi-subscription-summary mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-12 lg:px-8">
@@ -54,14 +56,13 @@ export function SubscriptionSummary() {
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
             <p className="font-manrope type-small uppercase tracking-[0.2em] text-[rgb(4,120,87)]">
-              KYFI subscription
+              {t("subscription.kicker")}
             </p>
             <h2 className="mt-2 font-manrope text-2xl font-black tracking-[-0.04em] text-slate-950 sm:text-3xl">
-              Yearly dealer access
+              {t("subscription.title")}
             </h2>
             <p className="kyfi-subscription-description mt-3 max-w-xl font-manrope text-sm leading-6 text-slate-600 sm:text-base">
-              Digital access for farmer search, new farmer records, old farmer
-              votes, and dealer account tools. No physical delivery is involved.
+              {t("subscription.description")}
             </p>
           </div>
 
@@ -84,10 +85,10 @@ export function SubscriptionSummary() {
 
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               {[
-                "Dealer dashboard",
-                "Farmer search",
-                "Status records",
-                "Old farmer votes",
+                t("subscription.featureDashboard"),
+                t("subscription.featureSearch"),
+                t("subscription.featureRecords"),
+                t("subscription.featureVotes"),
               ].map((item) => (
                 <div
                   key={item}

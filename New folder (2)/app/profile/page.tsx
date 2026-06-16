@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { X } from "lucide-react";
+import { CalendarDays, CreditCard, X } from "lucide-react";
 import { Footer } from "@/components/kyfi/footer";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { fetchCurrentDealer, updateCurrentDealerProfile } from "@/lib/api/profile";
+import type { DealerAuthResponse } from "@/lib/api/auth";
 import {
   createMandal,
   createVillage,
@@ -59,6 +60,41 @@ const buildAutocompleteLabel = (place: GooglePlace) => place.formatted_address |
 
 const formatMandalSuggestion = (mandal: MandalRecord) =>
   `${mandal.mandalName} mandal, ${mandal.districtName} district, ${mandal.stateName}`;
+
+const formatProfileDate = (value?: string | null) => {
+  if (!value) return "-";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(parsed);
+};
+
+const formatProfilePrice = (value?: number | null) => {
+  if (value === undefined || value === null) return "-";
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(value));
+};
+
+const getRemainingDays = (value?: string | null) => {
+  if (!value) return "-";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+
+  const diff = parsed.getTime() - Date.now();
+  if (diff <= 0) return "0";
+
+  return String(Math.ceil(diff / (1000 * 60 * 60 * 24)));
+};
 
 const loadGooglePlaces = (apiKey: string) =>
   new Promise<void>((resolve, reject) => {
@@ -128,6 +164,7 @@ export default function ProfilePage() {
     mandal: "",
     village: "",
   });
+  const [dealerProfile, setDealerProfile] = useState<DealerAuthResponse | null>(null);
   const [mandalOptions, setMandalOptions] = useState<MandalRecord[]>([]);
   const [hideMandalSuggestions, setHideMandalSuggestions] = useState(false);
   const [mandalSearchLoading, setMandalSearchLoading] = useState(false);
@@ -163,6 +200,7 @@ export default function ProfilePage() {
       try {
         const response = await fetchCurrentDealer();
         const dealer = response.dealer;
+        setDealerProfile(dealer);
 
         setForm({
           name: dealer.name ?? "",
@@ -561,6 +599,7 @@ export default function ProfilePage() {
       });
 
       const dealer = response.dealer;
+      setDealerProfile(dealer);
       setForm({
         name: dealer.name ?? "",
         shopName: dealer.shopName ?? "",
@@ -621,6 +660,86 @@ export default function ProfilePage() {
               {error}
             </div>
           ) : null}
+
+          <Card className="mb-6 overflow-hidden border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white shadow-[0_18px_50px_rgba(15,23,42,0.07)]">
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="font-manrope type-small uppercase tracking-[0.2em] text-emerald-700">
+                    {t("profile.subscriptionKicker")}
+                  </p>
+                  <h2 className="mt-2 font-manrope type-card text-slate-950">
+                    {t("profile.subscriptionTitle")}
+                  </h2>
+                </div>
+                <Badge
+                  className={
+                    dealerProfile?.subscriptionStatus === "active"
+                      ? "w-fit border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "w-fit border-amber-200 bg-amber-50 text-amber-700"
+                  }
+                  variant="outline"
+                >
+                  {dealerProfile?.subscriptionStatus === "active"
+                    ? t("profile.subscriptionActive")
+                    : t("profile.subscriptionInactive")}
+                </Badge>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                  <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                    {t("profile.subscriptionPlan")}
+                  </p>
+                  <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
+                    {dealerProfile?.subscriptionPlanName || "-"}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-emerald-700" />
+                    <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                      {t("profile.subscriptionStarted")}
+                    </p>
+                  </div>
+                  <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
+                    {formatProfileDate(dealerProfile?.subscriptionStartedAt)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-emerald-700" />
+                    <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                      {t("profile.subscriptionExpires")}
+                    </p>
+                  </div>
+                  <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
+                    {formatProfileDate(dealerProfile?.subscriptionExpiresAt)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-emerald-700" />
+                    <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                      {t("profile.subscriptionPrice")}
+                    </p>
+                  </div>
+                  <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
+                    {formatProfilePrice(dealerProfile?.subscriptionYearlyPrice)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                  <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                    {t("profile.subscriptionRemaining")}
+                  </p>
+                  <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
+                    {getRemainingDays(dealerProfile?.subscriptionExpiresAt)}{" "}
+                    {t("profile.subscriptionDays")}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="overflow-hidden border-white/80 bg-white/85 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
             <CardContent className="space-y-6 p-6 sm:p-8">

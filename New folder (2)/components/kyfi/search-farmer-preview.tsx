@@ -812,9 +812,9 @@ export function SearchFarmerPreview() {
     const mandal = form.mandal.trim();
     const village = form.village.trim();
     const farmer_name = form.farmerName.trim();
-    if (!mandal && !village && !farmer_name) {
+    if (!mandal || !village || !farmer_name) {
       setResults([]);
-      setToastMessage(t("search.fillAtLeastOne"));
+      setToastMessage("Mandal, village, and farmer name are required.");
       setToastTone("error");
       setToastOpen(true);
       return;
@@ -1573,11 +1573,11 @@ export function SearchFarmerPreview() {
       />
       {proofVoteFarmer ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-content-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeProofVoteModal}
         >
           <div
-            className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="kyfi-content-modal-panel flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
@@ -1603,7 +1603,7 @@ export function SearchFarmerPreview() {
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
               {proofVoteMode !== "moveToOld" ? (
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="kyfi-modal-details-grid grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
                     <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
                       Farmer name
@@ -1706,7 +1706,7 @@ export function SearchFarmerPreview() {
       ) : null}
       {votesDialogOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-content-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={() => {
             setVotesDialogOpen(false);
             setVotesDialogError("");
@@ -1715,7 +1715,7 @@ export function SearchFarmerPreview() {
           }}
         >
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="kyfi-content-modal-panel w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">

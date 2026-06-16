@@ -33,10 +33,10 @@ export function CTASection() {
               <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur">
                 <LockKeyhole className="h-5 w-5 text-emerald-200" />
                 <p className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-white">
-                  {t("hero.dealerAccess")}
+                  {t("cta.dealerOnly")}
                 </p>
                 <p className="mt-2 text-sm leading-7 text-emerald-50/85">
-                  {t("hero.statusText")}
+                  {t("cta.dealerOnlyBody")}
                 </p>
               </div>
               <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5 backdrop-blur">

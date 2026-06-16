@@ -1574,11 +1574,11 @@ export default function AddFarmerStatusPage() {
       </section>{" "}
       {existingFarmerModalOpen && existingFarmerRecord ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/45 px-4 py-4 backdrop-blur-[2px] sm:py-6"
+          className="kyfi-content-modal fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/45 px-4 py-4 backdrop-blur-[2px] sm:py-6"
           onClick={closeExistingFarmerModal}
         >
           <div
-            className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:max-h-[calc(100vh-3rem)]"
+            className="kyfi-content-modal-panel flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:max-h-[calc(100vh-3rem)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5">
@@ -1600,8 +1600,8 @@ export default function AddFarmerStatusPage() {
               </button>
             </div>
 
-            <div className="space-y-4 overflow-y-auto px-6 py-6">
-              <div className="grid gap-3 sm:grid-cols-2">
+            <div className="kyfi-content-modal-scroll min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-6">
+              <div className="kyfi-modal-details-grid grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
                     {isTe ? "???? ????" : "Farmer name"}

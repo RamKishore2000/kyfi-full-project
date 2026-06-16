@@ -27,6 +27,8 @@ export function NativeStatusBar() {
 
     const backgroundColor = isAuthPage ? "#F8F7F4" : "#F6FAF7";
 
+    // Keep the WebView below the native status bar. This avoids device-specific
+    // double spacing and dark edge-to-edge strips on Android 15+.
     void StatusBar.setOverlaysWebView({ overlay: false });
     void StatusBar.setBackgroundColor({ color: backgroundColor });
     void StatusBar.setStyle({ style: Style.Light });

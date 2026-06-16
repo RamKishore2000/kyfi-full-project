@@ -407,6 +407,7 @@ body {
 
   body.kyfi-native-app header.sticky {
     top: 0;
+    padding-top: 0;
     border-bottom: 0;
     background: rgba(246, 250, 247, 0.96) !important;
     box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
@@ -536,6 +537,53 @@ body {
     max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top));
     overflow-y: auto;
     border-radius: 1.65rem !important;
+  }
+
+  body.kyfi-native-app .fixed.inset-0.z-50.kyfi-content-modal {
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1000 !important;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem
+      max(1rem, env(safe-area-inset-bottom)) !important;
+    background: rgba(15, 23, 42, 0.52) !important;
+    backdrop-filter: blur(3px);
+  }
+
+  body.kyfi-native-app
+    .fixed.inset-0.z-50.kyfi-content-modal
+    > .kyfi-content-modal-panel {
+    width: 100%;
+    max-height: calc(
+      100dvh - max(2rem, env(safe-area-inset-top)) -
+        max(2rem, env(safe-area-inset-bottom))
+    ) !important;
+    margin: auto;
+    overflow: hidden !important;
+  }
+
+  body.kyfi-native-app
+    .kyfi-content-modal
+    .kyfi-content-modal-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    padding-bottom: max(7rem, calc(env(safe-area-inset-bottom) + 5.5rem)) !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.kyfi-native-app .kyfi-content-modal .kyfi-modal-details-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  body.kyfi-native-app .kyfi-content-modal .kyfi-modal-details-grid > div {
+    min-width: 0;
+    padding: 0.75rem !important;
+  }
+
+  body.kyfi-native-app .kyfi-content-modal .kyfi-modal-details-grid p {
+    overflow-wrap: anywhere;
   }
 
   body.kyfi-native-app .kyfi-location-modal {

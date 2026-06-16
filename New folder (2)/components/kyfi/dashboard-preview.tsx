@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   FolderOpen,
@@ -101,13 +100,6 @@ export function DashboardPreview() {
                 {t("preview.blacklistedBody")}
               </p>
             </div> */}
-
-            <Button
-              variant="outline"
-              className="border-white/15 bg-white/10 text-white hover:bg-white/15"
-            >
-              {t("preview.button")}
-            </Button>
           </CardContent>
         </Card>
       </motion.div>
