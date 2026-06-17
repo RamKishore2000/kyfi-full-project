@@ -41,7 +41,8 @@ export type RegisterDealerInput = {
   state: string;
   mandal: string;
   village: string;
-  aadhaarOrGstNumber: string;
+  aadhaarNumber: string;
+  gstNumber: string;
 };
 
 async function authFetch(path: string, init: RequestInit = {}) {
@@ -98,6 +99,8 @@ export async function registerDealer(input: RegisterDealerInput) {
       state?: string;
       mandal?: string;
       village?: string;
+      aadhaarNumber?: string;
+      gstNumber?: string;
       aadhaarOrGstNumber?: string;
       status?: string;
     };

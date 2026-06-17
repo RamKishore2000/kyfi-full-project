@@ -19,7 +19,8 @@ type DealerRegisterForm = {
   state: string;
   mandal: string;
   village: string;
-  aadhaarOrGstNumber: string;
+  aadhaarNumber: string;
+  gstNumber: string;
 };
 
 type DistrictSearchResult = {
@@ -195,7 +196,8 @@ export function DealerAddForm() {
     state: "",
     mandal: "",
     village: "",
-    aadhaarOrGstNumber: "",
+    aadhaarNumber: "",
+    gstNumber: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -608,9 +610,10 @@ export function DealerAddForm() {
     const state = form.state.trim();
     const mandal = form.mandal.trim();
     const village = form.village.trim();
-    const aadhaarOrGstNumber = form.aadhaarOrGstNumber.trim().toUpperCase();
+    const aadhaarNumber = form.aadhaarNumber.trim();
+    const gstNumber = form.gstNumber.trim().toUpperCase();
 
-    if (!shopName || !ownerName || !mobile || !district || !state || !mandal || !village || !aadhaarOrGstNumber) {
+    if (!shopName || !ownerName || !mobile || !district || !state || !mandal || !village || !aadhaarNumber || !gstNumber) {
       setError(t("dealers.addDescription"));
       return;
     }
@@ -620,8 +623,13 @@ export function DealerAddForm() {
       return;
     }
 
-    if (!aadhaarPattern.test(aadhaarOrGstNumber) && !gstPattern.test(aadhaarOrGstNumber)) {
-      setError(t("register.invalidIdentifier"));
+    if (!aadhaarPattern.test(aadhaarNumber)) {
+      setError("Enter a valid 12-digit Aadhaar number.");
+      return;
+    }
+
+    if (!gstPattern.test(gstNumber)) {
+      setError("Enter a valid GST number.");
       return;
     }
 
@@ -638,7 +646,8 @@ export function DealerAddForm() {
         state,
         mandal,
         village,
-        aadhaarOrGstNumber,
+        aadhaarNumber,
+        gstNumber,
       });
 
       router.push("/dashboard/dealers");
@@ -917,15 +926,28 @@ export function DealerAddForm() {
             </label>
 
             <label className="space-y-2 text-sm">
-              {t("register.identifier")}
+              Aadhaar Number
               <Input
-                value={form.aadhaarOrGstNumber}
-                onChange={updateField("aadhaarOrGstNumber")}
+                value={form.aadhaarNumber}
+                onChange={updateField("aadhaarNumber")}
                 required
-                placeholder={t("register.identifierPlaceholder")}
+                placeholder="Enter Aadhaar number"
+                inputMode="numeric"
+                maxLength={12}
+              />
+              <p className="text-xs text-muted-foreground">Only 12 digits allowed.</p>
+            </label>
+
+            <label className="space-y-2 text-sm">
+              GST Number
+              <Input
+                value={form.gstNumber}
+                onChange={updateField("gstNumber")}
+                required
+                placeholder="22AAAAA0000A1Z5"
                 maxLength={15}
               />
-              <p className="text-xs text-muted-foreground">{t("register.aadhaarHelp")}</p>
+              <p className="text-xs text-muted-foreground">Example: 22AAAAA0000A1Z5</p>
             </label>
           </div>
 

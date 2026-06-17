@@ -940,10 +940,9 @@ export function SearchFarmerPreview() {
       }
       closeProofVoteModal();
       setToastMessage(
-        response.message ||
-          (proofVoteMode === "moveToOld"
-            ? "Moved to old farmer successfully."
-            : "Your vote has been added successfully."),
+        proofVoteMode === "moveToOld"
+          ? response.message || "Moved to old farmer successfully."
+          : "Your vote has been added successfully.",
       );
       setToastTone("success");
       setToastOpen(true);

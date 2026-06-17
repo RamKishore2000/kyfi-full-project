@@ -103,13 +103,22 @@ const createDealerFromAdmin = async (req, res, next) => {
     state,
     mandal,
     village,
+    aadhaarNumber,
+    gstNumber,
     aadhaarOrGstNumber,
   } = req.body || {};
 
   const normalizedMobile = String(mobile || "").trim();
-  const normalizedIdentifier = String(aadhaarOrGstNumber || "")
+  const normalizedAadhaar = String(aadhaarNumber || "").trim();
+  const normalizedGst = String(gstNumber || "").trim().toUpperCase();
+  const legacyIdentifier = String(aadhaarOrGstNumber || "")
     .trim()
     .toUpperCase();
+  const resolvedAadhaar =
+    normalizedAadhaar || (/^\d{12}$/.test(legacyIdentifier) ? legacyIdentifier : "");
+  const resolvedGst =
+    normalizedGst ||
+    (/^\d{2}[A-Z0-9]{13}$/.test(legacyIdentifier) ? legacyIdentifier : "");
 
   if (
     !String(shopName || "").trim() ||
@@ -119,7 +128,8 @@ const createDealerFromAdmin = async (req, res, next) => {
     !String(state || "").trim() ||
     !String(mandal || "").trim() ||
     !String(village || "").trim() ||
-    !normalizedIdentifier
+    !resolvedAadhaar ||
+    !resolvedGst
   ) {
     return res
       .status(400)
@@ -132,13 +142,16 @@ const createDealerFromAdmin = async (req, res, next) => {
       .json({ message: "Enter a valid 10-digit mobile number" });
   }
 
-  if (
-    !/^\d{12}$/.test(normalizedIdentifier) &&
-    !/^\d{2}[A-Z0-9]{13}$/.test(normalizedIdentifier)
-  ) {
+  if (!/^\d{12}$/.test(resolvedAadhaar)) {
     return res
       .status(400)
-      .json({ message: "Enter a valid Aadhaar or GST number" });
+      .json({ message: "Enter a valid 12-digit Aadhaar number" });
+  }
+
+  if (!/^\d{2}[A-Z0-9]{13}$/.test(resolvedGst)) {
+    return res
+      .status(400)
+      .json({ message: "Enter a valid GST number" });
   }
 
   try {
@@ -152,7 +165,9 @@ const createDealerFromAdmin = async (req, res, next) => {
       state: String(state).trim(),
       mandal: String(mandal).trim(),
       village: String(village).trim(),
-      aadhaarOrGstNumber: normalizedIdentifier,
+      aadhaarNumber: resolvedAadhaar,
+      gstNumber: resolvedGst,
+      aadhaarOrGstNumber: [resolvedAadhaar, resolvedGst].join(" / "),
       status: "pending",
     });
 

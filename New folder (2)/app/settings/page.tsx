@@ -22,7 +22,7 @@ import type { KyfiLanguage } from "@/lib/kyfi-i18n";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 
 export default function SettingsPage() {
-  const { language, setLanguage, t } = useKyfiLanguage();
+  const { language, setLanguage, t, translateText } = useKyfiLanguage();
   const router = useRouter();
   const [error, setError] = useState("");
   const [savingLanguage, setSavingLanguage] = useState(false);
@@ -42,32 +42,32 @@ export default function SettingsPage() {
 
   const policyLinks = [
     {
-      label: "Privacy Policy",
+      labelKey: "footer.privacy",
       href: "/privacy-policy",
       icon: ShieldCheck,
     },
     {
-      label: "Terms of Use",
+      labelKey: "footer.terms",
       href: "/terms-of-use",
       icon: FileCheck2,
     },
     {
-      label: "Refund Policy",
+      labelKey: "footer.refund",
       href: "/refund-policy",
       icon: BadgeIndianRupee,
     },
     {
-      label: "Cancellation",
+      labelKey: "footer.cancellation",
       href: "/cancellation-policy",
       icon: RefreshCcw,
     },
     {
-      label: "Digital Delivery",
+      labelKey: "footer.digitalDelivery",
       href: "/digital-service-delivery",
       icon: Truck,
     },
     {
-      label: "Contact Support",
+      labelKey: "footer.contactSupport",
       href: "/contact-support",
       icon: Headphones,
     },
@@ -148,16 +148,18 @@ export default function SettingsPage() {
           <div className="grid gap-8 lg:grid-cols-2">
             <section className="kyfi-settings-accent-card native-only-policy-links space-y-4 lg:col-span-2">
                 <div className="kyfi-settings-accent-content border-l-4 border-[rgb(4,120,87)] pl-4">
-                  <p className="font-manrope type-nav text-slate-900">Policies</p>
+                  <p className="font-manrope type-nav text-slate-900">
+                    {t("footer.policies")}
+                  </p>
                   <h2 className="mt-1 font-manrope type-card text-slate-900">
-                    KYFI support and policy links
+                    {translateText("KYFI support and policy links")}
                   </h2>
                   <p className="mt-2 font-manrope type-body text-slate-600">
-                    Access KYFI payment, refund, and support information inside the app.
+                    {translateText("Access KYFI payment, refund, and support information inside the app.")}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {policyLinks.map(({ label, href, icon: Icon }) => (
+                  {policyLinks.map(({ labelKey, href, icon: Icon }) => (
                     <button
                       key={href}
                       type="button"
@@ -168,7 +170,7 @@ export default function SettingsPage() {
                         <Icon className="h-5 w-5" />
                       </span>
                       <span className="font-manrope text-[0.78rem] font-bold leading-4 text-slate-900">
-                        {label}
+                        {t(labelKey)}
                       </span>
                     </button>
                   ))}
