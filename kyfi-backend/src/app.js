@@ -6,7 +6,26 @@ const { handleRazorpayWebhook } = require("./controllers/subscription.controller
 
 const app = express();
 
-app.use(cors());
+const allowedCorsOrigins = new Set([
+  "https://kyfi.in",
+  "https://www.kyfi.in",
+  "https://admin.kyfi.in",
+  "http://localhost:3000",
+  "http://localhost:3005",
+]);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedCorsOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
+  }),
+);
 app.post(
   "/api/subscription/razorpay/webhook",
   express.raw({ type: "application/json", limit: "1mb" }),

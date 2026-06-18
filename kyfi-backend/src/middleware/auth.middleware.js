@@ -35,6 +35,31 @@ const requireAuth = async (req, res, next) => {
         });
       }
 
+      const dealerStatus = String(dealer.status || "").toLowerCase();
+      if (dealerStatus !== "approved") {
+        const statusMessages = {
+          pending:
+            "Your dealer account is waiting for admin approval. You can use KYFI after approval.",
+          rejected:
+            "Your dealer account was rejected. Please contact KYFI support.",
+          suspended:
+            "Your dealer account has been suspended. Please contact KYFI support.",
+        };
+        const statusCodes = {
+          pending: "DEALER_PENDING",
+          rejected: "DEALER_REJECTED",
+          suspended: "DEALER_SUSPENDED",
+        };
+
+        return res.status(403).json({
+          success: false,
+          code: statusCodes[dealerStatus] || "DEALER_NOT_APPROVED",
+          message:
+            statusMessages[dealerStatus] ||
+            "Your dealer account is not approved. Please contact KYFI support.",
+        });
+      }
+
       if (dealer.subscription_status !== "active") {
         return res.status(403).json({
           success: false,

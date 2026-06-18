@@ -1,4 +1,5 @@
 import { KYFI_API_BASE_URL } from "@/lib/config";
+import { handleDealerAccountBlock } from "@/lib/api/account-status";
 import { handleSubscriptionExpiry } from "@/lib/api/subscription-expiry";
 
 export type BlacklistEntryRecord = {
@@ -42,6 +43,7 @@ async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<T
   const data = (await response.json().catch(() => null)) as TResponse | ApiErrorPayload | null;
 
   if (!response.ok) {
+    handleDealerAccountBlock(data);
     handleSubscriptionExpiry(data);
     throw new Error((data as ApiErrorPayload | null)?.message || "Request failed");
   }

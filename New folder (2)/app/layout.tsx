@@ -10,6 +10,7 @@ import { NativeStatusBar } from "@/components/kyfi/native-status-bar";
 import { NativeBackHandler } from "@/components/kyfi/native-back-handler";
 import { LanguageProvider } from "@/components/kyfi/language-provider";
 import { MobileBottomTabs } from "@/components/kyfi/mobile-bottom-tabs";
+import { AccountStatusModal } from "@/components/kyfi/account-status-modal";
 
 export const metadata: Metadata = {
   title: "KYFI - Know Your Farmer Information",
@@ -30,6 +31,7 @@ export default function RootLayout({
           <NativeBackHandler />
           {children}
           <MobileBottomTabs />
+          <AccountStatusModal />
         </LanguageProvider>
       </body>
     </html>

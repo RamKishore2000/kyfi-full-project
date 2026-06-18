@@ -1,4 +1,5 @@
 import { KYFI_API_BASE_URL } from "@/lib/config";
+import { handleDealerAccountBlock } from "@/lib/api/account-status";
 import { handleSubscriptionExpiry } from "@/lib/api/subscription-expiry";
 
 export type MandalRecord = {
@@ -66,6 +67,7 @@ async function authenticatedRequest<TResponse>(
     | null;
 
   if (!response.ok) {
+    handleDealerAccountBlock(data);
     handleSubscriptionExpiry(data);
     throw new Error(
       (data as { message?: string } | null)?.message || "Request failed",
