@@ -215,9 +215,7 @@ const requestDealerOtp = async (req, res, next) => {
       testOtp: otpResult.otpCode,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
-      message: error.message || "Unable to generate OTP",
-    });
+    return next(error);
   }
 };
 
@@ -240,9 +238,7 @@ const resendDealerOtp = async (req, res, next) => {
       testOtp: otpResult.otpCode,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
-      message: error.message || "Unable to resend OTP",
-    });
+    return next(error);
   }
 };
 
@@ -302,9 +298,7 @@ const verifyDealerOtpRequest = async (req, res, next) => {
       },
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({
-      message: error.message || "Unable to verify OTP",
-    });
+    return next(error);
   }
 };
 

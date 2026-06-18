@@ -38,7 +38,14 @@ app.use("/api", router);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal server error";
+  const isProduction = process.env.NODE_ENV === "production";
+  const isClientError = statusCode >= 400 && statusCode < 500;
+  const message =
+    isProduction && !isClientError
+      ? "Something went wrong. Please try again later."
+      : err.message || "Internal server error";
+
+  console.error(err);
 
   res.status(statusCode).json({
     success: false,
