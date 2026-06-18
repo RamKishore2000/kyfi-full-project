@@ -1,4 +1,11 @@
+export const MAX_PROOF_IMAGE_BYTES = 5 * 1024 * 1024;
+export const PROOF_IMAGE_SIZE_MESSAGE = "Please upload an image below 5 MB.";
+
 export async function imageFileToWebpDataUrl(file: File): Promise<string> {
+  if (file.size > MAX_PROOF_IMAGE_BYTES) {
+    throw new Error(PROOF_IMAGE_SIZE_MESSAGE);
+  }
+
   if (!file.type.startsWith("image/")) {
     throw new Error("Select a valid image file.");
   }
@@ -31,5 +38,13 @@ export async function imageFileToWebpDataUrl(file: File): Promise<string> {
   }
 
   context.drawImage(image, 0, 0, width, height);
-  return canvas.toDataURL("image/webp", 0.82);
+  const dataUrl = canvas.toDataURL("image/webp", 0.82);
+  const base64 = dataUrl.split(",", 2)[1] || "";
+  const decodedSize = Math.floor((base64.length * 3) / 4);
+
+  if (decodedSize > MAX_PROOF_IMAGE_BYTES) {
+    throw new Error(PROOF_IMAGE_SIZE_MESSAGE);
+  }
+
+  return dataUrl;
 }

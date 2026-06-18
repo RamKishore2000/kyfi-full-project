@@ -5,6 +5,8 @@ const db = require("../config/db");
 
 const normalizeDigits = (value) => String(value || "").replace(/\D/g, "");
 const PROOF_UPLOAD_DIR = path.join(process.cwd(), "uploads", "farmer-proofs");
+const MAX_PROOF_IMAGE_BYTES = 5 * 1024 * 1024;
+const PROOF_IMAGE_SIZE_MESSAGE = "Please upload an image below 5 MB.";
 
 const saveProofImage = async (dataUrl) => {
   if (!dataUrl) return null;
@@ -16,8 +18,14 @@ const saveProofImage = async (dataUrl) => {
   }
 
   const buffer = Buffer.from(match[1], "base64");
-  if (!buffer.length || buffer.length > 5 * 1024 * 1024) {
-    const error = new Error("Proof image is invalid or too large");
+  if (!buffer.length) {
+    const error = new Error("Proof image is invalid");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (buffer.length > MAX_PROOF_IMAGE_BYTES) {
+    const error = new Error(PROOF_IMAGE_SIZE_MESSAGE);
     error.statusCode = 400;
     throw error;
   }
