@@ -111,6 +111,16 @@ const buildDealerAuthResponse = (dealer, token, message = "Login successful") =>
   },
 });
 
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    const error = new Error("JWT secret is not configured");
+    error.statusCode = 500;
+    throw error;
+  }
+  return secret;
+};
+
 const loginDealer = async (req, res, next) => {
   const { mobile, password, otp, mode } = req.body || {};
 
@@ -127,7 +137,7 @@ const loginDealer = async (req, res, next) => {
 
     dealer = await normalizeDealerSubscription(dealer);
 
-    const secret = process.env.JWT_SECRET || "kyfi-secret-key";
+    const secret = getJwtSecret();
     const loginMode = mode === "otp" ? "otp" : "password";
 
     if (loginMode === "otp") {
@@ -164,16 +174,15 @@ const loginDealer = async (req, res, next) => {
 
       let isPasswordValid = false;
 
-      if (dealer.role === "admin" && !dealer.password_hash) {
-        const adminPassword = process.env.ADMIN_PASSWORD || "admin1234";
-        isPasswordValid = password === adminPassword;
-      } else {
-        if (!dealer.password_hash) {
-          return res.status(400).json({ message: "Password login is not available for this dealer" });
-        }
-
-        isPasswordValid = await bcrypt.compare(password, dealer.password_hash);
+      if (!dealer.password_hash) {
+        const message =
+          dealer.role === "admin"
+            ? "Admin password is not configured"
+            : "Password login is not available for this dealer";
+        return res.status(400).json({ message });
       }
+
+      isPasswordValid = await bcrypt.compare(password, dealer.password_hash);
 
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid phone number or password" });
@@ -259,7 +268,7 @@ const verifyDealerOtpRequest = async (req, res, next) => {
 
     const otpResult = await verifyDealerOtp(mobile, otp);
     const normalizedDealer = await normalizeDealerSubscription(otpResult.dealer);
-    const secret = process.env.JWT_SECRET || "kyfi-secret-key";
+    const secret = getJwtSecret();
     const token = signJwt(
       {
         dealerId: otpResult.dealer.id,

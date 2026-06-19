@@ -8,22 +8,31 @@ const {
   findDealerByIdWithSubscriptionCheck,
 } = require("../services/dealer.service");
 
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    const error = new Error("JWT secret is not configured");
+    error.statusCode = 500;
+    throw error;
+  }
+  return secret;
+};
+
 const requireAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  const secret = process.env.JWT_SECRET || "kyfi-secret-key";
 
   if (!token) {
     return res.status(401).json({ message: "Authorization token required" });
   }
 
-  const payload = verifyJwt(token, secret);
-
-  if (!payload) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-
   try {
+    const payload = verifyJwt(token, getJwtSecret());
+
+    if (!payload) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
     if (payload.role === "dealer") {
       const dealer = await findDealerByIdWithSubscriptionCheck(payload.dealerId);
 
@@ -81,23 +90,22 @@ const requireAuth = async (req, res, next) => {
 const requireAdmin = async (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  const secret = process.env.JWT_SECRET || "kyfi-secret-key";
 
   if (!token) {
     return res.status(401).json({ message: "Authorization token required" });
   }
 
-  const payload = verifyJwt(token, secret);
-
-  if (!payload) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-
-  if (payload.role !== "admin") {
-    return res.status(403).json({ message: "Admin access only" });
-  }
-
   try {
+    const payload = verifyJwt(token, getJwtSecret());
+
+    if (!payload) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    if (payload.role !== "admin") {
+      return res.status(403).json({ message: "Admin access only" });
+    }
+
     const adminAccess = await getAdminAccess(payload.dealerId);
 
     if (!adminAccess) {
