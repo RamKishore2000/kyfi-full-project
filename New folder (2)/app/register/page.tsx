@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
+  CheckCircle2,
   Eye,
   EyeOff,
   Plus,
@@ -108,6 +109,7 @@ function RegisterPageContent() {
     name?: string;
     mobile?: string;
   } | null>(null);
+  const [registrationSuccessOpen, setRegistrationSuccessOpen] = useState(false);
   const [progressFill, setProgressFill] = useState(false);
   const [toast, setToast] = useState<{
     open: boolean;
@@ -212,6 +214,18 @@ function RegisterPageContent() {
 
     return () => window.clearTimeout(timeout);
   }, [toast.open]);
+
+  useEffect(() => {
+    if (!registrationSuccessOpen) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      router.push("/login");
+    }, 3200);
+
+    return () => window.clearTimeout(timeout);
+  }, [registrationSuccessOpen, router]);
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -746,7 +760,7 @@ function RegisterPageContent() {
         });
       }
 
-      setFlowStep("subscription");
+      setRegistrationSuccessOpen(true);
       showToast(translateRuntimeMessage("Registration successful"));
     } catch (submitError) {
       setError(
@@ -1470,6 +1484,25 @@ function RegisterPageContent() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {registrationSuccessOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-7 text-center shadow-[0_28px_90px_rgba(15,23,42,0.24)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-[rgb(4,120,87)]">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <h2 className="mt-5 font-manrope text-2xl font-black tracking-[-0.04em] text-slate-950">
+              Registration successful
+            </h2>
+            <p className="mt-3 font-manrope text-base leading-7 text-slate-600">
+              Your free trial has started. You can now enjoy your free trial.
+            </p>
+            <p className="mt-5 font-manrope text-sm font-semibold text-[rgb(4,120,87)]">
+              Redirecting to login...
+            </p>
           </div>
         </div>
       ) : null}

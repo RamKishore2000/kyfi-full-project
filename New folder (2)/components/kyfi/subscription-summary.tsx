@@ -22,6 +22,9 @@ export function SubscriptionSummary() {
   const [subscription, setSubscription] = useState<SubscriptionRecord | null>(
     null,
   );
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     let active = true;
@@ -43,12 +46,73 @@ export function SubscriptionSummary() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const readDealerTrial = () => {
+      const dealerJson = window.localStorage.getItem("kyfi_dealer");
+      if (!dealerJson) {
+        setTrialDaysRemaining(null);
+        return;
+      }
+
+      try {
+        const dealer = JSON.parse(dealerJson) as {
+          trialStatus?: string;
+          trialExpiresAt?: string | null;
+          trialDaysRemaining?: number | null;
+        };
+        const trialStatus = String(dealer.trialStatus || "")
+          .trim()
+          .toLowerCase();
+
+        if (trialStatus !== "active") {
+          setTrialDaysRemaining(null);
+          return;
+        }
+
+        if (typeof dealer.trialDaysRemaining === "number") {
+          setTrialDaysRemaining(Math.max(0, dealer.trialDaysRemaining));
+          return;
+        }
+
+        const expiresAt = dealer.trialExpiresAt
+          ? new Date(dealer.trialExpiresAt)
+          : null;
+
+        if (!expiresAt || Number.isNaN(expiresAt.getTime())) {
+          setTrialDaysRemaining(null);
+          return;
+        }
+
+        const remaining = Math.ceil(
+          (expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+        );
+        setTrialDaysRemaining(Math.max(0, remaining));
+      } catch {
+        setTrialDaysRemaining(null);
+      }
+    };
+
+    readDealerTrial();
+    window.addEventListener("kyfi-auth-changed", readDealerTrial);
+    window.addEventListener("storage", readDealerTrial);
+
+    return () => {
+      window.removeEventListener("kyfi-auth-changed", readDealerTrial);
+      window.removeEventListener("storage", readDealerTrial);
+    };
+  }, []);
+
   const planName = subscription?.planName || "One Year Plan";
   const duration = subscription?.durationLabel || "1 Year";
   const price =
     subscription?.yearlyPrice !== undefined && subscription?.yearlyPrice !== null
       ? formatCurrency(subscription.yearlyPrice, subscription.currency || "INR")
       : t("subscription.loading");
+  const freeTrialDays = Number(subscription?.freeTrialDays || 0);
 
   return (
     <section className="kyfi-subscription-summary mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-12 lg:px-8">
@@ -98,6 +162,29 @@ export function SubscriptionSummary() {
                   <span>{item}</span>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
+                <p className="font-manrope text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                  {t("subscription.freeTrialProvided")}
+                </p>
+                <p className="mt-1 font-manrope text-xl font-black text-slate-950">
+                  {freeTrialDays} {freeTrialDays === 1 ? "day" : "days"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
+                <p className="font-manrope text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                  {t("subscription.trialDaysRemaining")}
+                </p>
+                <p className="mt-1 font-manrope text-xl font-black text-[rgb(4,120,87)]">
+                  {trialDaysRemaining === null
+                    ? "-"
+                    : `${trialDaysRemaining} ${
+                        trialDaysRemaining === 1 ? "day" : "days"
+                      }`}
+                </p>
+              </div>
             </div>
           </div>
         </div>

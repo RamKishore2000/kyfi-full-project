@@ -45,11 +45,24 @@ const requireAuth = async (req, res, next) => {
         });
       }
 
+      const access = getDealerAccessState(dealer);
+
+      if (access.accessStatus !== "allowed") {
+        return res.status(403).json({
+          success: false,
+          code: "SUBSCRIPTION_REQUIRED",
+          message:
+            dealer.trial_status === "expired"
+              ? "Your free trial has expired. Please subscribe to continue."
+              : "Please subscribe to continue using KYFI.",
+        });
+      }
+
       const dealerStatus = String(dealer.status || "").toLowerCase();
-      if (dealerStatus !== "approved") {
+      if (!access.trialActive && dealerStatus !== "approved") {
         const statusMessages = {
           pending:
-            "Your dealer account is waiting for admin approval. You can use KYFI after approval.",
+            "Dealer account is pending. After admin approval, you will receive an SMS.",
           rejected:
             "Your dealer account was rejected. Please contact KYFI support.",
           suspended:
@@ -67,19 +80,6 @@ const requireAuth = async (req, res, next) => {
           message:
             statusMessages[dealerStatus] ||
             "Your dealer account is not approved. Please contact KYFI support.",
-        });
-      }
-
-      const access = getDealerAccessState(dealer);
-
-      if (access.accessStatus !== "allowed") {
-        return res.status(403).json({
-          success: false,
-          code: "SUBSCRIPTION_REQUIRED",
-          message:
-            dealer.trial_status === "expired"
-              ? "Your free trial has expired. Please subscribe to continue."
-              : "Please subscribe to continue using KYFI.",
         });
       }
 

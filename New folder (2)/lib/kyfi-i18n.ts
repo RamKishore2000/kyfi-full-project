@@ -167,7 +167,7 @@ const english: Dictionary = {
   "login.invalidOtp": "Enter a valid 6-digit OTP.",
   "login.onlyDealer": "Only dealers can sign in here.",
   "login.pending":
-    "Dealer account is pending approval. You will receive an SMS after approval.",
+    "Dealer account is pending. After admin approval, you will receive an SMS.",
   "login.rejected": "Dealer account has been rejected.",
   "login.suspended": "Dealer account is suspended.",
   "login.notApproved": "Dealer account is not approved yet.",
@@ -298,6 +298,8 @@ const english: Dictionary = {
   "subscription.featureSearch": "Farmer search",
   "subscription.featureRecords": "Status records",
   "subscription.featureVotes": "Old farmer votes",
+  "subscription.freeTrialProvided": "Free trial provided",
+  "subscription.trialDaysRemaining": "Trial days remaining",
   "common.closeModal": "Close modal",
   "hero.kicker": "Trusted dealer-powered credit reputation",
   "hero.title": "Check Farmer Credit Reputation Before Giving Credit",
@@ -688,7 +690,7 @@ const telugu: Dictionary = {
   "login.invalidOtp": "చెల్లుబాటు అయ్యే 6 అంకెల OTP ను నమోదు చేయండి.",
   "login.onlyDealer": "ఇక్కడ డీలర్లు మాత్రమే లాగిన్ చేయగలరు.",
   "login.pending":
-    "డీలర్ ఖాతా ఆమోదం కోసం పెండింగ్‌లో ఉంది. ఆమోదం తర్వాత SMS వస్తుంది.",
+    "డీలర్ ఖాతా పెండింగ్‌లో ఉంది. అడ్మిన్ ఆమోదం తర్వాత మీకు SMS వస్తుంది.",
   "login.rejected": "డీలర్ ఖాతా తిరస్కరించబడింది.",
   "login.suspended": "డీలర్ ఖాతా నిలిపివేయబడింది.",
   "login.notApproved": "డీలర్ ఖాతా ఇంకా ఆమోదించబడలేదు.",
@@ -909,6 +911,8 @@ const telugu: Dictionary = {
   "subscription.featureSearch": "రైతు శోధన",
   "subscription.featureRecords": "స్టేటస్ రికార్డులు",
   "subscription.featureVotes": "పాత రైతు ఓట్లు",
+  "subscription.freeTrialProvided": "ఉచిత ట్రయల్ రోజులు",
+  "subscription.trialDaysRemaining": "ట్రయల్ మిగిలిన రోజులు",
   "hero.kicker": "నమ్మదగిన డీలర్ ఆధారిత క్రెడిట్ ప్రతిష్ట",
   "hero.title": "రుణం ఇవ్వడానికి ముందు రైతు క్రెడిట్ ప్రతిష్టను చూడండి",
   "hero.subtitle":

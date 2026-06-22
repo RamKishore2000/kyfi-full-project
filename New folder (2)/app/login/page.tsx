@@ -71,9 +71,12 @@ export default function LoginPage() {
     dealer?: {
       status?: string;
       subscriptionStatus?: string;
+      subscriptionExpiresAt?: string | null;
       trialStatus?: string;
       trialExpiresAt?: string | null;
       accessStatus?: string;
+      hasActiveSubscription?: boolean;
+      hasActiveTrial?: boolean;
       id?: number;
       mobile?: string;
       name?: string;
@@ -90,12 +93,22 @@ export default function LoginPage() {
       ? new Date(dealer.trialExpiresAt)
       : null;
     const trialActive =
+      dealer?.hasActiveTrial === true ||
       trialStatus === "active" &&
       !!trialExpiresAt &&
       !Number.isNaN(trialExpiresAt.getTime()) &&
       trialExpiresAt.getTime() > Date.now();
+    const subscriptionExpiresAt = dealer?.subscriptionExpiresAt
+      ? new Date(dealer.subscriptionExpiresAt)
+      : null;
+    const subscriptionActive =
+      dealer?.hasActiveSubscription === true ||
+      (subscriptionStatus === "active" &&
+        !!subscriptionExpiresAt &&
+        !Number.isNaN(subscriptionExpiresAt.getTime()) &&
+        subscriptionExpiresAt.getTime() > Date.now());
     const accessAllowed =
-      subscriptionStatus === "active" ||
+      subscriptionActive ||
       trialActive ||
       String(dealer?.accessStatus || "").trim().toLowerCase() === "allowed";
 
@@ -105,6 +118,18 @@ export default function LoginPage() {
         window.localStorage.removeItem("kyfi_dealer");
       }
       router.push("/register?step=subscription");
+      return;
+    }
+
+    if (trialActive) {
+      if (typeof window !== "undefined" && dealer && token) {
+        window.localStorage.setItem("kyfi_token", token);
+        window.localStorage.setItem("kyfi_dealer", JSON.stringify(dealer));
+        window.localStorage.removeItem("kyfi_pending_dealer");
+        window.dispatchEvent(new Event("kyfi-auth-changed"));
+      }
+
+      router.push(Capacitor.isNativePlatform() ? "/dashboard" : "/");
       return;
     }
 

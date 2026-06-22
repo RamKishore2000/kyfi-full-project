@@ -48,9 +48,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         : null;
     const subscriptionActive =
       subscriptionStatus === "active" &&
-      (!expiresAt ||
-        Number.isNaN(expiresAt.getTime()) ||
-        expiresAt.getTime() > Date.now());
+      !!expiresAt &&
+      !Number.isNaN(expiresAt.getTime()) &&
+      expiresAt.getTime() > Date.now();
     const trialStatus = String(dealer?.trialStatus || dealer?.trial_status || "")
       .trim()
       .toLowerCase();
@@ -73,7 +73,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     const dealerStatus = String(dealer?.status || "").trim().toLowerCase();
-    if (dealerStatus !== "approved") {
+    if (!trialActive && dealerStatus !== "approved") {
       router.replace("/login");
       return;
     }
