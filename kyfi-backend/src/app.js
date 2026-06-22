@@ -10,6 +10,9 @@ const allowedCorsOrigins = new Set([
   "https://kyfi.in",
   "https://www.kyfi.in",
   "https://admin.kyfi.in",
+  "http://localhost",
+  "https://localhost",
+  "capacitor://localhost",
   "http://localhost:3000",
   "http://localhost:3005",
 ]);

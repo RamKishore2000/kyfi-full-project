@@ -1,0 +1,295 @@
+KYFI FRONTEND DESIGN BRIEF FOR GEMINI
+
+Purpose
+KYFI means Know Your Farmer Information. It is a dealer-focused digital platform for pesticide/agri dealers. Dealers use it to check farmer credit reputation before giving credit, add farmer records, vote on risky old farmers with proof, and manage their own records.
+
+Use this document to suggest UI/UX improvements only. Do not suggest backend/API/business-logic changes.
+
+Project Type
+1. Dealer website frontend.
+2. Same frontend is also used inside Capacitor Android and iOS apps.
+3. Desktop website design should remain clean, professional, and web-style.
+4. Capacitor Android/iOS should feel like a real mobile app, not just a responsive website.
+
+Main Users
+1. Pesticide/agri dealers.
+2. Dealers may not be highly technical.
+3. UI should be simple, clear, fast, and touch-friendly.
+4. Main actions must be easy to understand: Search, Add Farmer, My Records, Profile.
+
+Brand Direction
+1. Brand color: deep green, close to #047857.
+2. Visual feel: agriculture, trust, safety, dealer network, credit reputation.
+3. Avoid heavy dark UI.
+4. Use clean white/off-white backgrounds with soft green accents.
+5. Cards should feel premium but not too heavy.
+6. Use strong hierarchy, simple labels, and clear call-to-action buttons.
+
+Current Frontend Pages
+1. Dashboard
+2. Login
+3. Register
+4. Subscription
+5. Add Farmer Status
+6. Search Farmer Status
+7. My Records
+8. Profile
+9. Settings
+10. Change Password
+11. Privacy Policy
+12. Terms of Use
+13. Refund Policy
+14. Cancellation Policy
+15. Digital Service Delivery
+16. Contact Support
+
+Dashboard Page
+Purpose:
+The dashboard is the home page for dealers.
+
+Important sections:
+1. Header with KYFI logo and profile/login action.
+2. Hero banner.
+3. KYFI shortcuts / core tools.
+4. Status explanation cards: Green, Yellow, Red.
+5. How it works section.
+6. Subscription summary section.
+7. Dashboard preview section.
+8. CTA section.
+9. Footer on browser/mobile web only, not inside Capacitor app.
+
+Dashboard Design Needs:
+1. Mobile app dashboard should look like an app home screen.
+2. Hero banner should be visually strong and responsive.
+3. Shortcuts should be app-style action cards.
+4. Status cards should clearly explain:
+   - Green = paid / safe
+   - Yellow = half payment / caution
+   - Red = not paid / risky
+5. Avoid too much text in Capacitor app view.
+6. Browser desktop can show fuller content.
+
+Add Farmer Page
+Purpose:
+Dealer adds farmer records.
+
+Two tabs:
+1. Old Farmer
+2. New Farmer
+
+Old Farmer meaning:
+Farmers who repeatedly take credit/products and do not pay properly. Dealer records this type of farmer with image proof. Old farmer vote/proof logic is important.
+
+New Farmer meaning:
+Farmers personally maintained by a dealer. New farmers have status:
+1. Green = paid
+2. Yellow = half payment
+3. Red = not paid
+
+Important Add Farmer UX:
+1. Old Farmer and New Farmer tabs must be easy to identify.
+2. Forms should feel mobile-app friendly in Capacitor.
+3. Inputs should be large and touch-friendly.
+4. Image proof upload should be clear for Old Farmer.
+5. Duplicate farmer modal should be centered and scroll properly.
+6. District, Mandal, Village fields should be easy to use on mobile.
+7. Do not change any existing logic.
+
+Search Farmer Status Page
+Purpose:
+Dealer searches farmer records by mandal, village, and farmer name.
+
+Search includes:
+1. Old Farmers
+2. New Farmers
+
+Old Farmer Search:
+1. Shows old farmer details.
+2. Shows vote count.
+3. Shows View Votes.
+4. Dealer can vote with image proof when allowed.
+5. Green old farmers should not show plus/minus vote controls if current logic hides them.
+
+New Farmer Search:
+1. Shows New Farmer status: Green/Yellow/Red.
+2. Dealer can manage own records where allowed.
+3. Move to Old flow exists for new farmers.
+
+Design Needs:
+1. Search form should not feel like a web form inside app.
+2. Results should be clean mobile cards.
+3. Important details should be visible without unnecessary expand sections.
+4. Avoid repeated text.
+5. Modals should be centered, readable, and scrollable.
+
+My Records Page
+Purpose:
+Dealer checks records personally related to their account.
+
+Tabs:
+1. Old Farmers
+2. New Farmers
+3. My Voted Old Farmers
+
+Counts:
+1. Old Farmers count
+2. New Farmers count
+3. My Voted Old Farmers count
+
+Design Needs:
+1. Count cards should show full labels clearly in mobile app.
+2. Tabs should be easy to tap.
+3. Records should be card-based and readable.
+4. Avoid hidden/expand-only important details.
+5. Remove unnecessary remarks where not needed.
+
+Profile Page
+Purpose:
+Dealer sees and updates profile details.
+
+Important details:
+1. Dealer name
+2. Shop name
+3. Mobile
+4. District, Mandal, Village
+5. Subscription details
+6. Subscription start date
+7. Subscription expiry date
+8. Remaining days count
+
+Design Needs:
+1. Profile should feel like an account screen in a mobile app.
+2. Subscription details should be clear.
+3. Back arrow should exist in Capacitor app where appropriate.
+
+Settings Page
+Purpose:
+Dealer manages language, password, and policy links.
+
+Contains:
+1. Policy links
+2. Language card
+3. Change password card
+
+Policy Links:
+1. Privacy Policy
+2. Terms of Use
+3. Refund Policy
+4. Cancellation Policy
+5. Digital Service Delivery
+6. Contact Support
+
+Design Needs:
+1. Policy links should be compact and app-like.
+2. Icons beside text.
+3. Two cards per row can work on mobile if readable.
+4. Language and password cards should look separate and important.
+
+Login Page
+Purpose:
+Dealer login by password or OTP.
+
+Design Needs:
+1. In Capacitor app, login should open first.
+2. Login should be vertically balanced.
+3. Status bar should match page background.
+4. OTP input style should be clean.
+5. No bottom tabs on login/register pages.
+6. Login page should feel native-app style.
+
+Register Page
+Purpose:
+Dealer registration and subscription step.
+
+Flow:
+1. Step 1: Register
+2. Step 2: Subscription
+
+Design Needs:
+1. Step progress should be clear.
+2. Register form should not feel cramped.
+3. Subscription card should be simple and trustworthy.
+4. No bottom tabs on register page.
+5. Status bar and safe area should look correct in Capacitor.
+
+Policy Pages
+Pages:
+1. Privacy Policy
+2. Terms of Use
+3. Refund Policy
+4. Cancellation Policy
+5. Digital Service Delivery
+6. Contact Support
+
+Design Needs:
+1. Should look readable and professional.
+2. Use numbered sections.
+3. Headings, subheadings, and short descriptions.
+4. Avoid card-inside-card clutter.
+5. In Capacitor app, show back arrow and bottom tabs where appropriate.
+
+Capacitor Android/iOS App Requirements
+Very important:
+Do not treat app screens as only responsive web pages. They should look like a real app.
+
+App design should have:
+1. Safe-area handling for status bar and bottom area.
+2. Fixed bottom tabs on main protected pages.
+3. No bottom tabs on Login and Register.
+4. Proper Android back button behavior.
+5. App-style headers.
+6. Large touch targets.
+7. Better spacing between cards and sections.
+8. Centered modals.
+9. Scrollable modal content when needed.
+10. No content hidden behind keyboard or bottom tabs.
+
+Mobile Bottom Tabs
+Tabs:
+1. Home
+2. Add Farmer
+3. Search
+4. My Records
+
+Requirements:
+1. Fixed at bottom in Capacitor app.
+2. Icons and labels must be readable.
+3. Should hide when keyboard is open.
+4. Should reappear after keyboard closes.
+5. Should not show on Login/Register.
+
+Important Technical Constraint
+Do not break existing functionality:
+1. Dealer login
+2. OTP login
+3. Register flow
+4. Razorpay subscription flow
+5. Add farmer flow
+6. Search farmer flow
+7. Old farmer vote/proof flow
+8. New farmer status flow
+9. Move to old flow
+10. My Records flow
+11. Profile update
+12. Settings/language switching
+13. Admin-managed hero banners
+
+Design Request For Gemini
+Please suggest a professional mobile app UI/UX redesign for the KYFI dealer app based on this brief.
+
+Focus especially on:
+1. Dashboard app home screen
+2. Shortcuts/action cards
+3. Add Farmer form
+4. Search Farmer form and result cards
+5. My Records cards and tabs
+6. Profile and subscription details
+7. Settings and policy links
+8. Modal design
+9. Bottom tab navigation
+10. Status bar and safe-area consistency
+
+Give suggestions that can be implemented with React/Next.js/Tailwind CSS and Capacitor without changing backend logic.
+
+Do not suggest changing business logic, APIs, database, or routing unless absolutely necessary.
+
