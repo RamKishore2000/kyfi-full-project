@@ -9,7 +9,10 @@ export function handleSubscriptionExpiry(payload: unknown) {
   }
 
   const error = payload as SubscriptionErrorPayload | null;
-  if (error?.code !== "SUBSCRIPTION_EXPIRED") {
+  if (
+    error?.code !== "SUBSCRIPTION_EXPIRED" &&
+    error?.code !== "SUBSCRIPTION_REQUIRED"
+  ) {
     return;
   }
 

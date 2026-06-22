@@ -17,6 +17,10 @@ type DealerInfo = {
   mobile?: string;
   subscriptionStatus?: string;
   subscriptionExpiresAt?: string | null;
+  trialStatus?: string;
+  trialExpiresAt?: string | null;
+  trialDaysRemaining?: number | null;
+  accessStatus?: string;
 };
 
 type SubscriptionCheckoutProps = {
@@ -98,6 +102,10 @@ function useDealerFromStorage(providedDealer?: DealerInfo | null) {
         mobile: parsed.mobile,
         subscriptionStatus: parsed.subscriptionStatus,
         subscriptionExpiresAt: parsed.subscriptionExpiresAt,
+        trialStatus: parsed.trialStatus,
+        trialExpiresAt: parsed.trialExpiresAt,
+        trialDaysRemaining: parsed.trialDaysRemaining,
+        accessStatus: parsed.accessStatus,
       });
     } catch {
       setDealer(null);
@@ -167,6 +175,15 @@ export function SubscriptionCheckout({
     Boolean(subscriptionExpiry) &&
     !Number.isNaN(subscriptionExpiry?.getTime()) &&
     subscriptionExpiry!.getTime() <= Date.now();
+  const trialExpiry = dealer?.trialExpiresAt
+    ? new Date(dealer.trialExpiresAt)
+    : null;
+  const trialActive =
+    String(dealer?.trialStatus || "").toLowerCase() === "active" &&
+    Boolean(trialExpiry) &&
+    !Number.isNaN(trialExpiry?.getTime()) &&
+    trialExpiry!.getTime() > Date.now();
+  const trialExpired = String(dealer?.trialStatus || "").toLowerCase() === "expired";
 
   const handleSuccess = () => {
     setMessage("Subscription activated successfully.");
@@ -299,6 +316,26 @@ export function SubscriptionCheckout({
               </p>
               <p className="mt-1 text-sm leading-5 text-amber-800">
                 Please renew your subscription to continue using KYFI dealer features.
+              </p>
+            </div>
+          ) : null}
+          {!isRenewal && trialExpired ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-semibold text-amber-900">
+                Your free trial has expired.
+              </p>
+              <p className="mt-1 text-sm leading-5 text-amber-800">
+                Please activate your yearly plan to continue using KYFI dealer features.
+              </p>
+            </div>
+          ) : null}
+          {trialActive ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-sm font-semibold text-emerald-900">
+                Free trial active
+              </p>
+              <p className="mt-1 text-sm leading-5 text-emerald-800">
+                {dealer?.trialDaysRemaining ?? "Trial"} days remaining. You can subscribe anytime.
               </p>
             </div>
           ) : null}

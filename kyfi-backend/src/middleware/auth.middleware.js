@@ -6,6 +6,7 @@ const {
 } = require("../services/admin-access.service");
 const {
   findDealerByIdWithSubscriptionCheck,
+  getDealerAccessState,
 } = require("../services/dealer.service");
 
 const getJwtSecret = () => {
@@ -69,11 +70,16 @@ const requireAuth = async (req, res, next) => {
         });
       }
 
-      if (dealer.subscription_status !== "active") {
+      const access = getDealerAccessState(dealer);
+
+      if (access.accessStatus !== "allowed") {
         return res.status(403).json({
           success: false,
-          code: "SUBSCRIPTION_EXPIRED",
-          message: "Your subscription has expired. Please renew your plan.",
+          code: "SUBSCRIPTION_REQUIRED",
+          message:
+            dealer.trial_status === "expired"
+              ? "Your free trial has expired. Please subscribe to continue."
+              : "Please subscribe to continue using KYFI.",
         });
       }
 

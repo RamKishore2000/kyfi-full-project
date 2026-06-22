@@ -14,6 +14,14 @@ function parseMysqlUtcDate(value) {
   return new Date(/[zZ]|[+-]\d{2}:\d{2}$/.test(normalized) ? normalized : `${normalized}Z`);
 }
 
+function formatMysqlDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+
 async function hasDealerColumn(columnName) {
   const [rows] = await db.execute(
     `SELECT COUNT(*) AS count
@@ -25,6 +33,48 @@ async function hasDealerColumn(columnName) {
   );
 
   return Number(rows[0]?.count || 0) > 0;
+}
+
+async function ensureSubscriptionSettingsTrialColumn() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS subscription_settings (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      plan_name VARCHAR(150) NOT NULL DEFAULT 'One Year Plan',
+      yearly_price DECIMAL(10,2) NOT NULL DEFAULT 1999.00,
+      currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+      duration_label VARCHAR(50) NOT NULL DEFAULT '1 Year',
+      free_trial_days INT UNSIGNED NOT NULL DEFAULT 0,
+      updated_by_admin_id BIGINT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id)
+    )
+  `);
+
+  await db.execute("INSERT IGNORE INTO subscription_settings (id) VALUES (1)");
+
+  const [columns] = await db.execute(
+    `SELECT COUNT(*) AS count
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'subscription_settings'
+       AND COLUMN_NAME = 'free_trial_days'`,
+  );
+
+  if (Number(columns[0]?.count || 0) === 0) {
+    await db.execute(
+      "ALTER TABLE subscription_settings ADD COLUMN free_trial_days INT UNSIGNED NOT NULL DEFAULT 0 AFTER duration_label",
+    );
+  }
+}
+
+async function getConfiguredFreeTrialDays() {
+  await ensureSubscriptionSettingsTrialColumn();
+  const [rows] = await db.execute(
+    "SELECT free_trial_days FROM subscription_settings WHERE id = 1 LIMIT 1",
+  );
+
+  return Math.max(0, Number(rows[0]?.free_trial_days || 0));
 }
 
 async function ensureDealerColumns() {
@@ -73,6 +123,18 @@ async function ensureDealerColumns() {
       name: "subscription_razorpay_signature",
       sql: "ALTER TABLE dealers ADD COLUMN subscription_razorpay_signature VARCHAR(255) DEFAULT NULL",
     },
+    {
+      name: "trial_status",
+      sql: "ALTER TABLE dealers ADD COLUMN trial_status ENUM('inactive', 'active', 'expired') NOT NULL DEFAULT 'inactive'",
+    },
+    {
+      name: "trial_started_at",
+      sql: "ALTER TABLE dealers ADD COLUMN trial_started_at DATETIME DEFAULT NULL",
+    },
+    {
+      name: "trial_expires_at",
+      sql: "ALTER TABLE dealers ADD COLUMN trial_expires_at DATETIME DEFAULT NULL",
+    },
   ];
 
   for (const column of columnStatements) {
@@ -116,8 +178,46 @@ function mapDealerRow(row) {
     subscription_razorpay_order_id: row.subscription_razorpay_order_id || null,
     subscription_razorpay_payment_id: row.subscription_razorpay_payment_id || null,
     subscription_razorpay_signature: row.subscription_razorpay_signature || null,
+    trial_status: row.trial_status || "inactive",
+    trial_started_at: row.trial_started_at || null,
+    trial_expires_at: row.trial_expires_at || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
+  };
+}
+
+function getDealerAccessState(dealer) {
+  if (!dealer || dealer.role !== "dealer") {
+    return {
+      accessStatus: "allowed",
+      subscriptionActive: false,
+      trialActive: false,
+      trialDaysRemaining: null,
+    };
+  }
+
+  const now = Date.now();
+  const subscriptionExpiresAt = parseMysqlUtcDate(dealer.subscription_expires_at);
+  const trialExpiresAt = parseMysqlUtcDate(dealer.trial_expires_at);
+  const subscriptionActive =
+    dealer.subscription_status === "active" &&
+    subscriptionExpiresAt instanceof Date &&
+    !Number.isNaN(subscriptionExpiresAt.getTime()) &&
+    subscriptionExpiresAt.getTime() > now;
+  const trialActive =
+    dealer.trial_status === "active" &&
+    trialExpiresAt instanceof Date &&
+    !Number.isNaN(trialExpiresAt.getTime()) &&
+    trialExpiresAt.getTime() > now;
+  const trialDaysRemaining = trialActive
+    ? Math.max(0, Math.ceil((trialExpiresAt.getTime() - now) / (24 * 60 * 60 * 1000)))
+    : 0;
+
+  return {
+    accessStatus: subscriptionActive || trialActive ? "allowed" : "subscription_required",
+    subscriptionActive,
+    trialActive,
+    trialDaysRemaining,
   };
 }
 
@@ -129,6 +229,7 @@ const findDealerByMobile = async (mobile) => {
             subscription_status, subscription_plan_name, subscription_yearly_price,
             subscription_started_at, subscription_expires_at, subscription_razorpay_order_id,
             subscription_razorpay_payment_id, subscription_razorpay_signature,
+            trial_status, trial_started_at, trial_expires_at,
             created_at, updated_at
      FROM dealers WHERE mobile = ? LIMIT 1`,
     [mobile],
@@ -145,6 +246,7 @@ const findDealerById = async (dealerId) => {
             subscription_status, subscription_plan_name, subscription_yearly_price,
             subscription_started_at, subscription_expires_at, subscription_razorpay_order_id,
             subscription_razorpay_payment_id, subscription_razorpay_signature,
+            trial_status, trial_started_at, trial_expires_at,
             created_at, updated_at
      FROM dealers WHERE id = ? LIMIT 1`,
     [dealerId],
@@ -161,6 +263,7 @@ const findDealerBySubscriptionOrderId = async (orderId) => {
             subscription_status, subscription_plan_name, subscription_yearly_price,
             subscription_started_at, subscription_expires_at, subscription_razorpay_order_id,
             subscription_razorpay_payment_id, subscription_razorpay_signature,
+            trial_status, trial_started_at, trial_expires_at,
             created_at, updated_at
      FROM dealers WHERE subscription_razorpay_order_id = ? LIMIT 1`,
     [orderId],
@@ -196,14 +299,20 @@ const createDealer = async ({
     normalizedGst ||
     (/^\d{2}[A-Z0-9]{13}$/.test(legacyIdentifier) ? legacyIdentifier : "");
   const combinedIdentifier = [resolvedAadhaar, resolvedGst].filter(Boolean).join(" / ") || legacyIdentifier;
+  const freeTrialDays = role === "dealer" ? await getConfiguredFreeTrialDays() : 0;
+  const trialStartedAt = freeTrialDays > 0 ? new Date() : null;
+  const trialExpiresAt = trialStartedAt
+    ? new Date(trialStartedAt.getTime() + freeTrialDays * 24 * 60 * 60 * 1000)
+    : null;
+  const trialStatus = trialExpiresAt ? "active" : "inactive";
 
   const [result] = await db.execute(
     `INSERT INTO dealers
       (role, name, mobile, password_hash, shop_name, district, state, mandal, village, aadhaar_number, gst_number, aadhaar_or_gst_number,
        status, language_preference, subscription_status, subscription_plan_name, subscription_yearly_price,
        subscription_started_at, subscription_expires_at, subscription_razorpay_order_id,
-       subscription_razorpay_payment_id, subscription_razorpay_signature, otp_code)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'en', 'inactive', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)`,
+       subscription_razorpay_payment_id, subscription_razorpay_signature, trial_status, trial_started_at, trial_expires_at, otp_code)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'en', 'inactive', NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?, ?, NULL)`,
     [
       role,
       name,
@@ -218,6 +327,9 @@ const createDealer = async ({
       resolvedGst || null,
       combinedIdentifier || null,
       status,
+      trialStatus,
+      formatMysqlDate(trialStartedAt),
+      formatMysqlDate(trialExpiresAt),
     ],
   );
 
@@ -242,6 +354,9 @@ const createDealer = async ({
     subscriptionYearlyPrice: null,
     subscriptionStartedAt: null,
     subscriptionExpiresAt: null,
+    trialStatus,
+    trialStartedAt,
+    trialExpiresAt,
   };
 };
 
@@ -327,6 +442,9 @@ const updateDealerSubscriptionById = async (dealerId, updates) => {
   pushField("subscription_razorpay_order_id", updates.subscriptionRazorpayOrderId);
   pushField("subscription_razorpay_payment_id", updates.subscriptionRazorpayPaymentId);
   pushField("subscription_razorpay_signature", updates.subscriptionRazorpaySignature);
+  pushField("trial_status", updates.trialStatus);
+  pushField("trial_started_at", updates.trialStartedAt);
+  pushField("trial_expires_at", updates.trialExpiresAt);
 
   if (!fields.length) {
     return false;
@@ -343,29 +461,43 @@ const normalizeDealerSubscription = async (dealer) => {
     return dealer;
   }
 
-  const status = String(dealer.subscription_status || "inactive").toLowerCase();
-  if (status !== "active") {
-    return dealer;
+  const normalizedDealer = { ...dealer };
+  const status = String(normalizedDealer.subscription_status || "inactive").toLowerCase();
+
+  if (status === "active") {
+    const expiresAt = parseMysqlUtcDate(normalizedDealer.subscription_expires_at);
+    const hasValidExpiry =
+      expiresAt &&
+      !Number.isNaN(expiresAt.getTime()) &&
+      expiresAt.getTime() > Date.now();
+
+    if (!hasValidExpiry) {
+      await updateDealerSubscriptionById(dealer.id, {
+        subscriptionStatus: "inactive",
+      });
+
+      normalizedDealer.subscription_status = "inactive";
+    }
   }
 
-  const expiresAt = parseMysqlUtcDate(dealer.subscription_expires_at);
-  const hasValidExpiry =
-    expiresAt &&
-    !Number.isNaN(expiresAt.getTime()) &&
-    expiresAt.getTime() > Date.now();
+  const trialStatus = String(normalizedDealer.trial_status || "inactive").toLowerCase();
+  if (trialStatus === "active") {
+    const trialExpiresAt = parseMysqlUtcDate(normalizedDealer.trial_expires_at);
+    const hasValidTrial =
+      trialExpiresAt &&
+      !Number.isNaN(trialExpiresAt.getTime()) &&
+      trialExpiresAt.getTime() > Date.now();
 
-  if (hasValidExpiry) {
-    return dealer;
+    if (!hasValidTrial) {
+      await updateDealerSubscriptionById(dealer.id, {
+        trialStatus: "expired",
+      });
+
+      normalizedDealer.trial_status = "expired";
+    }
   }
 
-  await updateDealerSubscriptionById(dealer.id, {
-    subscriptionStatus: "inactive",
-  });
-
-  return {
-    ...dealer,
-    subscription_status: "inactive",
-  };
+  return normalizedDealer;
 };
 
 const findDealerByIdWithSubscriptionCheck = async (dealerId) => {
@@ -376,7 +508,7 @@ const findDealerByIdWithSubscriptionCheck = async (dealerId) => {
 const listDealers = async () => {
   await ensureDealerColumns();
   const [rows] = await db.execute(
-    "SELECT id, role, name, mobile, shop_name, district, state, mandal, village, aadhaar_or_gst_number, status, subscription_status, subscription_plan_name, subscription_yearly_price, subscription_started_at, subscription_expires_at, created_at, updated_at FROM dealers WHERE role = 'dealer' ORDER BY created_at DESC",
+    "SELECT id, role, name, mobile, shop_name, district, state, mandal, village, aadhaar_or_gst_number, status, subscription_status, subscription_plan_name, subscription_yearly_price, subscription_started_at, subscription_expires_at, trial_status, trial_started_at, trial_expires_at, created_at, updated_at FROM dealers WHERE role = 'dealer' ORDER BY created_at DESC",
   );
 
   return rows.map(mapDealerRow);
@@ -402,6 +534,7 @@ module.exports = {
   updateDealerSettingsById,
   updateDealerSubscriptionById,
   normalizeDealerSubscription,
+  getDealerAccessState,
   findDealerByIdWithSubscriptionCheck,
   listDealers,
   updateDealerStatusById,

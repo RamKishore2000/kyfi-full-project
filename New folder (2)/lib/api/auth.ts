@@ -44,6 +44,13 @@ export type DealerAuthResponse = {
   subscriptionYearlyPrice?: number | null;
   subscriptionStartedAt?: string | null;
   subscriptionExpiresAt?: string | null;
+  trialStatus?: "inactive" | "active" | "expired";
+  trialStartedAt?: string | null;
+  trialExpiresAt?: string | null;
+  trialDaysRemaining?: number | null;
+  accessStatus?: "allowed" | "subscription_required";
+  hasActiveSubscription?: boolean;
+  hasActiveTrial?: boolean;
 };
 
 type ApiErrorPayload = {

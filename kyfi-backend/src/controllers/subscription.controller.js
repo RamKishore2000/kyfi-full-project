@@ -28,14 +28,15 @@ async function getAdminSubscription(req, res, next) {
 
 async function updateAdminSubscription(req, res, next) {
   try {
-    const { yearlyPrice } = req.body || {};
+    const { yearlyPrice, freeTrialDays } = req.body || {};
     const subscription = await updateSubscriptionSettings({
       yearlyPrice,
+      freeTrialDays,
       updatedByAdminId: req.user?.dealerId || null,
     });
 
     return res.status(200).json({
-      message: "Subscription price updated successfully",
+      message: "Subscription settings updated successfully",
       subscription,
     });
   } catch (error) {

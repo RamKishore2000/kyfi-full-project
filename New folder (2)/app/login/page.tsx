@@ -71,6 +71,9 @@ export default function LoginPage() {
     dealer?: {
       status?: string;
       subscriptionStatus?: string;
+      trialStatus?: string;
+      trialExpiresAt?: string | null;
+      accessStatus?: string;
       id?: number;
       mobile?: string;
       name?: string;
@@ -80,8 +83,23 @@ export default function LoginPage() {
     const subscriptionStatus = String(dealer?.subscriptionStatus || "")
       .trim()
       .toLowerCase();
+    const trialStatus = String(dealer?.trialStatus || "")
+      .trim()
+      .toLowerCase();
+    const trialExpiresAt = dealer?.trialExpiresAt
+      ? new Date(dealer.trialExpiresAt)
+      : null;
+    const trialActive =
+      trialStatus === "active" &&
+      !!trialExpiresAt &&
+      !Number.isNaN(trialExpiresAt.getTime()) &&
+      trialExpiresAt.getTime() > Date.now();
+    const accessAllowed =
+      subscriptionStatus === "active" ||
+      trialActive ||
+      String(dealer?.accessStatus || "").trim().toLowerCase() === "allowed";
 
-    if (subscriptionStatus !== "active") {
+    if (!accessAllowed) {
       if (typeof window !== "undefined" && dealer) {
         window.localStorage.setItem("kyfi_pending_dealer", JSON.stringify(dealer));
         window.localStorage.removeItem("kyfi_dealer");

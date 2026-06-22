@@ -686,7 +686,7 @@ export default function ProfilePage() {
                 </Badge>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
                 <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
                   <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
                     {t("profile.subscriptionPlan")}
@@ -735,6 +735,19 @@ export default function ProfilePage() {
                   <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
                     {getRemainingDays(dealerProfile?.subscriptionExpiresAt)}{" "}
                     {t("profile.subscriptionDays")}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                  <p className="font-manrope text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                    Free trial
+                  </p>
+                  <p className="mt-2 font-manrope text-base font-extrabold text-slate-950">
+                    {dealerProfile?.trialStatus === "active"
+                      ? `${dealerProfile.trialDaysRemaining ?? 0} days left`
+                      : dealerProfile?.trialStatus || "-"}
+                  </p>
+                  <p className="mt-1 font-manrope text-xs text-slate-500">
+                    {formatProfileDate(dealerProfile?.trialExpiresAt)}
                   </p>
                 </div>
               </div>

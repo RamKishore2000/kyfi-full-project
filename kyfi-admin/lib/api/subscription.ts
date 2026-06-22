@@ -6,6 +6,7 @@ export type AdminSubscriptionRecord = {
   yearlyPrice: number;
   currency: string;
   durationLabel: string;
+  freeTrialDays: number;
   updatedByAdminId: number | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -43,9 +44,12 @@ export async function fetchAdminSubscription() {
   return authFetch("/admin/subscription") as Promise<SubscriptionResponse>;
 }
 
-export async function updateAdminSubscription(yearlyPrice: number) {
+export async function updateAdminSubscription(input: {
+  yearlyPrice: number;
+  freeTrialDays: number;
+}) {
   return authFetch("/admin/subscription", {
     method: "PATCH",
-    body: JSON.stringify({ yearlyPrice }),
+    body: JSON.stringify(input),
   }) as Promise<{ message: string; subscription: AdminSubscriptionRecord }>;
 }

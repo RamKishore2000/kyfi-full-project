@@ -30,6 +30,7 @@ export default function SubscriptionAdminPage() {
   const [subscription, setSubscription] =
     useState<AdminSubscriptionRecord | null>(null);
   const [price, setPrice] = useState("");
+  const [trialDays, setTrialDays] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -43,6 +44,7 @@ export default function SubscriptionAdminPage() {
         if (!mounted) return;
         setSubscription(response.subscription);
         setPrice(String(response.subscription.yearlyPrice ?? ""));
+        setTrialDays(String(response.subscription.freeTrialDays ?? 0));
       })
       .catch((fetchError) => {
         if (!mounted) return;
@@ -78,18 +80,32 @@ export default function SubscriptionAdminPage() {
     setSuccess("");
 
     const normalizedPrice = Number(price);
+    const normalizedTrialDays = Number(trialDays);
 
     if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
       setError("Enter a valid yearly price");
       return;
     }
 
+    if (
+      !Number.isInteger(normalizedTrialDays) ||
+      normalizedTrialDays < 0 ||
+      normalizedTrialDays > 365
+    ) {
+      setError("Enter valid free trial days");
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const response = await updateAdminSubscription(normalizedPrice);
+      const response = await updateAdminSubscription({
+        yearlyPrice: normalizedPrice,
+        freeTrialDays: normalizedTrialDays,
+      });
       setSubscription(response.subscription);
       setPrice(String(response.subscription.yearlyPrice));
+      setTrialDays(String(response.subscription.freeTrialDays ?? 0));
       setSuccess(response.message);
     } catch (saveError) {
       setError(
@@ -146,6 +162,18 @@ export default function SubscriptionAdminPage() {
                     {subscription?.durationLabel || t("subscription.duration")}
                   </p>
                 </div>
+
+                <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 sm:col-span-2">
+                  <p className="text-[0.72rem] font-black uppercase tracking-[0.22em] text-amber-700">
+                    Free trial
+                  </p>
+                  <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-slate-950">
+                    {Number(trialDays || subscription?.freeTrialDays || 0)} days
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    New approved dealers can use private pages during this trial before subscription is required.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -173,6 +201,29 @@ export default function SubscriptionAdminPage() {
                 </div>
                 <p className="text-xs text-slate-500">
                   {t("subscription.priceHelp")}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  className="text-sm font-semibold text-slate-900"
+                  htmlFor="freeTrialDays"
+                >
+                  Free trial days
+                </label>
+                <Input
+                  id="freeTrialDays"
+                  inputMode="numeric"
+                  type="number"
+                  min="0"
+                  max="365"
+                  step="1"
+                  value={trialDays}
+                  onChange={(event) => setTrialDays(event.target.value)}
+                  placeholder="0"
+                />
+                <p className="text-xs text-slate-500">
+                  Set 0 to disable free trials for new registrations.
                 </p>
               </div>
 
@@ -243,6 +294,18 @@ export default function SubscriptionAdminPage() {
               </p>
               <p className="mt-1 text-sm text-white/70">
                 / {subscription?.durationLabel || t("subscription.duration")}
+              </p>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-5">
+              <p className="text-[0.7rem] font-black uppercase tracking-[0.24em] text-emerald-200">
+                Free trial
+              </p>
+              <p className="mt-2 text-4xl font-black tracking-[-0.06em] text-white">
+                {Number(trialDays || subscription?.freeTrialDays || 0)}
+              </p>
+              <p className="mt-1 text-sm text-white/70">
+                days for newly registered dealers
               </p>
             </div>
 

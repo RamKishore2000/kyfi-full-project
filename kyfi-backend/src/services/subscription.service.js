@@ -31,6 +31,7 @@ async function ensureSubscriptionTable() {
       yearly_price DECIMAL(10,2) NOT NULL DEFAULT 1999.00,
       currency VARCHAR(10) NOT NULL DEFAULT 'INR',
       duration_label VARCHAR(50) NOT NULL DEFAULT '1 Year',
+      free_trial_days INT UNSIGNED NOT NULL DEFAULT 0,
       updated_by_admin_id BIGINT UNSIGNED DEFAULT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -39,6 +40,21 @@ async function ensureSubscriptionTable() {
   `);
 
   await db.execute(`INSERT IGNORE INTO ${TABLE_NAME} (id) VALUES (1)`);
+
+  const [columns] = await db.execute(
+    `SELECT COUNT(*) AS count
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = ?
+       AND COLUMN_NAME = 'free_trial_days'`,
+    [TABLE_NAME],
+  );
+
+  if (Number(columns[0]?.count || 0) === 0) {
+    await db.execute(
+      `ALTER TABLE ${TABLE_NAME} ADD COLUMN free_trial_days INT UNSIGNED NOT NULL DEFAULT 0 AFTER duration_label`,
+    );
+  }
 }
 
 async function ensureWebhookEventsTable() {
@@ -71,6 +87,7 @@ function mapSubscriptionRow(row) {
       yearlyPrice: 1999,
       currency: "INR",
       durationLabel: "1 Year",
+      freeTrialDays: 0,
       updatedByAdminId: null,
       createdAt: null,
       updatedAt: null,
@@ -83,6 +100,7 @@ function mapSubscriptionRow(row) {
     yearlyPrice: Number(row.yearly_price || 0),
     currency: row.currency || "INR",
     durationLabel: row.duration_label || "1 Year",
+    freeTrialDays: Number(row.free_trial_days || 0),
     updatedByAdminId: row.updated_by_admin_id || null,
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
@@ -97,13 +115,35 @@ async function getSubscriptionSettings() {
   return mapSubscriptionRow(rows[0] || null);
 }
 
-async function updateSubscriptionSettings({ yearlyPrice, updatedByAdminId }) {
+async function updateSubscriptionSettings({ yearlyPrice, freeTrialDays, updatedByAdminId }) {
   await ensureSubscriptionTable();
 
   const normalizedPrice = Number(yearlyPrice);
+  let normalizedTrialDays = Number(freeTrialDays);
+
+  if (
+    freeTrialDays === undefined ||
+    freeTrialDays === null ||
+    freeTrialDays === ""
+  ) {
+    const [rows] = await db.execute(
+      `SELECT free_trial_days FROM ${TABLE_NAME} WHERE id = 1 LIMIT 1`
+    );
+    normalizedTrialDays = Number(rows[0]?.free_trial_days || 0);
+  }
 
   if (!Number.isFinite(normalizedPrice) || normalizedPrice < 0) {
     const error = new Error("Enter a valid yearly price");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (
+    !Number.isInteger(normalizedTrialDays) ||
+    normalizedTrialDays < 0 ||
+    normalizedTrialDays > 365
+  ) {
+    const error = new Error("Enter valid free trial days");
     error.statusCode = 400;
     throw error;
   }
@@ -112,10 +152,11 @@ async function updateSubscriptionSettings({ yearlyPrice, updatedByAdminId }) {
     `
       UPDATE ${TABLE_NAME}
       SET yearly_price = ?,
+          free_trial_days = ?,
           updated_by_admin_id = ?
       WHERE id = 1
     `,
-    [normalizedPrice, updatedByAdminId || null],
+    [normalizedPrice, normalizedTrialDays, updatedByAdminId || null],
   );
 
   return getSubscriptionSettings();

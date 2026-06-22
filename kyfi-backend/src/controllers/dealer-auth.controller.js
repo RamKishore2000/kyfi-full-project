@@ -3,6 +3,7 @@ const {
   findDealerById,
   findDealerByMobile,
   normalizeDealerSubscription,
+  getDealerAccessState,
   createDealer,
   updateDealerPasswordById,
   updateDealerProfileById,
@@ -81,10 +82,10 @@ const registerDealer = async (req, res, next) => {
   }
 };
 
-const buildDealerAuthResponse = (dealer, token, message = "Login successful") => ({
-  message,
-  token,
-  dealer: {
+const buildDealerPayload = (dealer) => {
+  const access = getDealerAccessState(dealer);
+
+  return {
     id: dealer.id,
     role: dealer.role,
     name: dealer.name,
@@ -108,7 +109,20 @@ const buildDealerAuthResponse = (dealer, token, message = "Login successful") =>
         : null,
     subscriptionStartedAt: dealer.subscription_started_at || null,
     subscriptionExpiresAt: dealer.subscription_expires_at || null,
-  },
+    trialStatus: dealer.trial_status || "inactive",
+    trialStartedAt: dealer.trial_started_at || null,
+    trialExpiresAt: dealer.trial_expires_at || null,
+    trialDaysRemaining: access.trialDaysRemaining,
+    accessStatus: access.accessStatus,
+    hasActiveSubscription: access.subscriptionActive,
+    hasActiveTrial: access.trialActive,
+  };
+};
+
+const buildDealerAuthResponse = (dealer, token, message = "Login successful") => ({
+  message,
+  token,
+  dealer: buildDealerPayload(dealer),
 });
 
 const getJwtSecret = () => {
@@ -282,29 +296,7 @@ const verifyDealerOtpRequest = async (req, res, next) => {
     return res.status(200).json({
       message: "OTP verified successfully",
       token,
-      dealer: {
-        id: normalizedDealer.id,
-        role: normalizedDealer.role,
-        name: normalizedDealer.name,
-        mobile: normalizedDealer.mobile,
-        shopName: normalizedDealer.shop_name,
-        district: normalizedDealer.district,
-        state: normalizedDealer.state,
-        mandal: normalizedDealer.mandal,
-        village: normalizedDealer.village,
-        aadhaarOrGstNumber: normalizedDealer.aadhaar_or_gst_number,
-        status: normalizedDealer.status,
-        languagePreference: normalizedDealer.language_preference || "en",
-        subscriptionStatus: normalizedDealer.subscription_status || "inactive",
-        subscriptionPlanName: normalizedDealer.subscription_plan_name || null,
-        subscriptionYearlyPrice:
-          normalizedDealer.subscription_yearly_price !== null &&
-          normalizedDealer.subscription_yearly_price !== undefined
-            ? Number(normalizedDealer.subscription_yearly_price)
-            : null,
-        subscriptionStartedAt: normalizedDealer.subscription_started_at || null,
-        subscriptionExpiresAt: normalizedDealer.subscription_expires_at || null,
-      },
+      dealer: buildDealerPayload(normalizedDealer),
     });
   } catch (error) {
     return next(error);
@@ -319,36 +311,14 @@ const getCurrentDealer = async (req, res, next) => {
   }
 
   try {
-    const dealer = await findDealerById(dealerId);
+    const dealer = await normalizeDealerSubscription(await findDealerById(dealerId));
 
     if (!dealer) {
       return res.status(404).json({ message: "Dealer not found" });
     }
 
     return res.status(200).json({
-      dealer: {
-        id: dealer.id,
-        role: dealer.role,
-        name: dealer.name,
-        mobile: dealer.mobile,
-        shopName: dealer.shop_name,
-        district: dealer.district,
-        state: dealer.state,
-        mandal: dealer.mandal,
-        village: dealer.village,
-        aadhaarOrGstNumber: dealer.aadhaar_or_gst_number,
-        status: dealer.status,
-        languagePreference: dealer.language_preference || "en",
-        subscriptionStatus: dealer.subscription_status || "inactive",
-        subscriptionPlanName: dealer.subscription_plan_name || null,
-        subscriptionYearlyPrice:
-          dealer.subscription_yearly_price !== null &&
-          dealer.subscription_yearly_price !== undefined
-            ? Number(dealer.subscription_yearly_price)
-            : null,
-        subscriptionStartedAt: dealer.subscription_started_at || null,
-        subscriptionExpiresAt: dealer.subscription_expires_at || null,
-      },
+      dealer: buildDealerPayload(dealer),
     });
   } catch (error) {
     return next(error);

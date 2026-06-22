@@ -6,6 +6,7 @@ export type SubscriptionRecord = {
   yearlyPrice: number;
   currency: string;
   durationLabel: string;
+  freeTrialDays: number;
   updatedByAdminId: number | null;
   createdAt: string | null;
   updatedAt: string | null;

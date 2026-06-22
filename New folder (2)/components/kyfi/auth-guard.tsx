@@ -19,6 +19,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               subscriptionExpiresAt?: string | null;
               subscription_status?: string;
               subscription_expires_at?: string | null;
+              trialStatus?: string;
+              trialExpiresAt?: string | null;
+              trial_status?: string;
+              trial_expires_at?: string | null;
+              accessStatus?: string;
             };
           } catch {
             return null;
@@ -46,8 +51,23 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       (!expiresAt ||
         Number.isNaN(expiresAt.getTime()) ||
         expiresAt.getTime() > Date.now());
+    const trialStatus = String(dealer?.trialStatus || dealer?.trial_status || "")
+      .trim()
+      .toLowerCase();
+    const trialExpiresAt = dealer?.trialExpiresAt
+      ? new Date(dealer.trialExpiresAt)
+      : dealer?.trial_expires_at
+        ? new Date(dealer.trial_expires_at)
+        : null;
+    const trialActive =
+      trialStatus === "active" &&
+      !!trialExpiresAt &&
+      !Number.isNaN(trialExpiresAt.getTime()) &&
+      trialExpiresAt.getTime() > Date.now();
+    const backendAllowsAccess =
+      String(dealer?.accessStatus || "").trim().toLowerCase() === "allowed";
 
-    if (!subscriptionActive) {
+    if (!subscriptionActive && !trialActive && !backendAllowsAccess) {
       router.replace("/register?step=subscription");
       return;
     }
