@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchCurrentDealer } from "@/lib/api/profile";
+import { isSubscriptionRedirectPending } from "@/lib/api/subscription-expiry";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -12,6 +13,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const token = window.localStorage.getItem("kyfi_token");
     const dealerJson = window.localStorage.getItem("kyfi_dealer");
+    const pendingDealerJson = window.localStorage.getItem("kyfi_pending_dealer");
 
     const parseDealer = (value: string | null) => {
       if (!value) {
@@ -42,6 +44,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
 
       if (!dealer) {
+        if (isSubscriptionRedirectPending()) {
+          router.replace("/register?step=subscription");
+          return;
+        }
+
         router.replace("/login");
         return;
       }
@@ -92,6 +99,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     if (!token) {
+      if (isSubscriptionRedirectPending() || pendingDealerJson) {
+        router.replace("/register?step=subscription");
+        return;
+      }
+
       router.replace("/login");
       return;
     }

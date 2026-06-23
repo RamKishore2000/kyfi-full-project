@@ -19,6 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getKyfiDictionary } from "@/lib/kyfi-i18n";
 import { loginDealerOtp, loginDealerPassword } from "@/lib/api/auth";
+import {
+  clearSubscriptionRedirect,
+  isSubscriptionRedirectPending,
+} from "@/lib/api/subscription-expiry";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,6 +33,8 @@ export default function LoginPage() {
   const [resendLabel, setResendLabel] = useState(t("login.resendOtp"));
   const [isPasswordLoggingIn, setIsPasswordLoggingIn] = useState(false);
   const [isOtpLoggingIn, setIsOtpLoggingIn] = useState(false);
+  const [redirectingToSubscription, setRedirectingToSubscription] =
+    useState(false);
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,6 +52,20 @@ export default function LoginPage() {
   useEffect(() => {
     setResendLabel(t("login.resendOtp"));
   }, [t]);
+
+  useEffect(() => {
+    const pendingDealer = window.localStorage.getItem("kyfi_pending_dealer");
+
+    if (isSubscriptionRedirectPending() && pendingDealer) {
+      setRedirectingToSubscription(true);
+      router.replace("/register?step=subscription");
+      return;
+    }
+
+    if (!pendingDealer) {
+      clearSubscriptionRedirect();
+    }
+  }, [router]);
 
   const getDealerStatusMessage = (status?: string) => {
     const normalized = String(status || "")
@@ -123,6 +143,7 @@ export default function LoginPage() {
 
     if (trialActive) {
       if (typeof window !== "undefined" && dealer && token) {
+        clearSubscriptionRedirect();
         window.localStorage.setItem("kyfi_token", token);
         window.localStorage.setItem("kyfi_dealer", JSON.stringify(dealer));
         window.localStorage.removeItem("kyfi_pending_dealer");
@@ -145,6 +166,7 @@ export default function LoginPage() {
     }
 
     if (typeof window !== "undefined" && dealer && token) {
+      clearSubscriptionRedirect();
       window.localStorage.setItem("kyfi_token", token);
       window.localStorage.setItem("kyfi_dealer", JSON.stringify(dealer));
       window.localStorage.removeItem("kyfi_pending_dealer");
@@ -285,6 +307,10 @@ export default function LoginPage() {
       </p>
     </div>
   ) : null;
+
+  if (redirectingToSubscription) {
+    return <main className="min-h-[100dvh] bg-[#F8F7F4]" />;
+  }
 
   return (
     <main className="kyfi-auth-page flex min-h-[100dvh] items-center justify-center bg-[#F8F7F4] px-0 py-0 sm:px-4 sm:py-4 lg:min-h-screen lg:px-6 lg:py-6">

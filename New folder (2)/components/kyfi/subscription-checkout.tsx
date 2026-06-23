@@ -10,6 +10,7 @@ import {
   verifySubscriptionPayment,
   type SubscriptionRecord,
 } from "@/lib/api/subscription";
+import { clearSubscriptionRedirect } from "@/lib/api/subscription-expiry";
 
 type DealerInfo = {
   id?: number;
@@ -17,10 +18,16 @@ type DealerInfo = {
   mobile?: string;
   subscriptionStatus?: string;
   subscriptionExpiresAt?: string | null;
+  subscription_status?: string;
+  subscription_expires_at?: string | null;
   trialStatus?: string;
   trialExpiresAt?: string | null;
+  trial_status?: string;
+  trial_expires_at?: string | null;
   trialDaysRemaining?: number | null;
+  trial_days_remaining?: number | null;
   accessStatus?: string;
+  access_status?: string;
 };
 
 type SubscriptionCheckoutProps = {
@@ -78,12 +85,8 @@ function useDealerFromStorage(providedDealer?: DealerInfo | null) {
   );
 
   useEffect(() => {
-    if (providedDealer) {
-      setDealer(providedDealer);
-      return;
-    }
-
     if (typeof window === "undefined") {
+      setDealer(providedDealer ?? null);
       return;
     }
 
@@ -91,24 +94,41 @@ function useDealerFromStorage(providedDealer?: DealerInfo | null) {
     const active = window.localStorage.getItem("kyfi_dealer");
     const source = pending || active;
     if (!source) {
+      setDealer(providedDealer ?? null);
       return;
     }
 
     try {
       const parsed = JSON.parse(source) as DealerInfo;
       setDealer({
-        id: Number(parsed.id || 0) || undefined,
-        name: parsed.name,
-        mobile: parsed.mobile,
-        subscriptionStatus: parsed.subscriptionStatus,
-        subscriptionExpiresAt: parsed.subscriptionExpiresAt,
-        trialStatus: parsed.trialStatus,
-        trialExpiresAt: parsed.trialExpiresAt,
-        trialDaysRemaining: parsed.trialDaysRemaining,
-        accessStatus: parsed.accessStatus,
+        ...parsed,
+        ...providedDealer,
+        id: Number(providedDealer?.id || parsed.id || 0) || undefined,
+        name: providedDealer?.name || parsed.name,
+        mobile: providedDealer?.mobile || parsed.mobile,
+        subscriptionStatus:
+          providedDealer?.subscriptionStatus ||
+          parsed.subscriptionStatus ||
+          parsed.subscription_status,
+        subscriptionExpiresAt:
+          providedDealer?.subscriptionExpiresAt ||
+          parsed.subscriptionExpiresAt ||
+          parsed.subscription_expires_at,
+        trialStatus:
+          providedDealer?.trialStatus || parsed.trialStatus || parsed.trial_status,
+        trialExpiresAt:
+          providedDealer?.trialExpiresAt ||
+          parsed.trialExpiresAt ||
+          parsed.trial_expires_at,
+        trialDaysRemaining:
+          providedDealer?.trialDaysRemaining ??
+          parsed.trialDaysRemaining ??
+          parsed.trial_days_remaining,
+        accessStatus:
+          providedDealer?.accessStatus || parsed.accessStatus || parsed.access_status,
       });
     } catch {
-      setDealer(null);
+      setDealer(providedDealer ?? null);
     }
   }, [providedDealer]);
 
@@ -168,28 +188,45 @@ export function SubscriptionCheckout({
   const canPay = Boolean(
     dealer?.id && dealer.mobile && subscription && yearlyPrice !== null,
   );
-  const subscriptionExpiry = dealer?.subscriptionExpiresAt
-    ? new Date(dealer.subscriptionExpiresAt)
+  const subscriptionStatus = String(
+    dealer?.subscriptionStatus || dealer?.subscription_status || "",
+  )
+    .trim()
+    .toLowerCase();
+  const subscriptionExpiryValue =
+    dealer?.subscriptionExpiresAt || dealer?.subscription_expires_at || null;
+  const subscriptionExpiry = subscriptionExpiryValue
+    ? new Date(subscriptionExpiryValue)
     : null;
   const isRenewal =
-    Boolean(subscriptionExpiry) &&
+    subscriptionStatus === "expired" ||
+    (Boolean(subscriptionExpiry) &&
     !Number.isNaN(subscriptionExpiry?.getTime()) &&
-    subscriptionExpiry!.getTime() <= Date.now();
-  const trialExpiry = dealer?.trialExpiresAt
-    ? new Date(dealer.trialExpiresAt)
+    subscriptionExpiry!.getTime() <= Date.now());
+  const trialStatus = String(dealer?.trialStatus || dealer?.trial_status || "")
+    .trim()
+    .toLowerCase();
+  const trialExpiryValue = dealer?.trialExpiresAt || dealer?.trial_expires_at || null;
+  const trialExpiry = trialExpiryValue
+    ? new Date(trialExpiryValue)
     : null;
   const trialActive =
-    String(dealer?.trialStatus || "").toLowerCase() === "active" &&
+    trialStatus === "active" &&
     Boolean(trialExpiry) &&
     !Number.isNaN(trialExpiry?.getTime()) &&
     trialExpiry!.getTime() > Date.now();
-  const trialExpired = String(dealer?.trialStatus || "").toLowerCase() === "expired";
+  const trialExpired =
+    trialStatus === "expired" ||
+    (Boolean(trialExpiry) &&
+      !Number.isNaN(trialExpiry?.getTime()) &&
+      trialExpiry!.getTime() <= Date.now());
 
   const handleSuccess = () => {
     setMessage("Subscription activated successfully.");
     setError("");
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("kyfi_pending_dealer");
+      clearSubscriptionRedirect();
       window.localStorage.setItem("kyfi_subscription_success", "1");
       window.dispatchEvent(new Event("kyfi-auth-changed"));
     }
@@ -325,7 +362,7 @@ export function SubscriptionCheckout({
                 Your free trial has expired.
               </p>
               <p className="mt-1 text-sm leading-5 text-amber-800">
-                Please activate your yearly plan to continue using KYFI dealer features.
+                Please subscribe to continue using KYFI.
               </p>
             </div>
           ) : null}
@@ -413,6 +450,10 @@ export function SubscriptionCheckout({
           <div className="rounded-[28px] border border-slate-200 bg-white p-6 text-sm text-slate-500">
             Loading subscription plan...
           </div>
+        ) : error && !subscription ? (
+          <div className="rounded-[28px] border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-700">
+            {error}
+          </div>
         ) : (
           card
         )}
@@ -426,6 +467,10 @@ export function SubscriptionCheckout({
         {loading ? (
           <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-10 text-sm text-slate-500 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             Loading subscription plan...
+          </div>
+        ) : error && !subscription ? (
+          <div className="rounded-[28px] border border-red-200 bg-red-50 px-6 py-10 text-sm font-medium text-red-700 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            {error}
           </div>
         ) : (
           card

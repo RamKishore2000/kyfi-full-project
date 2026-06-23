@@ -36,6 +36,7 @@ import {
 } from "@/lib/api/locations";
 import { getKyfiDictionary } from "@/lib/kyfi-i18n";
 import { translateRuntimeMessage } from "@/lib/kyfi-runtime-message";
+import { clearSubscriptionRedirect } from "@/lib/api/subscription-expiry";
 
 type RegisterForm = {
   shopName: string;
@@ -188,6 +189,44 @@ function RegisterPageContent() {
   useEffect(() => {
     setFlowStep(searchParams.get("step") === "subscription" ? "subscription" : "register");
   }, [searchParams]);
+
+  useEffect(() => {
+    if (flowStep === "register") {
+      clearSubscriptionRedirect();
+    }
+  }, [flowStep]);
+
+  useEffect(() => {
+    if (flowStep !== "subscription" || registeredDealer?.id) {
+      return;
+    }
+
+    const source =
+      window.localStorage.getItem("kyfi_pending_dealer") ||
+      window.localStorage.getItem("kyfi_dealer");
+
+    if (!source) {
+      return;
+    }
+
+    try {
+      const dealer = JSON.parse(source) as {
+        id?: number;
+        name?: string;
+        mobile?: string;
+      };
+
+      if (dealer.id && dealer.mobile) {
+        setRegisteredDealer({
+          id: dealer.id,
+          name: dealer.name,
+          mobile: dealer.mobile,
+        });
+      }
+    } catch {
+      setRegisteredDealer(null);
+    }
+  }, [flowStep, registeredDealer?.id]);
 
   useEffect(() => {
     if (flowStep !== "subscription") {

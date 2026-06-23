@@ -302,7 +302,7 @@ const createDealer = async ({
   const freeTrialDays = role === "dealer" ? await getConfiguredFreeTrialDays() : 0;
   const trialStartedAt = freeTrialDays > 0 ? new Date() : null;
   const trialExpiresAt = trialStartedAt
-    ? new Date(trialStartedAt.getTime() + freeTrialDays * 60 * 1000)
+    ? new Date(trialStartedAt.getTime() + freeTrialDays * 24 * 60 * 60 * 1000)
     : null;
   const trialStatus = trialExpiresAt ? "active" : "inactive";
 
