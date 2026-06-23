@@ -25,6 +25,7 @@ export function SubscriptionSummary() {
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(
     null,
   );
+  const [isDealerLoggedIn, setIsDealerLoggedIn] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -54,9 +55,12 @@ export function SubscriptionSummary() {
     const readDealerTrial = () => {
       const dealerJson = window.localStorage.getItem("kyfi_dealer");
       if (!dealerJson) {
+        setIsDealerLoggedIn(false);
         setTrialDaysRemaining(null);
         return;
       }
+
+      setIsDealerLoggedIn(true);
 
       try {
         const dealer = JSON.parse(dealerJson) as {
@@ -164,7 +168,11 @@ export function SubscriptionSummary() {
               ))}
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div
+              className={`mt-5 grid gap-3 ${
+                isDealerLoggedIn ? "sm:grid-cols-2" : ""
+              }`}
+            >
               <div className="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
                 <p className="font-manrope text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
                   {t("subscription.freeTrialProvided")}
@@ -173,18 +181,20 @@ export function SubscriptionSummary() {
                   {freeTrialDays} {freeTrialDays === 1 ? "day" : "days"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
-                <p className="font-manrope text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
-                  {t("subscription.trialDaysRemaining")}
-                </p>
-                <p className="mt-1 font-manrope text-xl font-black text-[rgb(4,120,87)]">
-                  {trialDaysRemaining === null
-                    ? "-"
-                    : `${trialDaysRemaining} ${
-                        trialDaysRemaining === 1 ? "day" : "days"
-                      }`}
-                </p>
-              </div>
+              {isDealerLoggedIn ? (
+                <div className="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
+                  <p className="font-manrope text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {t("subscription.trialDaysRemaining")}
+                  </p>
+                  <p className="mt-1 font-manrope text-xl font-black text-[rgb(4,120,87)]">
+                    {trialDaysRemaining === null
+                      ? "-"
+                      : `${trialDaysRemaining} ${
+                          trialDaysRemaining === 1 ? "day" : "days"
+                        }`}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

@@ -76,6 +76,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     const syncLanguage = async () => {
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("kyfi_token")
+          : null;
+
+      if (!token) {
+        if (!cancelled) {
+          setLanguage("en");
+        }
+        return;
+      }
+
       try {
         const dealer = await fetchCurrentDealer();
         if (cancelled) return;

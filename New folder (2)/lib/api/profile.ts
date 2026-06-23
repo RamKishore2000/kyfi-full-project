@@ -26,7 +26,7 @@ async function apiRequest<TResponse>(path: string, init: RequestInit): Promise<T
 
   if (!response.ok) {
     handleDealerAccountBlock(data);
-    handleSubscriptionExpiry(data);
+    handleSubscriptionExpiry(data, response.status);
     throw new Error((data as ApiErrorPayload | null)?.message || "Request failed");
   }
 

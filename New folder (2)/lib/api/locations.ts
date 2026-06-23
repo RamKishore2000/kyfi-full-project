@@ -68,7 +68,7 @@ async function authenticatedRequest<TResponse>(
 
   if (!response.ok) {
     handleDealerAccountBlock(data);
-    handleSubscriptionExpiry(data);
+    handleSubscriptionExpiry(data, response.status);
     throw new Error(
       (data as { message?: string } | null)?.message || "Request failed",
     );
