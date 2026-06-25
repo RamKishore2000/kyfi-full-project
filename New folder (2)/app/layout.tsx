@@ -8,6 +8,7 @@ import "@fontsource/manrope/800.css";
 import "./globals.css";
 import { NativeStatusBar } from "@/components/kyfi/native-status-bar";
 import { NativeBackHandler } from "@/components/kyfi/native-back-handler";
+import { NativeMediaRestore } from "@/components/kyfi/native-media-restore";
 import { LanguageProvider } from "@/components/kyfi/language-provider";
 import { MobileBottomTabs } from "@/components/kyfi/mobile-bottom-tabs";
 import { AccountStatusModal } from "@/components/kyfi/account-status-modal";
@@ -29,6 +30,7 @@ export default function RootLayout({
         <LanguageProvider>
           <NativeStatusBar />
           <NativeBackHandler />
+          <NativeMediaRestore />
           {children}
           <MobileBottomTabs />
           <AccountStatusModal />

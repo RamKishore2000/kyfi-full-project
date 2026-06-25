@@ -12,7 +12,6 @@ import {
   ChevronDown,
   Plus,
   Fingerprint,
-  ImagePlus,
   Loader2,
   MapPin,
   Phone,
@@ -24,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
+import { OldFarmerProofPicker } from "@/components/kyfi/old-farmer-proof-picker";
 import { useKyfiLanguage } from "@/components/kyfi/language-provider";
 import {
   createMandal,
@@ -49,6 +49,10 @@ import {
 import type { FarmerStatusRecord } from "@/lib/api/farmer-status";
 import { KYFI_API_BASE_URL } from "@/lib/config";
 import { imageFileToWebpDataUrl } from "@/lib/image-proof";
+
+const SEARCH_PROOF_SESSION_KEY = "kyfi_search_proof_session";
+const SEARCH_PROOF_SESSION_TTL_MS = 3 * 60 * 1000;
+
 const formatMandalSuggestion = (mandal: MandalSearchResult) =>
   `${mandal.name} mandal, ${mandal.districtName || "-"} district, ${mandal.stateName || "-"}`;
 function maskAadhaar(value: string | null | undefined) {
@@ -493,6 +497,64 @@ export function SearchFarmerPreview() {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
+
+  const rememberProofVoteSession = () => {
+    if (!proofVoteFarmer || typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      SEARCH_PROOF_SESSION_KEY,
+      JSON.stringify({
+        farmer: proofVoteFarmer,
+        mode: proofVoteMode,
+        sourceStatusId: proofVoteSourceStatusId,
+        expiresAt: Date.now() + SEARCH_PROOF_SESSION_TTL_MS,
+      }),
+    );
+  };
+
+  const clearProofVoteSession = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.removeItem(SEARCH_PROOF_SESSION_KEY);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedSession = window.localStorage.getItem(SEARCH_PROOF_SESSION_KEY);
+    if (!storedSession) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(storedSession) as {
+        farmer?: FarmerStatusRecord;
+        mode?: "vote" | "moveToOld" | "moveAndVoteExisting";
+        sourceStatusId?: number | null;
+        expiresAt?: number;
+      };
+
+      if (!parsed.expiresAt || parsed.expiresAt < Date.now()) {
+        clearProofVoteSession();
+        return;
+      }
+
+      if (parsed.farmer) {
+        setProofVoteFarmer(parsed.farmer);
+        setProofVoteMode(parsed.mode || "vote");
+        setProofVoteSourceStatusId(parsed.sourceStatusId ?? null);
+      }
+    } catch {
+      clearProofVoteSession();
+    }
+  }, []);
+
   useEffect(() => {
     const mandalQuery = String(form.mandal || "").trim();
     if (hideMandalSuggestions || mandalQuery.length < 3) {
@@ -855,6 +917,7 @@ export function SearchFarmerPreview() {
     }
   };
   const closeProofVoteModal = () => {
+    clearProofVoteSession();
     setProofVoteFarmer(null);
     setProofVoteMode("vote");
     setProofVoteSourceStatusId(null);
@@ -869,9 +932,14 @@ export function SearchFarmerPreview() {
     event.target.value = "";
     if (!file) return;
 
+    await handleProofVoteImageFile(file);
+  };
+
+  const handleProofVoteImageFile = async (file: File) => {
     try {
       setProofVoteError("");
       setProofVoteImage(await imageFileToWebpDataUrl(file));
+      clearProofVoteSession();
     } catch (proofError) {
       setProofVoteImage("");
       setProofVoteError(
@@ -1384,7 +1452,7 @@ export function SearchFarmerPreview() {
       </section>
       {locationModal ? (
         <div
-          className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-location-modal fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeLocationModal}
         >
           {" "}
@@ -1583,7 +1651,7 @@ export function SearchFarmerPreview() {
       />
       {proofVoteFarmer ? (
         <div
-          className="kyfi-content-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-content-modal fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeProofVoteModal}
         >
           <div
@@ -1661,33 +1729,20 @@ export function SearchFarmerPreview() {
                 </div>
               ) : (
                 <>
-                  <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-5 text-center transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50">
-                    {proofVoteImage ? (
-                      <img
-                        src={proofVoteImage}
-                        alt="Selected vote proof preview"
-                        className="max-h-40 w-full rounded-2xl object-contain sm:max-h-56"
-                      />
-                    ) : (
-                      <>
-                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[rgb(4,120,87)] shadow-sm">
-                          <ImagePlus className="h-5 w-5" />
-                        </span>
-                        <span className="font-manrope text-sm font-semibold text-slate-800">
-                          Select one proof image
-                        </span>
-                        <span className="font-manrope text-xs text-slate-500">
-                          JPG, JPEG, or PNG will be converted to WebP.
-                        </span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      className="sr-only"
-                      onChange={handleProofVoteImageChange}
-                    />
-                  </label>
+                  <OldFarmerProofPicker
+                    pickerId="search-farmer-proof-vote"
+                    image={proofVoteImage}
+                    onChange={handleProofVoteImageChange}
+                    onFileSelect={handleProofVoteImageFile}
+                    onBeforeNativePick={rememberProofVoteSession}
+                    onRemove={() => {
+                      setProofVoteImage("");
+                      setProofVoteError("");
+                    }}
+                    title="Select one proof image"
+                    hint="JPG, JPEG, or PNG will be converted to WebP."
+                    previewClassName="max-h-40 w-full rounded-2xl object-contain sm:max-h-56"
+                  />
                   {proofVoteError ? (
                     <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                       {proofVoteError}
@@ -1716,7 +1771,7 @@ export function SearchFarmerPreview() {
       ) : null}
       {votesDialogOpen ? (
         <div
-          className="kyfi-content-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-content-modal fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={() => {
             setVotesDialogOpen(false);
             setVotesDialogError("");

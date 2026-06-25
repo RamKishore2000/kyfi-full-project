@@ -9,11 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import { motion } from "framer-motion";
-import { ImagePlus, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { AuthGuard } from "@/components/kyfi/auth-guard";
 import { Header } from "@/components/kyfi/header";
 import { Footer } from "@/components/kyfi/footer";
 import { KyfiToast } from "@/components/kyfi/kyfi-toast";
+import { OldFarmerProofPicker } from "@/components/kyfi/old-farmer-proof-picker";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,8 @@ const initialFarmerStatusForm: FarmerStatusForm = {
   villageId: null,
   address: "",
 };
+const ADD_FARMER_PROOF_SESSION_KEY = "kyfi_add_farmer_proof_session";
+const ADD_FARMER_PROOF_SESSION_TTL_MS = 3 * 60 * 1000;
 const statusOptions: Array<{
   value: FarmerStatusColor;
   label: string;
@@ -141,6 +144,83 @@ export default function AddFarmerStatusPage() {
     message: string;
     tone: "success" | "error";
   }>({ open: false, message: "", tone: "success" });
+
+  const rememberAddFarmerProofSession = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      ADD_FARMER_PROOF_SESSION_KEY,
+      JSON.stringify({
+        form,
+        farmerType,
+        selectedStatus,
+        existingFarmerModalOpen,
+        existingFarmerRecord,
+        existingFarmerDuplicatePolicy,
+        expiresAt: Date.now() + ADD_FARMER_PROOF_SESSION_TTL_MS,
+      }),
+    );
+  };
+
+  const clearAddFarmerProofSession = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.removeItem(ADD_FARMER_PROOF_SESSION_KEY);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedSession = window.localStorage.getItem(
+      ADD_FARMER_PROOF_SESSION_KEY,
+    );
+    if (!storedSession) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(storedSession) as {
+        form?: FarmerStatusForm;
+        farmerType?: "OLD" | "NEW";
+        selectedStatus?: FarmerStatusColor;
+        existingFarmerModalOpen?: boolean;
+        existingFarmerRecord?: FarmerStatusRecord | null;
+        existingFarmerDuplicatePolicy?: FarmerStatusDuplicatePolicy;
+        expiresAt?: number;
+      };
+
+      if (!parsed.expiresAt || parsed.expiresAt < Date.now()) {
+        clearAddFarmerProofSession();
+        return;
+      }
+
+      if (parsed.form) {
+        setForm(parsed.form);
+      }
+      if (parsed.farmerType) {
+        setFarmerType(parsed.farmerType);
+      }
+      if (parsed.selectedStatus) {
+        setSelectedStatus(parsed.selectedStatus);
+      }
+      if (parsed.existingFarmerModalOpen && parsed.existingFarmerRecord) {
+        setExistingFarmerModalOpen(true);
+        setExistingFarmerRecord(parsed.existingFarmerRecord);
+        setExistingFarmerDuplicatePolicy(
+          parsed.existingFarmerDuplicatePolicy ?? null,
+        );
+      }
+    } catch {
+      clearAddFarmerProofSession();
+    }
+  }, []);
+
   useEffect(() => {
     if (!toast.open) return;
     const timeout = window.setTimeout(() => {
@@ -180,10 +260,15 @@ export default function AddFarmerStatusPage() {
     event.target.value = "";
     if (!file) return;
 
+    await handleOldFarmerProofFile(file);
+  };
+
+  const handleOldFarmerProofFile = async (file: File) => {
     try {
       setOldFarmerProofError("");
       const webpDataUrl = await imageFileToWebpDataUrl(file);
       setOldFarmerProofImage(webpDataUrl);
+      clearAddFarmerProofSession();
     } catch (proofError) {
       const message =
         proofError instanceof Error
@@ -1352,45 +1437,20 @@ export default function AddFarmerStatusPage() {
                         <label className="block font-manrope type-nav text-slate-800">
                           Proof image
                         </label>
-                        <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-5 text-center transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50">
-                          {oldFarmerProofImage ? (
-                            <img
-                              src={oldFarmerProofImage}
-                              alt="Selected proof preview"
-                              className="max-h-44 w-full rounded-2xl object-contain"
-                            />
-                          ) : (
-                            <>
-                              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[rgb(4,120,87)] shadow-sm">
-                                <ImagePlus className="h-5 w-5" />
-                              </span>
-                              <span className="font-manrope text-sm font-semibold text-slate-800">
-                                Select one image proof
-                              </span>
-                              <span className="font-manrope text-xs text-slate-500">
-                                JPG, JPEG, or PNG will be converted to WebP.
-                              </span>
-                            </>
-                          )}
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/jpg,image/webp"
-                            className="sr-only"
+                        <div className="mt-2">
+                          <OldFarmerProofPicker
+                            pickerId="add-farmer-form-proof"
+                            image={oldFarmerProofImage}
                             onChange={handleOldFarmerProofChange}
-                          />
-                        </label>
-                        {oldFarmerProofImage ? (
-                          <button
-                            type="button"
-                            onClick={() => {
+                            onFileSelect={handleOldFarmerProofFile}
+                            onBeforeNativePick={rememberAddFarmerProofSession}
+                            onRemove={() => {
                               setOldFarmerProofImage("");
                               setOldFarmerProofError("");
                             }}
-                            className="mt-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
-                          >
-                            Remove selected image
-                          </button>
-                        ) : null}
+                            hint="JPG, JPEG, or PNG will be converted to WebP."
+                          />
+                        </div>
                         {oldFarmerProofError ? (
                           <p className="mt-2 font-manrope text-sm text-red-600">
                             {oldFarmerProofError}
@@ -1574,7 +1634,7 @@ export default function AddFarmerStatusPage() {
       </section>{" "}
       {existingFarmerModalOpen && existingFarmerRecord ? (
         <div
-          className="kyfi-content-modal fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/45 px-4 py-4 backdrop-blur-[2px] sm:py-6"
+          className="kyfi-content-modal fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-slate-950/45 px-4 py-4 backdrop-blur-[2px] sm:py-6"
           onClick={closeExistingFarmerModal}
         >
           <div
@@ -1763,45 +1823,20 @@ export default function AddFarmerStatusPage() {
                         <label className="block font-manrope text-sm font-black uppercase tracking-[0.18em] text-slate-500">
                           Proof image
                         </label>
-                        <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-5 text-center transition hover:border-[rgb(4,120,87)] hover:bg-emerald-50">
-                          {oldFarmerProofImage ? (
-                            <img
-                              src={oldFarmerProofImage}
-                              alt="Selected proof preview"
-                              className="max-h-52 w-full rounded-2xl object-contain"
-                            />
-                          ) : (
-                            <>
-                              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[rgb(4,120,87)] shadow-sm">
-                                <ImagePlus className="h-5 w-5" />
-                              </span>
-                              <span className="font-manrope text-sm font-semibold text-slate-800">
-                                Select one image proof
-                              </span>
-                              <span className="font-manrope text-xs text-slate-500">
-                                JPG, JPEG, PNG, or WebP will be saved as WebP.
-                              </span>
-                            </>
-                          )}
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/jpg,image/webp"
-                            className="sr-only"
+                        <div className="mt-2">
+                          <OldFarmerProofPicker
+                            pickerId="add-farmer-existing-modal-proof"
+                            image={oldFarmerProofImage}
                             onChange={handleOldFarmerProofChange}
-                          />
-                        </label>
-                        {oldFarmerProofImage ? (
-                          <button
-                            type="button"
-                            onClick={() => {
+                            onFileSelect={handleOldFarmerProofFile}
+                            onBeforeNativePick={rememberAddFarmerProofSession}
+                            onRemove={() => {
                               setOldFarmerProofImage("");
                               setOldFarmerProofError("");
                             }}
-                            className="mt-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
-                          >
-                            Remove selected image
-                          </button>
-                        ) : null}
+                            previewClassName="max-h-52 w-full rounded-2xl object-contain"
+                          />
+                        </div>
                         {oldFarmerProofError ? (
                           <p className="mt-2 font-manrope text-sm text-red-600">
                             {oldFarmerProofError}
@@ -1836,7 +1871,7 @@ export default function AddFarmerStatusPage() {
       ) : null}
       {locationModal ? (
         <div
-          className="kyfi-location-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="kyfi-location-modal fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           onClick={closeLocationModal}
         >
           {" "}

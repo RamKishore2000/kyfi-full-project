@@ -5,22 +5,31 @@ import { Capacitor } from "@capacitor/core";
 import { useRouter } from "next/navigation";
 import DashboardPage from "./dashboard/page";
 import { isSubscriptionRedirectPending } from "@/lib/api/subscription-expiry";
+import { consumeNativeMediaReturnRoute } from "@/lib/native-media-return";
 
 export default function HomePage() {
   const router = useRouter();
   const [showWebsiteDashboard, setShowWebsiteDashboard] = useState(false);
 
   useEffect(() => {
-    const hasPendingDealer =
-      typeof window !== "undefined" &&
-      Boolean(window.localStorage.getItem("kyfi_pending_dealer"));
-
-    if (isSubscriptionRedirectPending() || hasPendingDealer) {
+    if (isSubscriptionRedirectPending()) {
       router.replace("/register?step=subscription");
       return;
     }
 
-    if (Capacitor.isNativePlatform()) {
+    const isNative = Capacitor.isNativePlatform();
+    if (isNative) {
+      const mediaReturnRoute = consumeNativeMediaReturnRoute();
+      if (mediaReturnRoute) {
+        router.replace(mediaReturnRoute as Parameters<typeof router.replace>[0]);
+        return;
+      }
+
+      if (window.localStorage.getItem("kyfi_token")) {
+        router.replace("/dashboard");
+        return;
+      }
+
       router.replace("/login");
       return;
     }

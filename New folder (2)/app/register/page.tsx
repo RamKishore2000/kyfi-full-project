@@ -69,6 +69,8 @@ const initialForm: RegisterForm = {
 const registerGreenButtonClass =
   "rounded-full bg-[rgb(4,120,87)] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-105";
 
+const subscriptionRequiredStorageKey = "kyfi_subscription_required";
+
 function formatMandalSuggestion(mandal: MandalRecord) {
   return `${mandal.mandalName} mandal, ${mandal.districtName} district, ${mandal.stateName}`;
 }
@@ -92,6 +94,8 @@ function RegisterPageContent() {
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
   const aadhaarInputRef = useRef<HTMLInputElement | null>(null);
   const gstInputRef = useRef<HTMLInputElement | null>(null);
+  const registerPanelScrollRef = useRef<HTMLDivElement | null>(null);
+  const registerFormScrollRef = useRef<HTMLDivElement | null>(null);
 
   const districtDropdownRef = useRef<HTMLDivElement | null>(null);
   const mandalDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -102,9 +106,7 @@ function RegisterPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [flowStep, setFlowStep] = useState<"register" | "subscription">(
-    searchParams.get("step") === "subscription" ? "subscription" : "register",
-  );
+  const [flowStep, setFlowStep] = useState<"register" | "subscription">("register");
   const [registeredDealer, setRegisteredDealer] = useState<{
     id?: number;
     name?: string;
@@ -120,6 +122,10 @@ function RegisterPageContent() {
     open: false,
     message: "",
     tone: "success",
+  });
+  const [registerScrollState, setRegisterScrollState] = useState({
+    hasTop: false,
+    hasBottom: false,
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -182,18 +188,71 @@ function RegisterPageContent() {
     setToast({ open: true, message, tone });
   };
 
+  const updateRegisterScrollState = (element: HTMLDivElement | null) => {
+    if (!element) {
+      return;
+    }
+
+    setRegisterScrollState({
+      hasTop: element.scrollTop > 8,
+      hasBottom:
+        element.scrollTop + element.clientHeight < element.scrollHeight - 8,
+    });
+  };
+
   const closeToast = () => {
     setToast((current) => ({ ...current, open: false }));
   };
 
   useEffect(() => {
-    setFlowStep(searchParams.get("step") === "subscription" ? "subscription" : "register");
-  }, [searchParams]);
+    const wantsSubscription = searchParams.get("step") === "subscription";
+
+    if (!wantsSubscription) {
+      setFlowStep("register");
+      return;
+    }
+
+    const subscriptionRequired =
+      window.localStorage.getItem(subscriptionRequiredStorageKey) === "1";
+    const hasLoggedInDealer =
+      Boolean(window.localStorage.getItem("kyfi_token")) &&
+      Boolean(window.localStorage.getItem("kyfi_dealer"));
+
+    if (subscriptionRequired || hasLoggedInDealer) {
+      setFlowStep("subscription");
+      return;
+    }
+
+    clearSubscriptionRedirect();
+    window.localStorage.removeItem("kyfi_pending_dealer");
+    setRegisteredDealer(null);
+    setFlowStep("register");
+    router.replace("/login");
+  }, [router, searchParams]);
 
   useEffect(() => {
     if (flowStep === "register") {
       clearSubscriptionRedirect();
     }
+  }, [flowStep]);
+
+  useEffect(() => {
+    const updateActiveScrollContainer = () => {
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+      updateRegisterScrollState(
+        isDesktop
+          ? registerFormScrollRef.current
+          : registerPanelScrollRef.current,
+      );
+    };
+
+    const frame = window.requestAnimationFrame(updateActiveScrollContainer);
+    window.addEventListener("resize", updateActiveScrollContainer);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateActiveScrollContainer);
+    };
   }, [flowStep]);
 
   useEffect(() => {
@@ -788,6 +847,7 @@ function RegisterPageContent() {
       });
 
       if (typeof window !== "undefined" && response.dealer) {
+        clearSubscriptionRedirect();
         window.localStorage.setItem(
           "kyfi_pending_dealer",
           JSON.stringify(response.dealer),
@@ -828,8 +888,23 @@ function RegisterPageContent() {
           </div>
         </div>
 
-        <div className="order-1 flex min-h-screen items-start justify-center overflow-y-auto bg-[#F8F7F4] px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] lg:px-6 lg:py-2">
-          <div className="no-scrollbar w-full max-w-[34rem] lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2">
+        <div
+          ref={registerPanelScrollRef}
+          onScroll={(event) => updateRegisterScrollState(event.currentTarget)}
+          className="kyfi-register-scroll order-1 flex min-h-screen items-start justify-center overflow-y-auto bg-[#F8F7F4] px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] lg:order-2 lg:min-h-[calc(100vh-3rem)] lg:items-center lg:justify-center lg:overflow-hidden lg:bg-[linear-gradient(180deg,#F8F7F4_0%,#F6F0E7_100%)] lg:px-6 lg:py-2"
+        >
+          <div
+            ref={registerFormScrollRef}
+            onScroll={(event) => updateRegisterScrollState(event.currentTarget)}
+            className="kyfi-register-scroll w-full max-w-[34rem] scroll-smooth lg:mx-auto lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:px-2"
+          >
+            <div
+              className={[
+                "pointer-events-none sticky top-0 z-30 -mb-8 h-8 bg-gradient-to-b from-[#F8F7F4] via-[#F8F7F4]/90 to-transparent transition-opacity duration-200 lg:from-[#F8F7F4]",
+                registerScrollState.hasTop ? "opacity-100" : "opacity-0",
+              ].join(" ")}
+              aria-hidden="true"
+            />
             <div className="space-y-4 px-0 py-0 lg:space-y-3 lg:px-1 lg:py-1">
               <div className="flex items-start justify-center gap-3 lg:justify-between">
                 <div className="flex items-center gap-3">
@@ -1357,6 +1432,13 @@ function RegisterPageContent() {
                 </div>
               )}
             </div>
+            <div
+              className={[
+                "pointer-events-none sticky bottom-0 z-30 -mt-8 h-10 bg-gradient-to-t from-[#F8F7F4] via-[#F8F7F4]/95 to-transparent transition-opacity duration-200 lg:from-[#F6F0E7]",
+                registerScrollState.hasBottom ? "opacity-100" : "opacity-0",
+              ].join(" ")}
+              aria-hidden="true"
+            />
           </div>
         </div>
       </section>

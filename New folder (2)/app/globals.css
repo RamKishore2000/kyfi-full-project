@@ -924,6 +924,36 @@ body {
   display: none;
 }
 
+.kyfi-register-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(4, 120, 87, 0.55) rgba(226, 232, 240, 0.6);
+  -webkit-overflow-scrolling: touch;
+}
+
+.kyfi-register-scroll::-webkit-scrollbar {
+  width: 0.55rem;
+  height: 0.55rem;
+}
+
+.kyfi-register-scroll::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.55);
+  border-radius: 999px;
+}
+
+.kyfi-register-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 120, 87, 0.72),
+    rgba(4, 120, 87, 0.46)
+  );
+  border: 2px solid rgba(248, 247, 244, 0.95);
+  border-radius: 999px;
+}
+
+.kyfi-register-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(4, 120, 87, 0.78);
+}
+
 body:has(.kyfi-auth-page) .kyfi-mobile-bottom-tabs,
 body:has(.kyfi-auth-page) .kyfi-mobile-bottom-tabs + div {
   display: none !important;
